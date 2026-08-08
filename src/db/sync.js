@@ -7,6 +7,7 @@ import {
   mappingSetKey,
   rulesetKey,
   rubricKey,
+  flattenMappingEdges,
 } from "../corpus/load.js";
 import { connectSurreal } from "./connect.js";
 import { CONTENT_SOURCE_REPO } from "./params.js";
@@ -80,12 +81,16 @@ export async function syncCorpus(options = {}) {
   const syncedAt = new Date().toISOString();
 
   const corpus = loadCorpus(options.root);
+  const mappingEdges = flattenMappingEdges(corpus.mappingSets);
   const plan = {
     dryRun,
     prune,
     syncSha,
     syncedAt,
-    counts: corpus.counts,
+    counts: {
+      ...corpus.counts,
+      maps_to: mappingEdges.length,
+    },
     upserts: {
       domain: corpus.domains.map(domainKey),
       framework: corpus.frameworks.map(frameworkKey),
@@ -93,6 +98,7 @@ export async function syncCorpus(options = {}) {
       mapping_set: corpus.mappingSets.map(mappingSetKey),
       ruleset: corpus.rulesets.map(rulesetKey),
       rubric: corpus.rubrics.map(rubricKey),
+      maps_to: mappingEdges.map((e) => e.key),
     },
     deleted: {
       domain: [],
@@ -101,6 +107,7 @@ export async function syncCorpus(options = {}) {
       mapping_set: [],
       ruleset: [],
       rubric: [],
+      maps_to: [],
     },
   };
 
@@ -147,12 +154,60 @@ export async function syncCorpus(options = {}) {
 
     for (const doc of corpus.mappingSets) {
       const key = mappingSetKey(doc);
-      const { source_path, id: _id, ...fields } = doc;
+      const { source_path, id: _id, mappings: _mappings, ...fields } = doc;
       await upsertRecord(db, "mapping_set", key, {
         ...fields,
         corpus_id: key,
+        mapping_count: (doc.mappings || []).length,
         ...syncMeta({ sourcePath: source_path, syncSha, syncedAt }),
       });
+    }
+
+    // Graph edges: requirement:⟨from⟩ -> maps_to -> requirement:⟨to⟩
+    // RELATION tables require RELATE / INSERT RELATION (not UPSERT CONTENT).
+    for (const edge of mappingEdges) {
+      await db.query(
+        `
+        DELETE type::record("maps_to", $edge_key);
+        INSERT RELATION INTO maps_to {
+          id: type::record("maps_to", $edge_key),
+          in: type::record("requirement", $from),
+          out: type::record("requirement", $to),
+          edge_key: $edge_key,
+          relation: $relation,
+          strength: $strength,
+          note: $note,
+          reviewed: $reviewed,
+          reviewer: $reviewer,
+          mapping_set: $mapping_set,
+          from_framework: $from_framework,
+          to_framework: $to_framework,
+          set_status: $set_status,
+          content_source: $content_source,
+          source_path: $source_path,
+          sync_sha: $sync_sha,
+          synced_at: $synced_at
+        };
+        `,
+        {
+          edge_key: edge.key,
+          from: edge.from,
+          to: edge.to,
+          relation: edge.relation,
+          strength: edge.strength,
+          note: edge.note,
+          reviewed: edge.reviewed,
+          reviewer: edge.reviewer,
+          mapping_set: edge.mappingSetId,
+          from_framework: edge.from_framework,
+          to_framework: edge.to_framework,
+          set_status: edge.set_status,
+          content_source: CONTENT_SOURCE_REPO,
+          source_path: edge.source_path,
+          sync_sha: syncSha,
+          synced_at: syncedAt,
+        },
+      );
     }
 
     for (const doc of corpus.rulesets) {
@@ -201,6 +256,11 @@ export async function syncCorpus(options = {}) {
         db,
         "rubric",
         plan.upserts.rubric,
+      );
+      plan.deleted.maps_to = await deleteMissing(
+        db,
+        "maps_to",
+        plan.upserts.maps_to,
       );
     }
 
