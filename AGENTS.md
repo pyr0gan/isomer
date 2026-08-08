@@ -18,6 +18,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Connection helpers: `src/db/connect.js` (`connectSurreal`, `pingSurreal`).
 - Sync: `src/db/sync.js` + `src/corpus/load.js`; CLI `scripts/sync-corpus.js`.
 - Database params (`DEFINE PARAM`): `src/db/params.js` — e.g. `$isomer_content_source`, `$isomer_maturity_levels`, `$isomer_ai_roles`. Prefer these in SurQL instead of string literals; JS mirrors live in the same module for writers.
+- Database functions (`DEFINE FUNCTION`): `src/db/functions.js` — `fn::isomer::*` helpers (`requirement`, `requirements_by_domain`, `applicable_requirements`, `corpus_stats`, maturity helpers, etc.). Prefer these for playbook queries.
 - Vault secret read: `src/vault/secrets.js` (token or AppRole; KV v1/v2).
 - Config via `.env` (see `.env.example`). Surreal password comes from Vault (`VAULT_SECRET_PATH` / `VAULT_SECRET_FIELD`), not from a `SURREAL_PASSWORD` env var.
 - `VAULT_SECRET_PATH` is the path after `/v1/` (e.g. `kv/data/surreal`). A leading `v1/` is stripped automatically if present.
