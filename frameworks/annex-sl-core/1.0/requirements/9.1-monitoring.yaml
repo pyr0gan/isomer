@@ -1,0 +1,21 @@
+id: annex-sl-core/1.0/9.1
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "9.1"
+title: Monitoring, measurement, analysis and evaluation
+type: clause
+authority: certifiable
+text_summary: >
+  Determine what needs to be monitored and measured, the methods (which
+  must produce valid, comparable and reproducible results), when monitoring is
+  performed, who performs it, when results are analyzed, and who evaluates
+  them. Retain evidence and evaluate the performance and effectiveness of the
+  management system.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "Defined metrics/KPIs with methods, frequency and ownership"
+  - "Analyzed results feeding management review"
+tags: [metrics, monitoring]

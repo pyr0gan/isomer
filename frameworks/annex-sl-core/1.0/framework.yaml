@@ -1,0 +1,30 @@
+id: annex-sl-core
+version: "1.0"
+name: Annex SL Core (harmonized management system clauses 4-10)
+type: pseudo-framework
+authority: certifiable
+status: draft
+description: >
+  Shared skeleton of the harmonized ISO management system structure (Annex SL)
+  as realized by ISO/IEC 27001:2022 and ISO/IEC 42001:2023. Authored once and
+  inherited by both standards so integrated ISMS+AIMS implementations build a
+  single shell. All summaries are original paraphrases; organizations must hold
+  licensed copies of the standards themselves.
+inherited_by:
+  - framework: iso27001
+    version: "2022"
+  - framework: iso42001
+    version: "2023"
+extension_points:
+  - id: iso42001-2023/6.1.4
+    note: AI system impact assessment (planning) — 42001-specific, no core equivalent.
+  - id: iso42001-2023/8.4
+    note: AI system impact assessment (operation) — 42001-specific, no core equivalent.
+  - id: iso27001-2022/annex-a
+    note: 93-control reference set entered via core 6.1.3.
+  - id: iso42001-2023/annex-a
+    note: 38-control reference set entered via core 6.1.3.
+notes: >
+  Clause numbering follows the shared Annex SL layout; both standards use the
+  same top-level numbers for these requirements. Where one standard subdivides
+  a clause differently, the specializations field on the requirement records it.

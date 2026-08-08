@@ -1,0 +1,24 @@
+id: annex-sl-core/1.0/4.2
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "4.2"
+title: Understanding the needs and expectations of interested parties
+type: clause
+authority: certifiable
+text_summary: >
+  Determine which interested parties are relevant to the management
+  system, what requirements they have, and which of those requirements the
+  organization chooses or is obliged to address through the management system.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy, transparency-communication]
+evidence_expectations:
+  - "Stakeholder register listing parties and their relevant requirements"
+  - "Legal, regulatory and contractual requirements identified and traced to the register"
+specializations:
+  iso42001-2023: >
+    Interested parties include individuals and groups affected by AI system
+    outputs, not only customers and regulators; this feeds the impact assessment
+    process.
+tags: [context, stakeholders]

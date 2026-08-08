@@ -1,0 +1,21 @@
+id: annex-sl-core/1.0/7.4
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "7.4"
+title: Communication
+type: clause
+authority: certifiable
+text_summary: >
+  Determine the internal and external communications relevant to the
+  management system, including what to communicate, when, with whom, and how.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [transparency-communication]
+evidence_expectations:
+  - "Communication plan covering internal and external audiences"
+specializations:
+  iso42001-2023: >
+    External communication expectations are substantially extended by Annex A
+    objective A.8 (information for interested parties).
+tags: [communication]

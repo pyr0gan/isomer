@@ -1,0 +1,23 @@
+id: annex-sl-core/1.0/7.3
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "7.3"
+title: Awareness
+type: clause
+authority: certifiable
+text_summary: >
+  Ensure persons doing work under the organization's control are aware
+  of the policy, their contribution to the effectiveness of the management
+  system, the benefits of improved performance, and the implications of
+  nonconformance.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [resources-competence]
+evidence_expectations:
+  - "Awareness program content and completion records"
+specializations:
+  iso42001-2023: >
+    Interacts with EU AI Act Article 4 AI literacy expectations where
+    applicable; map at the obligation layer.
+tags: [awareness]

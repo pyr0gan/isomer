@@ -1,0 +1,21 @@
+id: annex-sl-core/1.0/7.1
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "7.1"
+title: Resources
+type: clause
+authority: certifiable
+text_summary: >
+  Determine and provide the resources needed to establish, implement,
+  maintain and continually improve the management system.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [resources-competence]
+evidence_expectations:
+  - "Budget, headcount or tooling allocations attributable to the management system"
+specializations:
+  iso42001-2023: >
+    Annex A objective A.4 extends this with documentation of data, tooling,
+    system, computing and human resources specific to AI systems.
+tags: [resources]

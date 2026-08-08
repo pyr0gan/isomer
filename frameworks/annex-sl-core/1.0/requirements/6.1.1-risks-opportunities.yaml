@@ -1,0 +1,22 @@
+id: annex-sl-core/1.0/6.1.1
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "6.1.1"
+title: Actions to address risks and opportunities — general
+type: clause
+authority: certifiable
+text_summary: >
+  Using the context and interested-party analysis, determine the risks
+  and opportunities that must be addressed for the management system to
+  achieve             its intended outcomes, prevent or reduce undesired
+  effects, and improve.             Plan actions to address them and how those
+  actions integrate into management             system processes and are
+  evaluated for effectiveness.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [risk-impact]
+evidence_expectations:
+  - "Risk and opportunity register traceable to clauses 4.1 and 4.2"
+  - "Planned actions with owners and effectiveness criteria"
+tags: [risk, planning]

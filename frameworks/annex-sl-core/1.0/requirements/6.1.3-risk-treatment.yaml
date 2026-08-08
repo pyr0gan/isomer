@@ -1,0 +1,30 @@
+id: annex-sl-core/1.0/6.1.3
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "6.1.3"
+title: Risk treatment and Statement of Applicability
+type: clause
+authority: certifiable
+text_summary: >
+  Define and apply a risk treatment process: select treatment options,
+  determine the controls necessary to implement them, and compare determined
+  controls against the standard's reference control set (Annex A) to verify no
+  necessary control has been omitted. Produce a Statement of Applicability
+  recording included and excluded controls with justification for each
+  decision, formulate a risk treatment plan, and obtain risk owners' approval
+  of the plan and acceptance of residual risks.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [risk-impact]
+evidence_expectations:
+  - "Statement of Applicability with per-control inclusion/exclusion justification"
+  - "Risk treatment plan linked to register entries"
+  - "Recorded risk-owner approval and residual risk acceptance"
+specializations:
+  iso27001-2022: >
+    Reference set is ISO/IEC 27001:2022 Annex A (93 controls).
+  iso42001-2023: >
+    Reference set is ISO/IEC 42001:2023 Annex A (38 controls); undocumented
+    exclusions are a common major nonconformity.
+tags: [risk, soa, treatment]

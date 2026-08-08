@@ -1,0 +1,23 @@
+id: annex-sl-core/1.0/4.3
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "4.3"
+title: Determining the scope of the management system
+type: clause
+authority: certifiable
+text_summary: >
+  Define the boundaries and applicability of the management system,
+  taking into account the context analysis and interested-party requirements,
+  and maintain the scope as documented information.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy]
+evidence_expectations:
+  - "Approved scope statement identifying organizational, physical and technological boundaries"
+  - "Interfaces and dependencies with activities outside the scope identified"
+specializations:
+  iso42001-2023: >
+    Scope should identify which AI systems and lifecycle stages are covered by
+    the AIMS.
+tags: [scope]

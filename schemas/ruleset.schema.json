@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/ruleset.schema.json",
+  "title": "ClassificationRuleset",
+  "description": "Decision model for a regulation: answers about an AI system -> classification -> activated obligations with effective dates.",
+  "type": "object",
+  "required": ["ruleset", "framework", "questions", "outcomes", "default_outcome"],
+  "additionalProperties": false,
+  "properties": {
+    "ruleset": { "type": "string", "description": "<framework>/<version>/<name>" },
+    "framework": { "type": "string", "description": "<framework>/<version> the activated obligations belong to" },
+    "status": { "enum": ["draft", "review", "released", "stale"] },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "ask", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "ask": { "type": "string" },
+          "kind": { "enum": ["single", "multi", "boolean"] },
+          "options": { "type": "array", "items": { "type": "string" } },
+          "help": { "type": "string" }
+        }
+      }
+    },
+    "outcomes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["when", "classification", "activates"],
+        "additionalProperties": false,
+        "properties": {
+          "when": {
+            "type": "object",
+            "description": "question id -> required answer (string) or any-of (array)",
+            "additionalProperties": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "boolean" },
+                { "type": "array", "items": { "type": "string" } }
+              ]
+            }
+          },
+          "classification": { "type": "string" },
+          "activates": { "type": "array", "items": { "type": "string" }, "description": "Requirement refs within the target framework" },
+          "applicable_from": { "type": "string", "format": "date" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "default_outcome": {
+      "type": "object",
+      "required": ["classification"],
+      "additionalProperties": false,
+      "properties": {
+        "classification": { "type": "string" },
+        "activates": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

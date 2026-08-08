@@ -1,0 +1,28 @@
+id: annex-sl-core/1.0/5.2
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "5.2"
+title: Policy
+type: clause
+authority: certifiable
+text_summary: >
+  Establish a policy appropriate to the organization's purpose that
+  provides a framework for setting objectives and commits to satisfying
+  applicable requirements and to continual improvement. The policy is
+  documented, communicated internally, and made available to interested
+  parties as appropriate.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy]
+evidence_expectations:
+  - "Approved, dated, version-controlled policy signed by top management"
+  - "Communication record demonstrating staff have received the policy"
+specializations:
+  iso27001-2022: >
+    Realized as the information security policy; topic-specific policies hang
+    beneath it per Annex A 5.1.
+  iso42001-2023: >
+    Realized as the AI policy; Annex A objective A.2 adds content requirements
+    and alignment with other organizational policies (A.2.2).
+tags: [policy]

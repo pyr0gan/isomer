@@ -1,0 +1,23 @@
+id: annex-sl-core/1.0/5.3
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "5.3"
+title: Organizational roles, responsibilities and authorities
+type: clause
+authority: certifiable
+text_summary: >
+  Assign and communicate responsibilities and authorities for ensuring
+  the management system conforms to the standard and for reporting on its
+  performance to top management.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy, resources-competence]
+evidence_expectations:
+  - "RACI or equivalent assignment for management system roles"
+  - "Role descriptions naming the reporting line to top management"
+specializations:
+  iso42001-2023: >
+    Annex A objective A.3 extends this with defined AI-specific roles across the
+    lifecycle (A.3.2) and reporting of concerns (A.3.3).
+tags: [roles, accountability]

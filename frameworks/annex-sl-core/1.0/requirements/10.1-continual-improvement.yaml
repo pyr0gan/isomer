@@ -1,0 +1,17 @@
+id: annex-sl-core/1.0/10.1
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "10.1"
+title: Continual improvement
+type: clause
+authority: certifiable
+text_summary: >
+  Continually improve the suitability, adequacy and effectiveness of
+  the management system.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "Improvement log with implemented items traceable to review, audit or metric inputs"
+tags: [improvement]
