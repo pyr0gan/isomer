@@ -1,0 +1,53 @@
+domain: identity-access
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      Access is unmanaged: shared accounts, no deprovisioning
+      discipline, unknown service accounts and machine identities.
+    observable_criteria:
+      - "No documented access control rules"
+      - "No inventory of accounts, human or non-human"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Access has rules: access control policy exists, accounts are
+      individual, and offboarding removes access.
+    observable_criteria:
+      - "Access control policy tied to business need"
+      - "Unique identities for users; offboarding removes access with records"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Identity runs as a lifecycle: joiner/mover/leaver for humans,
+      inventoried and owned non-human identities, managed secrets,
+      MFA on sensitive access, privileged access restricted and
+      reviewed.
+    observable_criteria:
+      - "Identity lifecycle procedure covering human and non-human identities"
+      - "NHI inventory (service accounts, workload identities) with owners and justification"
+      - "Secrets management tooling for system credentials"
+      - "MFA on sensitive user access; periodic access and privileged-access reviews with remediation"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Access is verified in practice: reviews demonstrably remove
+      stale rights, NHI credentials rotate, access anomalies are
+      detected and investigated.
+    observable_criteria:
+      - "Access review cycles with measured removal of stale entitlements"
+      - "Credential rotation executed for non-human identities with records"
+      - "Access anomaly detections investigated to closure"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Access is least-privilege by construction: just-in-time or
+      short-lived credentials, policy-as-code entitlements,
+      identity risk scored and trended — including AI agents as
+      first-class identities.
+    observable_criteria:
+      - "Short-lived/just-in-time credentials for privileged and workload access"
+      - "Entitlements managed as reviewable code/policy"
+      - "AI agent identities governed with scoped, auditable permissions"

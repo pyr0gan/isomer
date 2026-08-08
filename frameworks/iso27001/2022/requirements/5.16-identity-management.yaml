@@ -1,0 +1,20 @@
+id: iso27001/2022/5.16
+framework: iso27001
+framework_version: "2022"
+ref: "5.16"
+title: Identity management
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Manage the full lifecycle of identities — human and non-human — including
+  uniqueness, registration, and timely deprovisioning.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [identity-access]
+evidence_expectations:
+  - "Identity lifecycle procedure covering human and non-human identities"
+  - "Joiner/mover/leaver records demonstrating timely deprovisioning"
+  - "NHI inventory (service accounts, workload identities, agent identities) with owners"
+tags: [identity, nhi]

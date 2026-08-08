@@ -1,0 +1,18 @@
+id: iso27001/2022/5.36
+framework: iso27001
+framework_version: "2022"
+ref: "5.36"
+title: Compliance with policies, rules and standards
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Regularly review compliance with the organization's own security policies,
+  topic rules and standards.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "Compliance check records with remediation of deviations"
+tags: [compliance]

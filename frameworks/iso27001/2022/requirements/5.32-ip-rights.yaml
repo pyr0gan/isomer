@@ -1,0 +1,18 @@
+id: iso27001/2022/5.32
+framework: iso27001
+framework_version: "2022"
+ref: "5.32"
+title: Intellectual property rights
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Implement procedures to protect intellectual property rights — including
+  licensed software, content, and licensed models or datasets.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [data-governance, leadership-policy]
+evidence_expectations:
+  - "IP/licensing compliance procedure with license inventory"
+tags: [legal, ip]

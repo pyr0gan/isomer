@@ -1,0 +1,17 @@
+id: iso27001/2022/8.30
+framework: iso27001
+framework_version: "2022"
+ref: "8.30"
+title: Outsourced development
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Direct, monitor and review outsourced system development activity.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [third-party, ai-lifecycle]
+evidence_expectations:
+  - "Security requirements and review checkpoints in outsourced development engagements"
+tags: [suppliers, sdlc]

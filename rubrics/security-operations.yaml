@@ -1,0 +1,53 @@
+domain: security-operations
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No operational security: no monitoring, unmanaged
+      vulnerabilities, incidents handled improvised if noticed.
+    observable_criteria:
+      - "No logging or monitoring of security-relevant events"
+      - "No vulnerability management activity"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Basics are on: endpoint and malware protection deployed,
+      key logs collected, someone owns security operations.
+    observable_criteria:
+      - "Endpoint/malware protection coverage on managed devices"
+      - "Central collection of key system logs"
+      - "Named ownership of security operations"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Operations are defined: hardening baselines, vulnerability
+      management with SLAs, monitoring with triage, incident
+      response planned and practiced, change management enforced.
+    observable_criteria:
+      - "Configuration baselines with drift or periodic review"
+      - "Vulnerability remediation SLAs with records"
+      - "Alert triage process operating over collected logs"
+      - "Incident response plan exercised; change management records on production systems"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Operations are measured: detection coverage assessed, MTTR
+      and remediation metrics trended, incidents produce
+      implemented improvements, threat intel drives action.
+    observable_criteria:
+      - "Detection coverage mapped (e.g. against a threat framework) with gaps addressed"
+      - "Response/remediation metrics trended and reviewed"
+      - "Post-incident improvements verified implemented"
+      - "Documented actions taken from threat intelligence"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Operations anticipate: proactive exercises (red team/purple
+      team), automation for response, security telemetry from AI
+      systems integrated into detection.
+    observable_criteria:
+      - "Offensive exercises with tracked findings-to-fix"
+      - "Automated response playbooks in production use"
+      - "AI system events (misuse, anomalous outputs) integrated into security monitoring"

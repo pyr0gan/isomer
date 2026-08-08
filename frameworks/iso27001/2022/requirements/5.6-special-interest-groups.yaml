@@ -1,0 +1,18 @@
+id: iso27001/2022/5.6
+framework: iso27001
+framework_version: "2022"
+ref: "5.6"
+title: Contact with special interest groups
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Maintain contact with security forums, professional associations and
+  interest groups to stay current on threats and practice.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [resources-competence]
+evidence_expectations:
+  - "Memberships/subscriptions and evidence of intelligence flowing into the organization"
+tags: [external]

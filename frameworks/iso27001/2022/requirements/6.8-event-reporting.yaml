@@ -1,0 +1,18 @@
+id: iso27001/2022/6.8
+framework: iso27001
+framework_version: "2022"
+ref: "6.8"
+title: Information security event reporting
+type: control
+authority: certifiable
+objective: "6"
+text_summary: >
+  Provide a mechanism for personnel to report observed or suspected security
+  events in a timely manner through appropriate channels.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [security-operations, transparency-communication]
+evidence_expectations:
+  - "Reporting channel known to staff with reported-event records"
+tags: [incidents]

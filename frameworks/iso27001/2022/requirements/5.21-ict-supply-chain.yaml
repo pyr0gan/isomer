@@ -1,0 +1,20 @@
+id: iso27001/2022/5.21
+framework: iso27001
+framework_version: "2022"
+ref: "5.21"
+title: Managing information security in the ICT supply chain
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Manage risks associated with the ICT product and service supply chain,
+  including components and sub-suppliers — extending to models, datasets and
+  AI service dependencies.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [third-party]
+evidence_expectations:
+  - "Supply-chain risk requirements flowed to ICT suppliers"
+  - "Component/dependency visibility (e.g. SBOM; model and dataset dependencies where applicable)"
+tags: [supply-chain]

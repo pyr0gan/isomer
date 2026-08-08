@@ -1,0 +1,20 @@
+id: iso27001/2022/5.1
+framework: iso27001
+framework_version: "2022"
+ref: "5.1"
+title: Policies for information security
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Define an information security policy and supporting topic-specific
+  policies, approved by management, published, communicated, acknowledged, and
+  reviewed at planned intervals and on significant change.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy]
+evidence_expectations:
+  - "Approved policy set with review history"
+  - "Acknowledgement records from relevant personnel"
+tags: [policy]

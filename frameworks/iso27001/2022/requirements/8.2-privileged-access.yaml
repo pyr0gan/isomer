@@ -1,0 +1,19 @@
+id: iso27001/2022/8.2
+framework: iso27001
+framework_version: "2022"
+ref: "8.2"
+title: Privileged access rights
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Restrict and manage the allocation and use of privileged access rights —
+  human and non-human alike.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [identity-access]
+evidence_expectations:
+  - "Privileged access inventory (incl. service/machine accounts) with justification"
+  - "PAM controls or equivalent with periodic privileged-access review"
+tags: [access, nhi]

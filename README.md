@@ -12,10 +12,13 @@ frameworks/<framework>/<version>/requirements/*.yaml one file per requirement
 mappings/<from>--<to>.yaml                           typed cross-framework mappings
 rulesets/*.yaml                                      regulatory classification rulesets
 rubrics/<domain>.yaml                                per-domain maturity rubrics (L0–L4)
-vocab/domains.yaml                                   the nine maturity domains
+vocab/domains.yaml                                   maturity domains (9 AIMS + 4 ISMS)
 schemas/*.schema.json                                JSON Schema 2020-12 definitions
 tools/validate.py                                    CI validator
 ```
+
+Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
+`iso42001/2023` (Annex A, 38 controls), `iso27001/2022` (Annex A, 93 controls).
 
 ## Conventions
 

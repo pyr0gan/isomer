@@ -1,0 +1,20 @@
+id: iso27001/2022/8.4
+framework: iso27001
+framework_version: "2022"
+ref: "8.4"
+title: Access to source code
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Appropriately manage read and write access to source code, development tools
+  and software libraries — including model code, weights and pipelines where
+  relevant.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [identity-access, ai-lifecycle]
+evidence_expectations:
+  - "Repository access model with protected branches/reviews"
+  - "Access records for sensitive code and model artifacts"
+tags: [access, code]

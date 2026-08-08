@@ -1,0 +1,18 @@
+id: iso27001/2022/8.33
+framework: iso27001
+framework_version: "2022"
+ref: "8.33"
+title: Test information
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Appropriately select, protect and manage information used for testing —
+  including test data derived from production and evaluation datasets.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [data-governance, ai-lifecycle]
+evidence_expectations:
+  - "Test data selection/protection rules with masking of production-derived data"
+tags: [testing, data]

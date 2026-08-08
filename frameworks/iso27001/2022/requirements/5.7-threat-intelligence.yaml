@@ -1,0 +1,19 @@
+id: iso27001/2022/5.7
+framework: iso27001
+framework_version: "2022"
+ref: "5.7"
+title: Threat intelligence
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Collect and analyze information about security threats to produce actionable
+  intelligence used in defenses and risk decisions.
+applicability:
+  ai_roles: [all]
+  min_maturity: L3
+domains: [security-operations, risk-impact]
+evidence_expectations:
+  - "Threat intel sources and analysis records"
+  - "Documented defensive or risk actions driven by intelligence"
+tags: [threat-intel]

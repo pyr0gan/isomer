@@ -1,5 +1,7 @@
 # Maturity/scoring domains. Every requirement must claim at least one.
-# These are the nine assessment domains of the playbook's maturity model.
+# Playbook maturity domains: nine AIMS-oriented domains plus four
+# ISMS-oriented domains (identity-access, security-operations,
+# physical-environment, resilience-continuity) for ISO/IEC 27001 Annex A.
 domains:
   - id: leadership-policy
     name: Leadership & Policy
@@ -28,3 +30,15 @@ domains:
   - id: monitoring-improvement
     name: Monitoring, Audit & Improvement
     anchors: [clause 9, clause 10]
+  - id: identity-access
+    name: Identity & Access
+    anchors: [iso27001 5.15-5.18, iso27001 8.2-8.5, iso27001 8.18]
+  - id: security-operations
+    name: Security Operations
+    anchors: [iso27001 5.24-5.28, iso27001 8.x, iso27001 5.7]
+  - id: physical-environment
+    name: Physical & Environmental Security
+    anchors: [iso27001 7.1-7.14]
+  - id: resilience-continuity
+    name: Resilience & Continuity
+    anchors: [iso27001 5.29-5.30, iso27001 8.13-8.14]

@@ -1,0 +1,22 @@
+id: iso27001
+version: "2022"
+name: ISO/IEC 27001:2022 — Information security management system (Annex A reference controls)
+type: standard
+authority: certifiable
+status: draft
+description: >
+  Reference control set of ISO/IEC 27001:2022 Annex A - 93 controls across four
+  themes (5 Organizational, 6 People, 7 Physical, 8 Technological), entered via
+  the risk treatment process (annex-sl-core 6.1.3) and recorded in the
+  Statement of Applicability. Management-system clauses 4-10 are inherited from
+  annex-sl-core. Amd 1:2024 (climate change considerations) affects core 4.1/4.2
+  context, noted there. All summaries are original paraphrases; organizations
+  must hold a licensed copy of the standard.
+inherits:
+  - framework: annex-sl-core
+    version: "1.0"
+notes: >
+  Theme refs (5-8) are groupings recorded in the objective field. Where a
+  control has a natural AI-era reading (5.9 assets, 5.16 identities incl.
+  non-human, 5.21 supply chain, 8.4/8.25-8.33 development), the summary or
+  evidence notes it without altering the control's scope.

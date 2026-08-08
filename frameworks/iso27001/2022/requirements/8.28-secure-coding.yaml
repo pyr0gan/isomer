@@ -1,0 +1,17 @@
+id: iso27001/2022/8.28
+framework: iso27001
+framework_version: "2022"
+ref: "8.28"
+title: Secure coding
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Apply secure coding principles to software development.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [ai-lifecycle, security-operations]
+evidence_expectations:
+  - "Secure coding standard with enforcement (linters, review checklists, SAST)"
+tags: [sdlc]

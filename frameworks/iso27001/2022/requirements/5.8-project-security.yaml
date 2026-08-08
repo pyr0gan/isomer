@@ -1,0 +1,18 @@
+id: iso27001/2022/5.8
+framework: iso27001
+framework_version: "2022"
+ref: "5.8"
+title: Information security in project management
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Integrate information security into project management so requirements are
+  addressed in all projects regardless of type.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [leadership-policy, ai-lifecycle]
+evidence_expectations:
+  - "Security checkpoints in project methodology with completed examples"
+tags: [projects]

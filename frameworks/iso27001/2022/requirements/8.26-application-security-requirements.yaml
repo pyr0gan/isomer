@@ -1,0 +1,18 @@
+id: iso27001/2022/8.26
+framework: iso27001
+framework_version: "2022"
+ref: "8.26"
+title: Application security requirements
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Identify, specify and approve information security requirements when
+  developing or acquiring applications.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [ai-lifecycle, security-operations]
+evidence_expectations:
+  - "Security requirements in development/acquisition records"
+tags: [sdlc]

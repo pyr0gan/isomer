@@ -1,0 +1,18 @@
+id: iso27001/2022/7.11
+framework: iso27001
+framework_version: "2022"
+ref: "7.11"
+title: Supporting utilities
+type: control
+authority: certifiable
+objective: "7"
+text_summary: >
+  Protect information processing facilities from power failures and other
+  utility disruptions.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [physical-environment, resilience-continuity]
+evidence_expectations:
+  - "Utility resilience measures (UPS, redundancy) with test records"
+tags: [facilities]

@@ -1,0 +1,18 @@
+id: iso27001/2022/5.28
+framework: iso27001
+framework_version: "2022"
+ref: "5.28"
+title: Collection of evidence
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Establish procedures for identifying, collecting and preserving evidence
+  related to security events, admissible where legal process may follow.
+applicability:
+  ai_roles: [all]
+  min_maturity: L3
+domains: [security-operations]
+evidence_expectations:
+  - "Evidence handling procedure with chain-of-custody provisions"
+tags: [forensics]

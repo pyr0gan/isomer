@@ -1,0 +1,19 @@
+id: iso27001/2022/5.15
+framework: iso27001
+framework_version: "2022"
+ref: "5.15"
+title: Access control
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Establish and implement rules controlling physical and logical access to
+  information and assets based on business and security requirements.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [identity-access]
+evidence_expectations:
+  - "Access control policy tied to business requirements"
+  - "Access model (roles/attributes) documented"
+tags: [access]
