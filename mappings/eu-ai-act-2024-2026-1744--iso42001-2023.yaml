@@ -1,0 +1,343 @@
+id: eu-ai-act-2024-2026-1744--iso42001-2023
+from_framework: eu-ai-act/2024+2026-1744
+to_framework: iso42001/2023
+status: draft
+# Target side is the AIMS as a whole: iso42001/2023 controls plus the
+# annex-sl-core/1.0 clauses it inherits. Edges to core clauses are
+# deliberate — the management-system machinery often IS the satisfier.
+mappings:
+  # ---- horizontal duties ----
+  - from: eu-ai-act/2024+2026-1744/art-4
+    to: annex-sl-core/1.0/7.2
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Competence machinery delivers role-appropriate capability; the Act
+      extends coverage beyond staff whose work affects the management system
+      to persons operating/affected by AI systems. Gap: literacy coverage
+      scope + records for affected operators.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-4
+    to: annex-sl-core/1.0/7.3
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-5
+    to: iso42001/2023/A.9.2
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Use-approval process with prohibited applications is the enforcement
+      point; the Act's specific banned-practice list (incl. 2026/1744
+      additions) must be encoded as screening criteria. Gap: Article 5
+      practice list in approval screening.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-5
+    to: iso42001/2023/A.5.4
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- art 9 risk management ----
+  - from: eu-ai-act/2024+2026-1744/art-9
+    to: annex-sl-core/1.0/6.1.2
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      The AIMS risk assessment process is the chassis Art. 9 assumes; the
+      Act adds continuous-iterative lifecycle framing and testing against
+      preliminarily defined metrics. Gap: per-system metric definitions and
+      test linkage.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-9
+    to: annex-sl-core/1.0/8.2
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Interval/change-triggered assessment covers the cadence; Art. 9 wants
+      risk management running with the system, not around it. Gap:
+      lifecycle-embedded risk checkpoints.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-9
+    to: iso42001/2023/A.6.2.4
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- art 10 data governance ----
+  - from: eu-ai-act/2024+2026-1744/art-10
+    to: iso42001/2023/A.7.4
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Quality criteria incl. representativeness align directly; the Act sets
+      a legal bar (relevant, representative, to the best extent possible
+      error-free and complete) and requires bias examination and mitigation
+      explicitly. Gap: bias examination records + legal-bar quality
+      documentation per dataset.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-10
+    to: iso42001/2023/A.7.2
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Data management process carries governance practices (design choices,
+      collection, preparation); Art. 10 enumerates required practice areas.
+      Gap: enumerated practice coverage per training/validation/testing set.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-10
+    to: iso42001/2023/A.7.6
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-10
+    to: iso42001/2023/A.7.5
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- arts 11-13 documentation & transparency ----
+  - from: eu-ai-act/2024+2026-1744/art-11
+    to: iso42001/2023/A.6.2.7
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Technical documentation discipline is the same activity; Annex IV
+      prescribes content elements beyond what 42001 requires. Gap: Annex IV
+      content checklist over existing documentation.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-11
+    to: iso42001/2023/A.6.2.3
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-12
+    to: iso42001/2023/A.6.2.8
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Event logging with retention is the same control; the Act requires the
+      capability designed-in (automatic recording over lifetime, traceability
+      of functioning). Gap: designed-in logging capability attestation per
+      system.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-13
+    to: iso42001/2023/A.8.2
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      User/system information duty is the same shape; the Act's
+      instructions-for-use content list (identity, characteristics,
+      performance, oversight measures, lifetime) is prescriptive. Gap:
+      instructions-for-use content completeness.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-13
+    to: iso42001/2023/A.6.2.7
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- art 14 human oversight ----
+  - from: eu-ai-act/2024+2026-1744/art-14
+    to: iso42001/2023/A.9.2
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Responsible-use processes carry oversight requirements; the Act demands
+      oversight be effective by design — understand, monitor, interpret,
+      disregard, intervene, stop. 42001 distributes this across requirements
+      and use controls without mandating design-in effectiveness. Gap:
+      per-system oversight design meeting the five effectiveness capabilities.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-14
+    to: iso42001/2023/A.6.2.2
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- art 15 accuracy/robustness/cybersecurity ----
+  - from: eu-ai-act/2024+2026-1744/art-15
+    to: iso42001/2023/A.6.2.4
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      V&V machinery hosts accuracy/robustness testing; the Act adds declared
+      accuracy metrics, lifecycle-consistent performance, and resilience to
+      AI-specific attacks. The cybersecurity leg is substantively carried by
+      the ISMS (27001 8.x) rather than 42001. Gap: declared metrics +
+      adversarial testing evidence.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-15
+    to: iso42001/2023/A.6.2.6
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- arts 16-17 provider system ----
+  - from: eu-ai-act/2024+2026-1744/art-16
+    to: annex-sl-core/1.0/5.1
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-17
+    to: annex-sl-core/1.0/4.4
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      A 42001-conformant AIMS is substantively the Art. 17 QMS: management
+      system, risk management, data management, monitoring, incident
+      handling, records, accountability all present. Gap: map AIMS elements
+      to the Art. 17(1) enumerated items and close the deltas (regulatory
+      compliance strategy, conformity assessment procedures, authority
+      communication).
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-17
+    to: annex-sl-core/1.0/9.1
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-17
+    to: annex-sl-core/1.0/10.2
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- art 26 deployer duties ----
+  - from: eu-ai-act/2024+2026-1744/art-26
+    to: iso42001/2023/A.9.4
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Use-per-intended-purpose monitoring is the same control as
+      use-per-instructions; the Act adds suspend-and-inform-provider on
+      identified risk and worker information before workplace deployment.
+      Gap: suspension procedure + worker information records.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-26
+    to: iso42001/2023/A.6.2.6
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Operational monitoring covers the deployer's watch duty; the Act
+      scopes it to the deployer's control sphere incl. input data relevance
+      and representativeness. Gap: input-data suitability checks where
+      deployer controls inputs.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-26
+    to: iso42001/2023/A.6.2.8
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Log retention machinery exists; the Act sets a minimum period (at
+      least six months, subject to other law) for logs under deployer
+      control. Gap: retention period compliance.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-26
+    to: iso42001/2023/A.3.2
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- art 27 FRIA ----
+  - from: eu-ai-act/2024+2026-1744/art-27
+    to: iso42001/2023/A.5.2
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      The impact assessment process is the FRIA chassis; the Act fixes
+      timing (before first use), scope elements, and notification. Gap: FRIA
+      element checklist + before-first-use gating for in-scope deployments.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-27
+    to: iso42001/2023/A.5.4
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Individual/group impact content covers most FRIA substance (affected
+      categories, risks of harm, oversight, mitigation). Gap:
+      fundamental-rights framing of harm categories.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- arts 43/49 conformity & registration ----
+  - from: eu-ai-act/2024+2026-1744/art-43
+    to: annex-sl-core/1.0/9.2
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # art-49 registration: no AIMS analog — intentionally unmapped (net-new)
+  # ---- art 50 transparency ----
+  - from: eu-ai-act/2024+2026-1744/art-50
+    to: iso42001/2023/A.8.2
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Disclosure-to-users duty overlaps (AI interaction, purpose,
+      limitations); machine-readable marking of synthetic content is a
+      net-new technical requirement with no 42001 counterpart. Gap:
+      content marking implementation + deepfake/emotion-recognition
+      disclosures.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-50
+    to: iso42001/2023/A.9.4
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- arts 72-73 post-market ----
+  - from: eu-ai-act/2024+2026-1744/art-72
+    to: iso42001/2023/A.6.2.6
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Production monitoring with re-validation triggers is the chassis; the
+      Act requires a documented plan and active, proportionate data
+      collection over lifetime. Gap: documented post-market plan per system.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-72
+    to: annex-sl-core/1.0/9.1
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-73
+    to: iso42001/2023/A.8.4
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Incident communication machinery (thresholds, responsibilities,
+      regulatory alignment) carries this; the Act adds the serious-incident
+      definition, authority reporting deadlines, and deployer
+      inform-the-provider duty. Gap: serious-incident criteria + deadline
+      procedure.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: eu-ai-act/2024+2026-1744/art-73
+    to: annex-sl-core/1.0/10.2
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft

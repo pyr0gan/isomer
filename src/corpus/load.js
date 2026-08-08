@@ -135,6 +135,17 @@ export function mapsToEdgeKey({ mappingSetId, from, to, relation }) {
 }
 
 /**
+ * Framework/version prefix from a requirement id (`fw/ver/ref...`).
+ * Mapping sets may target multiple namespaces (e.g. iso42001 + inherited
+ * annex-sl-core); per-edge framework beats the set-level to_framework header.
+ */
+export function frameworkVersionFromRequirementId(id) {
+  const parts = String(id || "").split("/");
+  if (parts.length < 3) return null;
+  return `${parts[0]}/${parts[1]}`;
+}
+
+/**
  * Flatten mapping-set YAML docs into edge descriptors for Surreal RELATE/UPSERT.
  */
 export function flattenMappingEdges(mappingSets) {
@@ -159,8 +170,10 @@ export function flattenMappingEdges(mappingSets) {
         reviewer: m.reviewer,
         source_path: doc.source_path,
         set_status: doc.status ?? "draft",
-        from_framework: doc.from_framework,
-        to_framework: doc.to_framework,
+        from_framework:
+          frameworkVersionFromRequirementId(m.from) ?? doc.from_framework,
+        to_framework:
+          frameworkVersionFromRequirementId(m.to) ?? doc.to_framework,
       });
     }
   }

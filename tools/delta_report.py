@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Integration delta report.
 
-Usage: python3 tools/delta_report.py mappings/iso42001-2023--iso27001-2022.yaml
+Usage:
+  python3 tools/delta_report.py mappings/iso42001-2023--iso27001-2022.yaml
+  python3 tools/delta_report.py mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml
 
 For the mapping set's from_framework, reports each requirement's best
-coverage by the to_framework:
+coverage by mapping edges (to_framework may span inherited namespaces):
   covered   - has a satisfied_by edge
   partial   - best edge is partially_satisfied_by (gap notes shown)
   adjacent  - only related/supports edges
   net-new   - no edges at all
 
-This is the "what does an ISMS org still have to build for the AIMS"
-report; the product's roadmap generator consumes the same logic.
+Used for tier residuals (ISMS→AIMS, AIMS→AI Act); the product's roadmap
+generator consumes the same logic.
 """
 
 import glob
