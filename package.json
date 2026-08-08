@@ -8,13 +8,16 @@
     "validate": "python3 tools/validate.py",
     "db:ping": "node scripts/ping-db.js",
     "db:ping:op": "op run --env-file=.env -- node scripts/ping-db.js",
-    "db:ingest-sample": "node scripts/ingest-sample.js"
+    "db:ingest-sample": "node scripts/ingest-sample.js",
+    "db:sync": "node scripts/sync-corpus.js",
+    "db:sync:dry-run": "node scripts/sync-corpus.js --dry-run"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
-    "surrealdb": "^2.0.8"
+    "surrealdb": "^2.0.8",
+    "yaml": "^2.9.0"
   }
 }

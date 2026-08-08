@@ -1,0 +1,50 @@
+name: Sync corpus to SurrealDB
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-corpus-surreal
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Validate and sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        run: pip install pyyaml jsonschema
+
+      - name: Validate corpus
+        run: python3 tools/validate.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Sync corpus to SurrealDB
+        env:
+          SURREAL_URL: ${{ secrets.SURREAL_URL }}
+          SURREAL_NAMESPACE: ${{ secrets.SURREAL_NAMESPACE }}
+          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
+          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
+          VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: npm run db:sync
