@@ -3,8 +3,16 @@
  * Uses the Vault HTTP API via fetch — no node-vault dependency.
  */
 
+/** Normalize a Vault API path: strip leading slashes and an optional `v1/` prefix. */
+export function normalizeVaultPath(path) {
+  return String(path)
+    .trim()
+    .replace(/^\/+/, "")
+    .replace(/^v1\//, "");
+}
+
 async function vaultFetch(addr, path, { token, method = "GET", body } = {}) {
-  const url = `${addr}/v1/${path.replace(/^\//, "")}`;
+  const url = `${addr}/v1/${normalizeVaultPath(path)}`;
   const headers = { "Content-Type": "application/json" };
   if (token) headers["X-Vault-Token"] = token;
 
