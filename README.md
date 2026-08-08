@@ -38,29 +38,3 @@ tools/validate.py                                    CI validator
   Both standards inherit it; standard-specific deltas live in each
   requirement's `specializations` and the manifest's `extension_points`
   (notably 42001's 6.1.4 and 8.4 impact assessment clauses).
-
-## Lint / validation
-
-Keep source files clean before sync:
-
-```
-npm run lint              # corpus validator + ESLint
-npm run lint:corpus       # YAML / JSON Schema checks (tools/validate.py)
-npm run lint:js           # JavaScript (src/, scripts/)
-```
-
-`lint:corpus` auto-installs Python deps from `requirements.txt` when
-`pyyaml` / `jsonschema` are missing (you can also run
-`python3 -m pip install -r requirements.txt` yourself).
-
-`lint:js` auto-runs `npm install` when `eslint` is missing (you can also
-run `npm install` yourself). It invokes the local ESLint binary under
-`node_modules/`, not a global `eslint` on `PATH`.
-
-`lint:corpus` checks schema conformance, ID uniqueness, ID/path coherence,
-domain vocabulary resolution, mapping endpoint resolution, mandatory gap
-notes, effective dates on legal obligations, and maturity-rubric coverage
-(one `rubrics/<domain>.yaml` per vocab domain, levels L0–L4 in order).
-
-CI runs `npm run lint` on every PR and push to `main`. Live Surreal sync
-runs separately on `main` (see `.github/workflows/sync-corpus.yml`).
