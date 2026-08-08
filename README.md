@@ -15,19 +15,29 @@ rubrics/<domain>.yaml                                per-domain maturity rubrics
 vocab/domains.yaml                                   maturity domains (9 AIMS + 4 ISMS)
 schemas/*.schema.json                                JSON Schema 2020-12 definitions
 tools/validate.py                                    CI validator
-tools/delta_report.py                                ISMS→AIMS coverage delta
+tools/delta_report.py                                coverage delta (covered/partial/…)
+tools/check_content_charset.py                       reject non-Latin letters in content
 ```
 
 Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
 `iso42001/2023` (Annex A, 38 controls), `iso27001/2022` (Annex A, 93 controls),
 `eu-ai-act/2024+2026-1744` (18 obligations; consolidated post-Omnibus).
 
-Cross-framework mapping: `mappings/iso42001-2023--iso27001-2022.yaml`
-(38 edges). Integration delta (what an ISMS org still builds for AIMS):
+Cross-framework mappings (queryable residual work by tier):
+
+| Mapping set | Story |
+|---|---|
+| `mappings/iso42001-2023--iso27001-2022.yaml` | ISMS → AIMS residual |
+| `mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml` | AIMS → AI Act residual |
 
 ```
 npm run report:delta -- mappings/iso42001-2023--iso27001-2022.yaml
+npm run report:delta -- mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml
 ```
+
+The AI Act → AIMS set may target **both** `iso42001/2023` controls and
+inherited `annex-sl-core/1.0` clauses in one file (`to_framework` names the
+AIMS umbrella; per-edge targets carry their own namespace).
 
 Classification ruleset: `rulesets/eu-ai-act-classification.yaml`.
 Evaluate with first-match semantics (outcome order is semantic):
@@ -68,7 +78,9 @@ npm run ruleset:evaluate -- \
   must walk outcomes in file order and stop at the first match.
 - **Mappings** are directed and typed; `partially_satisfied_by` and
   `conflicts` require a gap note. Mappings reference framework
-  *versions*, and go `status: stale` when either side revs.
+  *versions*, and go `status: stale` when either side revs. Content YAML
+  must not contain non-Latin letters (CJK etc.); `npm run lint:charset`
+  enforces this (common typography like em dashes is allowed).
 - **annex-sl-core** is a pseudo-framework holding the harmonized
   clauses 4-10 shared by ISO/IEC 27001:2022 and ISO/IEC 42001:2023.
   Both standards inherit it; standard-specific deltas live in each
