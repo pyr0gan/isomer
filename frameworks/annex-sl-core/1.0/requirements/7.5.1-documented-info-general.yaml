@@ -1,0 +1,18 @@
+id: annex-sl-core/1.0/7.5.1
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "7.5.1"
+title: Documented information — general
+type: clause
+authority: certifiable
+text_summary: >
+  The management system includes the documented information required by
+  the standard and the documented information the organization determines is
+  necessary for the system's effectiveness.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "Document register mapping required documentation to actual artifacts"
+tags: [documentation]

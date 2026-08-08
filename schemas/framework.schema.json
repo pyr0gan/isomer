@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/framework.schema.json",
+  "title": "Framework",
+  "type": "object",
+  "required": ["id", "version", "name", "type", "authority", "status", "description"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "version": { "type": "string" },
+    "name": { "type": "string" },
+    "type": { "enum": ["standard", "regulation", "framework", "pseudo-framework", "custom"] },
+    "authority": { "enum": ["certifiable", "legal", "advisory", "internal"] },
+    "status": { "enum": ["draft", "review", "released", "superseded"] },
+    "description": { "type": "string" },
+    "inherited_by": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["framework", "version"],
+        "additionalProperties": false,
+        "properties": {
+          "framework": { "type": "string" },
+          "version": { "type": "string" }
+        }
+      }
+    },
+    "inherits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["framework", "version"],
+        "additionalProperties": false,
+        "properties": {
+          "framework": { "type": "string" },
+          "version": { "type": "string" }
+        }
+      }
+    },
+    "extension_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "note"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

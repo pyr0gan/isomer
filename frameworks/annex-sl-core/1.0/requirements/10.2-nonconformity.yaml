@@ -1,0 +1,22 @@
+id: annex-sl-core/1.0/10.2
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "10.2"
+title: Nonconformity and corrective action
+type: clause
+authority: certifiable
+text_summary: >
+  When a nonconformity occurs, react to control and correct it and deal
+  with consequences; evaluate the need for action to eliminate root causes so
+  it does not recur or occur elsewhere; implement needed actions; review their
+  effectiveness; update risks and opportunities determined during planning if
+  necessary; and change the management system if necessary. Retain documented
+  information on the nature of nonconformities, actions taken, and results.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "CAPA register with root-cause analysis and effectiveness review"
+  - "Linkage from audit findings to closed corrective actions"
+tags: [capa, improvement]

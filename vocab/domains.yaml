@@ -1,0 +1,30 @@
+# Maturity/scoring domains. Every requirement must claim at least one.
+# These are the nine assessment domains of the playbook's maturity model.
+domains:
+  - id: leadership-policy
+    name: Leadership & Policy
+    anchors: [iso42001 A.2, iso42001 A.3, clause 5]
+  - id: ai-lifecycle
+    name: AI Inventory & Lifecycle
+    anchors: [iso42001 A.6]
+  - id: risk-impact
+    name: Risk & Impact Assessment
+    anchors: [clause 6, clause 8, iso42005, iso23894]
+  - id: data-governance
+    name: Data Governance
+    anchors: [iso42001 A.7]
+  - id: transparency-communication
+    name: Transparency & Stakeholder Communication
+    anchors: [iso42001 A.8]
+  - id: responsible-use
+    name: Responsible Use / Ethics
+    anchors: [iso42001 A.9]
+  - id: third-party
+    name: Third-Party & Supply Chain
+    anchors: [iso42001 A.10]
+  - id: resources-competence
+    name: Resources & Competence
+    anchors: [iso42001 A.4, clause 7]
+  - id: monitoring-improvement
+    name: Monitoring, Audit & Improvement
+    anchors: [clause 9, clause 10]

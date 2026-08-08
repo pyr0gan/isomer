@@ -1,0 +1,19 @@
+id: annex-sl-core/1.0/7.5.2
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "7.5.2"
+title: Documented information — creating and updating
+type: clause
+authority: certifiable
+text_summary: >
+  When creating or updating documented information, ensure appropriate
+  identification and description, format and media, and review and approval
+  for             suitability and adequacy.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "Document control procedure covering identification, format, review and approval"
+  - "Version histories on management system documents"
+tags: [documentation]

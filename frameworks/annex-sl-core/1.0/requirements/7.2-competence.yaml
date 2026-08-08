@@ -1,0 +1,20 @@
+id: annex-sl-core/1.0/7.2
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "7.2"
+title: Competence
+type: clause
+authority: certifiable
+text_summary: >
+  Determine the competence needed by persons whose work affects
+  management system performance, ensure competence through education, training
+  or experience, take actions to close gaps, evaluate the effectiveness of
+  those actions, and retain evidence.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [resources-competence]
+evidence_expectations:
+  - "Competency requirements defined for key roles"
+  - "Training records with effectiveness evaluation"
+tags: [competence, training]

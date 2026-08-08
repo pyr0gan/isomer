@@ -1,0 +1,17 @@
+id: annex-sl-core/1.0/8.3
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "8.3"
+title: Risk treatment in operation
+type: clause
+authority: certifiable
+text_summary: >
+  Implement the risk treatment plan and retain documented results of
+  treatment activity.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [risk-impact]
+evidence_expectations:
+  - "Execution records against the risk treatment plan"
+tags: [risk, operations]

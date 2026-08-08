@@ -1,0 +1,24 @@
+id: annex-sl-core/1.0/9.2
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "9.2"
+title: Internal audit
+type: clause
+authority: certifiable
+text_summary: >
+  Conduct internal audits at planned intervals to determine whether the
+  management system conforms to the organization's own requirements and to the
+  standard, and is effectively implemented and maintained. Maintain an audit
+  programme that accounts for the importance of processes and prior audit
+  results; define criteria and scope per audit; select auditors to ensure
+  objectivity and impartiality; report results to relevant management; and
+  retain documented information.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "Audit programme covering the full scope over the certification cycle"
+  - "Audit reports with findings reported to management"
+  - "Demonstrated auditor independence from the audited area"
+tags: [audit]

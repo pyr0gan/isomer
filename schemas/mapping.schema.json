@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/mapping.schema.json",
+  "title": "MappingSet",
+  "description": "A file holding directed, typed mappings between requirements of two framework versions.",
+  "type": "object",
+  "required": ["id", "from_framework", "to_framework", "mappings"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+--[a-z0-9-]+(/[A-Za-z0-9.+-]+)?$" },
+    "from_framework": { "type": "string", "description": "<framework>/<version>" },
+    "to_framework": { "type": "string", "description": "<framework>/<version>" },
+    "status": { "enum": ["draft", "review", "released", "stale"], "default": "draft" },
+    "mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "relation", "strength", "reviewed", "reviewer"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "string", "description": "Full requirement id" },
+          "to": { "type": "string", "description": "Full requirement id" },
+          "relation": { "enum": ["satisfied_by", "partially_satisfied_by", "supports", "related", "conflicts"] },
+          "strength": { "enum": ["strong", "moderate", "weak"] },
+          "note": { "type": "string", "description": "Required in practice for partially_satisfied_by and conflicts; enforced by validator" },
+          "reviewed": { "type": "string", "format": "date" },
+          "reviewer": { "type": "string" }
+        }
+      }
+    }
+  }
+}

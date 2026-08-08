@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/requirement.schema.json",
+  "title": "Requirement",
+  "description": "Atomic unit of the content layer: a control, clause requirement, or regulatory obligation.",
+  "type": "object",
+  "required": ["id", "framework", "framework_version", "ref", "title", "type", "authority", "text_summary", "domains", "evidence_expectations"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Canonical ID: <framework>/<framework_version>/<ref>",
+      "pattern": "^[a-z0-9-]+/[A-Za-z0-9.+-]+/[A-Za-z0-9.()-]+$"
+    },
+    "framework": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "framework_version": { "type": "string" },
+    "ref": { "type": "string", "description": "The framework's own reference, e.g. A.6.2.4, 6.1.3, art-26" },
+    "title": { "type": "string", "minLength": 3 },
+    "type": { "enum": ["control", "clause", "obligation", "practice"] },
+    "authority": { "enum": ["certifiable", "legal", "advisory", "internal"] },
+    "objective": { "type": "string", "description": "Parent grouping ref, e.g. A.6" },
+    "text_summary": {
+      "type": "string",
+      "minLength": 20,
+      "description": "Original paraphrase. Never verbatim standard or regulation text."
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ai_roles": {
+          "type": "array",
+          "items": { "enum": ["all", "provider", "deployer", "developer", "importer", "distributor", "product-manufacturer", "user"] },
+          "minItems": 1
+        },
+        "min_maturity": { "enum": ["L0", "L1", "L2", "L3", "L4"] },
+        "conditions": { "type": "array", "items": { "type": "string" }, "description": "Free-form applicability conditions resolved by profiles/rulesets" }
+      }
+    },
+    "domains": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+      "minItems": 1,
+      "description": "Must resolve against vocab/domains.yaml"
+    },
+    "evidence_expectations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 10 },
+      "minItems": 1
+    },
+    "applicable_from": { "type": "string", "format": "date", "description": "Obligations only: date the requirement becomes enforceable" },
+    "applicable_until": { "type": "string", "format": "date" },
+    "specializations": {
+      "type": "object",
+      "description": "How inheriting frameworks extend or narrow this requirement, keyed by <framework>-<version>",
+      "additionalProperties": { "type": "string" }
+    },
+    "questions": { "type": "array", "items": { "type": "string" } },
+    "templates": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" } }
+  }
+}

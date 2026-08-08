@@ -1,0 +1,23 @@
+id: annex-sl-core/1.0/5.1
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "5.1"
+title: Leadership and commitment
+type: clause
+authority: certifiable
+text_summary: >
+  Top management demonstrates ownership of the management system:
+  ensuring policy and objectives align with strategic direction, integrating
+  requirements into business processes, providing resources, communicating the
+  importance of conformance, ensuring intended outcomes are achieved,
+  directing             and supporting contributors, and promoting continual
+  improvement.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy]
+evidence_expectations:
+  - "Named executive sponsor with documented accountability"
+  - "Management meeting minutes showing direction and resourcing decisions"
+  - "Evidence of integration into existing business processes (e.g. procurement, SDLC)"
+tags: [leadership, tone-from-top]

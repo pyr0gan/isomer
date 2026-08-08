@@ -1,0 +1,24 @@
+id: annex-sl-core/1.0/9.3
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "9.3"
+title: Management review
+type: clause
+authority: certifiable
+text_summary: >
+  Top management reviews the management system at planned intervals to
+  ensure continuing suitability, adequacy and effectiveness. Inputs include
+  the             status of prior actions, changes in relevant issues,
+  performance feedback             (nonconformities and corrective actions,
+  monitoring results, audit results,             risk assessment status and
+  treatment plan progress), interested-party             feedback, and
+  improvement opportunities. Outputs record decisions on
+  improvement and any needed changes.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [leadership-policy, monitoring-improvement]
+evidence_expectations:
+  - "Review minutes demonstrating required inputs were considered"
+  - "Recorded decisions and tracked follow-up actions"
+tags: [management-review]

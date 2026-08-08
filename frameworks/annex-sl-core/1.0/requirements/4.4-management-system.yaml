@@ -1,0 +1,17 @@
+id: annex-sl-core/1.0/4.4
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "4.4"
+title: Management system and its processes
+type: clause
+authority: certifiable
+text_summary: >
+  Establish, implement, maintain and continually improve the management
+  system, including the processes it needs and how those processes interact.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy, monitoring-improvement]
+evidence_expectations:
+  - "Management system description or manual identifying processes and their interactions"
+tags: [governance]

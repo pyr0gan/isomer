@@ -1,0 +1,28 @@
+id: annex-sl-core/1.0/4.1
+framework: annex-sl-core
+framework_version: "1.0"
+ref: "4.1"
+title: Understanding the organization and its context
+type: clause
+authority: certifiable
+text_summary: >
+  Identify the internal and external issues that are relevant to the
+  organization's purpose and that affect its ability to achieve the intended
+  outcomes of the management system. Revisit this analysis on a defined
+  cadence             and when the environment changes materially.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy]
+evidence_expectations:
+  - "Documented context analysis covering internal and external issues"
+  - "Defined review cadence with evidence of at least one review cycle"
+specializations:
+  iso27001-2022: >
+    Issues are framed around information security outcomes. Amd 1:2024 adds an
+    explicit expectation to consider whether climate change is a relevant issue.
+  iso42001-2023: >
+    Context must include the organization's role(s) with respect to AI systems
+    (e.g. provider, deployer, developer, user) and the regulatory environment
+    applicable to those roles.
+tags: [context, governance]
