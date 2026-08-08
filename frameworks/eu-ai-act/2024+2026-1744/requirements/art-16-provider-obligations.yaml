@@ -1,0 +1,20 @@
+id: eu-ai-act/2024+2026-1744/art-16
+framework: eu-ai-act
+framework_version: "2024+2026-1744"
+ref: "art-16"
+title: Obligations of providers (high-risk, umbrella)
+type: obligation
+authority: legal
+text_summary: >
+  Providers of high-risk systems ensure compliance with the Section 2
+  requirements, indicate identity on the system/packaging, maintain the QMS,
+  keep documentation and logs, run conformity assessment, register, take
+  corrective action, and cooperate with authorities.
+applicability:
+  ai_roles: [provider]
+  min_maturity: L2
+domains: [leadership-policy]
+evidence_expectations:
+  - "Compliance file demonstrating each umbrella duty is assigned and met"
+applicable_from: "2027-12-02"
+tags: [hrais]

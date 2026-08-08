@@ -1,0 +1,19 @@
+id: eu-ai-act/2024+2026-1744/art-49
+framework: eu-ai-act
+framework_version: "2024+2026-1744"
+ref: "art-49"
+title: Registration in the EU database (high-risk)
+type: obligation
+authority: legal
+text_summary: >
+  Providers (and certain public-authority deployers) register high-risk AI
+  systems in the EU database before placing on the market or putting into
+  service.
+applicability:
+  ai_roles: [provider, deployer]
+  min_maturity: L2
+domains: [transparency-communication]
+evidence_expectations:
+  - "Registration records with database entries kept current"
+applicable_from: "2027-12-02"
+tags: [hrais, registration]

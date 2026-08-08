@@ -14,7 +14,8 @@
     "db:ingest-sample": "node scripts/ingest-sample.js",
     "db:sync": "node scripts/sync-corpus.js",
     "db:sync:dry-run": "node scripts/sync-corpus.js --dry-run",
-    "report:delta": "python3 tools/delta_report.py"
+    "report:delta": "python3 tools/delta_report.py",
+    "ruleset:evaluate": "node scripts/evaluate-ruleset.js"
   },
   "engines": {
     "node": ">=20"

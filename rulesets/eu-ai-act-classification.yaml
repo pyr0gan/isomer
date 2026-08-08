@@ -1,0 +1,67 @@
+ruleset: eu-ai-act/2024+2026-1744/classification
+framework: eu-ai-act/2024+2026-1744
+status: draft
+questions:
+  - id: role
+    ask: "What is the organization's role for this AI system?"
+    kind: single
+    options: [provider, deployer, importer, distributor]
+    help: >
+      Provider: develops or has developed and places on market/into service
+      under own name. Deployer: uses an AI system under its authority in a
+      professional context.
+  - id: prohibited-use
+    ask: "Does the system perform any prohibited practice (manipulation causing significant harm, exploitation of vulnerabilities, social scoring, non-consensual intimate imagery generation, or other Article 5 practices)?"
+    kind: boolean
+  - id: annex-iii-area
+    ask: "Does the system's use fall in an Annex III high-risk area?"
+    kind: single
+    options: [biometrics, critical-infrastructure, education, employment,
+              essential-services, law-enforcement, migration-border,
+              justice-democracy, none]
+  - id: annex-i-product
+    ask: "Is the AI system a safety component of, or itself, a product regulated under Annex I product legislation (machinery, medical devices, radio equipment, etc.)?"
+    kind: boolean
+  - id: fria-deployer-class
+    ask: "Is the deployer a public-law body, a private entity providing public services, or using the system for credit scoring or life/health insurance risk assessment and pricing?"
+    kind: boolean
+  - id: interacts-or-generates
+    ask: "Does the system interact directly with people, generate synthetic content, or perform emotion recognition or biometric categorisation?"
+    kind: boolean
+outcomes:
+  - when: {prohibited-use: true}
+    classification: prohibited
+    activates: [art-5]
+    applicable_from: "2025-02-02"
+    note: Use must cease/never begin; applies regardless of role.
+  - when: {role: provider, annex-iii-area: [biometrics, critical-infrastructure, education, employment, essential-services, law-enforcement, migration-border, justice-democracy]}
+    classification: high-risk-annex-iii-provider
+    activates: [art-9, art-10, art-11, art-12, art-13, art-14, art-15, art-16, art-17, art-43, art-49, art-50, art-72, art-73, art-4]
+    applicable_from: "2027-12-02"
+  - when: {role: deployer, annex-iii-area: [biometrics, critical-infrastructure, education, employment, essential-services, law-enforcement, migration-border, justice-democracy], fria-deployer-class: true}
+    classification: high-risk-annex-iii-deployer-fria
+    activates: [art-26, art-27, art-14, art-50, art-73, art-4]
+    applicable_from: "2027-12-02"
+  - when: {role: deployer, annex-iii-area: [biometrics, critical-infrastructure, education, employment, essential-services, law-enforcement, migration-border, justice-democracy]}
+    classification: high-risk-annex-iii-deployer
+    activates: [art-26, art-14, art-50, art-73, art-4]
+    applicable_from: "2027-12-02"
+  - when: {role: provider, annex-i-product: true}
+    classification: high-risk-annex-i-provider
+    activates: [art-9, art-10, art-11, art-12, art-13, art-14, art-15, art-16, art-17, art-43, art-49, art-50, art-72, art-73, art-4]
+    applicable_from: "2028-08-02"
+    note: Same articles as Annex III providers; later date per 2026/1744.
+  - when: {role: deployer, annex-i-product: true}
+    classification: high-risk-annex-i-deployer
+    activates: [art-26, art-14, art-50, art-73, art-4]
+    applicable_from: "2028-08-02"
+  - when: {interacts-or-generates: true}
+    classification: limited-risk-transparency
+    activates: [art-50, art-4]
+    applicable_from: "2026-08-02"
+default_outcome:
+  classification: minimal-risk
+  activates: [art-4]
+  note: >
+    Literacy applies broadly since 2025-02-02; voluntary codes encouraged.
+    Classification review required on substantial modification or new use.

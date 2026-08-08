@@ -1,0 +1,22 @@
+id: eu-ai-act/2024+2026-1744/art-15
+framework: eu-ai-act
+framework_version: "2024+2026-1744"
+ref: "art-15"
+title: Accuracy, robustness and cybersecurity (high-risk)
+type: obligation
+authority: legal
+text_summary: >
+  High-risk systems achieve appropriate accuracy, robustness and
+  cybersecurity, perform consistently throughout their lifecycle, and are
+  resilient to errors, faults, inconsistencies and attempts to exploit
+  vulnerabilities (including AI-specific attacks such as data poisoning and
+  adversarial examples).
+applicability:
+  ai_roles: [provider]
+  min_maturity: L2
+domains: [security-operations, ai-lifecycle]
+evidence_expectations:
+  - "Declared accuracy metrics with test evidence"
+  - "Robustness and AI-specific attack-resistance testing records"
+applicable_from: "2027-12-02"
+tags: [hrais, security]

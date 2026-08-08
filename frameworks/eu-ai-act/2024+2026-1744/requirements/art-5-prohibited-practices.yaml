@@ -1,0 +1,22 @@
+id: eu-ai-act/2024+2026-1744/art-5
+framework: eu-ai-act
+framework_version: "2024+2026-1744"
+ref: "art-5"
+title: Prohibited AI practices
+type: obligation
+authority: legal
+text_summary: >
+  Certain AI practices are banned outright — including manipulative techniques
+  causing significant harm, exploitation of vulnerabilities, social scoring by
+  or for public authorities, and (per the 2026/1744 amendment) generation of
+  non-consensual intimate imagery and CSAM. Organizations must ensure no
+  system they provide or deploy falls in scope.
+applicability:
+  ai_roles: [provider, deployer]
+  min_maturity: L1
+domains: [responsible-use, risk-impact]
+evidence_expectations:
+  - "Prohibited-practice screening in the AI use approval process"
+  - "Screening records for in-scope systems including post-amendment prohibitions"
+applicable_from: "2025-02-02"
+tags: [prohibited]
