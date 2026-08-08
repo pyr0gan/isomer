@@ -1,0 +1,21 @@
+id: iso42001/2023/A.7.2
+framework: iso42001
+framework_version: "2023"
+ref: "A.7.2"
+title: Data for development and enhancement
+type: control
+authority: certifiable
+objective: "A.7"
+text_summary: >
+  Define and document data management processes for AI development and
+  improvement, addressing privacy and security implications, quality
+  management, and how data handling requirements apply at each lifecycle
+  stage.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [data-governance]
+evidence_expectations:
+  - "Documented data management process for AI development"
+  - "Privacy and security requirements integrated into data workflows"
+tags: [data]

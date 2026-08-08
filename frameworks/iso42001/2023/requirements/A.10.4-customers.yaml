@@ -1,0 +1,21 @@
+id: iso42001/2023/A.10.4
+framework: iso42001
+framework_version: "2023"
+ref: "A.10.4"
+title: Customers
+type: control
+authority: certifiable
+objective: "A.10"
+text_summary: >
+  Ensure the organization considers its customers' responsible-AI
+  expectations and obligations when providing AI systems or services:
+  gathering requirements, supplying the information customers need to
+  meet their own duties, and supporting their oversight.
+applicability:
+  ai_roles: [provider]
+  min_maturity: L2
+domains: [third-party, transparency-communication]
+evidence_expectations:
+  - "Customer requirement capture for AI offerings"
+  - "Customer-facing information pack supporting their compliance duties"
+tags: [customers]

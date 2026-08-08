@@ -1,0 +1,20 @@
+id: iso42001/2023/A.9.4
+framework: iso42001
+framework_version: "2023"
+ref: "A.9.4"
+title: Intended use of the AI system
+type: control
+authority: certifiable
+objective: "A.9"
+text_summary: >
+  Ensure AI systems are used according to their intended purpose and
+  documentation — including provider-supplied instructions for         third-
+  party systems — and manage deviations through the approval         process.
+applicability:
+  ai_roles: [deployer, user]
+  min_maturity: L2
+domains: [responsible-use]
+evidence_expectations:
+  - "Use monitoring against documented intended purpose"
+  - "Deviation/exception records with approvals"
+tags: [use, compliance]

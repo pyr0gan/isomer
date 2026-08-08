@@ -1,0 +1,19 @@
+id: iso42001/2023/A.5.5
+framework: iso42001
+framework_version: "2023"
+ref: "A.5.5"
+title: Assessing societal impacts
+type: control
+authority: certifiable
+objective: "A.5"
+text_summary: >
+  Within impact assessments, consider broader societal consequences of
+  AI systems: environmental effects, economic and labor impacts, effects
+  on culture, norms and institutions, and misinformation potential.
+applicability:
+  ai_roles: [all]
+  min_maturity: L3
+domains: [risk-impact, responsible-use]
+evidence_expectations:
+  - "Societal impact criteria present in the assessment template with completed examples"
+tags: [society, impact-assessment]

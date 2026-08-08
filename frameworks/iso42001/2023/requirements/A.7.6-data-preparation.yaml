@@ -1,0 +1,19 @@
+id: iso42001/2023/A.7.6
+framework: iso42001
+framework_version: "2023"
+ref: "A.7.6"
+title: Preparation of data
+type: control
+authority: certifiable
+objective: "A.7"
+text_summary: >
+  Define and document data preparation methods and criteria: cleaning,
+  labeling, annotation quality control, transformation and feature
+  engineering choices, and their potential effects on system behavior.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [data-governance]
+evidence_expectations:
+  - "Documented preparation/labeling procedures with quality controls"
+tags: [data, labeling]

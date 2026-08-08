@@ -1,0 +1,19 @@
+id: iso42001/2023/A.6.1.2
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.1.2"
+title: Objectives for responsible development
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Identify and document the objectives that guide responsible AI system
+  development — e.g. fairness, safety, transparency, robustness,
+  privacy — and use them as inputs to design and development activity.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [ai-lifecycle, responsible-use]
+evidence_expectations:
+  - "Documented responsible-AI objectives traceable into design decisions"
+tags: [lifecycle, responsible-ai]

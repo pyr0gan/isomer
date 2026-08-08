@@ -1,0 +1,22 @@
+id: iso42001/2023/A.10.3
+framework: iso42001
+framework_version: "2023"
+ref: "A.10.3"
+title: Suppliers
+type: control
+authority: certifiable
+objective: "A.10"
+text_summary: >
+  Establish a process to ensure that services, products or materials
+  supplied by third parties for use in AI systems — models, APIs, data,
+  components — align with the organization's responsible-AI approach:
+  due diligence, contractual requirements, and ongoing review.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [third-party]
+evidence_expectations:
+  - "AI-specific supplier due diligence records"
+  - "Contract clauses covering responsible-AI, data and incident duties"
+  - "Periodic supplier review evidence"
+tags: [supply-chain, vendors]

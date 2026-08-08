@@ -1,0 +1,22 @@
+id: iso42001/2023/A.6.2.6
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.2.6"
+title: AI system operation and monitoring
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Operate AI systems per their documentation and monitor them in
+  production: performance and drift, error and failure handling,
+  incident response, and defined criteria for re-validation, retraining
+  or decommissioning.
+applicability:
+  ai_roles: [provider, deployer]
+  min_maturity: L2
+domains: [ai-lifecycle, monitoring-improvement]
+evidence_expectations:
+  - "Production monitoring covering performance and drift with alert thresholds"
+  - "Incident handling records for AI system failures or degradation"
+  - "Defined triggers for re-validation or retirement"
+tags: [lifecycle, operations, monitoring]

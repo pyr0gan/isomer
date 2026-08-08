@@ -1,0 +1,21 @@
+id: iso42001/2023/A.4.2
+framework: iso42001
+framework_version: "2023"
+ref: "A.4.2"
+title: Resource documentation
+type: control
+authority: certifiable
+objective: "A.4"
+text_summary: >
+  Identify and document the resources each AI system depends on — data,
+  tooling, models and algorithms, compute, and human expertise — so
+  dependencies, ownership and constraints are visible for risk and
+  impact assessment.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [resources-competence, ai-lifecycle]
+evidence_expectations:
+  - "Per-system resource inventory covering data, tooling, compute and people"
+  - "Inventory linked to the AI system register"
+tags: [inventory, resources]

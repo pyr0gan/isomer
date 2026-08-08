@@ -1,0 +1,21 @@
+id: iso42001/2023/A.5.4
+framework: iso42001
+framework_version: "2023"
+ref: "A.5.4"
+title: Assessing impacts on individuals and groups
+type: control
+authority: certifiable
+objective: "A.5"
+text_summary: >
+  Within impact assessments, specifically consider consequences for
+  individuals and groups: fairness and discrimination, safety, privacy,
+  transparency, economic effects, accessibility, and effects on
+  vulnerable populations.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [risk-impact, responsible-use]
+evidence_expectations:
+  - "Assessment template enumerating individual/group harm categories"
+  - "Completed assessments showing category-by-category consideration"
+tags: [fairness, impact-assessment]

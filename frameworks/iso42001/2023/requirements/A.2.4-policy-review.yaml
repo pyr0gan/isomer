@@ -1,0 +1,19 @@
+id: iso42001/2023/A.2.4
+framework: iso42001
+framework_version: "2023"
+ref: "A.2.4"
+title: Review of the AI policy
+type: control
+authority: certifiable
+objective: "A.2"
+text_summary: >
+  Review the AI policy at planned intervals and when significant changes
+  occur (new regulation, new AI use cases, incidents) to confirm it
+  remains suitable, adequate and effective.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy]
+evidence_expectations:
+  - "Review schedule and record of completed reviews with change history"
+tags: [policy, review]

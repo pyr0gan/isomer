@@ -1,0 +1,20 @@
+id: iso42001/2023/A.6.2.2
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.2.2"
+title: AI system requirements and specification
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Specify and document requirements for each new AI system or material
+  enhancement, covering functional needs and responsible-AI requirements
+  (performance thresholds, fairness constraints, oversight needs,
+  operational context and limitations).
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [ai-lifecycle]
+evidence_expectations:
+  - "Requirement specifications per system including responsible-AI requirements"
+tags: [lifecycle, requirements]

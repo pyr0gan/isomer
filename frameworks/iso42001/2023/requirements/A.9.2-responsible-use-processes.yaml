@@ -1,0 +1,21 @@
+id: iso42001/2023/A.9.2
+framework: iso42001
+framework_version: "2023"
+ref: "A.9.2"
+title: Processes for responsible use
+type: control
+authority: certifiable
+objective: "A.9"
+text_summary: >
+  Define and document processes governing the organization's own use of
+  AI systems (including third-party systems): approval of new uses,
+  acceptable-use rules, oversight requirements, and prohibited
+  applications.
+applicability:
+  ai_roles: [deployer, user]
+  min_maturity: L1
+domains: [responsible-use]
+evidence_expectations:
+  - "Documented AI acceptable-use and approval process"
+  - "Register of approved uses with recorded approvals"
+tags: [use, acceptable-use]

@@ -1,0 +1,21 @@
+id: iso42001/2023/A.7.4
+framework: iso42001
+framework_version: "2023"
+ref: "A.7.4"
+title: Quality of data
+type: control
+authority: certifiable
+objective: "A.7"
+text_summary: >
+  Define quality requirements for data used in AI systems — accuracy,
+  completeness, representativeness for the intended population,
+  timeliness — and verify data against them, recording known issues and
+  their handling.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [data-governance]
+evidence_expectations:
+  - "Documented data quality criteria per system"
+  - "Quality verification results with recorded issues and dispositions"
+tags: [data, quality]

@@ -1,0 +1,21 @@
+id: iso42001/2023/A.2.3
+framework: iso42001
+framework_version: "2023"
+ref: "A.2.3"
+title: Alignment with other organizational policies
+type: control
+authority: certifiable
+objective: "A.2"
+text_summary: >
+  Determine where other organizational policies — information security,
+  privacy, data governance, HR, procurement, ethics — are affected by or
+  apply to AI, and keep the AI policy consistent with them rather than
+  creating a parallel, contradictory regime.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy]
+evidence_expectations:
+  - "Cross-reference map from the AI policy to affected policies"
+  - "Evidence of joint review with policy owners (e.g. CISO, privacy officer)"
+tags: [policy, integration]

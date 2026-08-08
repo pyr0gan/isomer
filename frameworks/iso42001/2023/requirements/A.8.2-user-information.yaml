@@ -1,0 +1,21 @@
+id: iso42001/2023/A.8.2
+framework: iso42001
+framework_version: "2023"
+ref: "A.8.2"
+title: System documentation and information for users
+type: control
+authority: certifiable
+objective: "A.8"
+text_summary: >
+  Determine and provide the information users of an AI system need:
+  that they are interacting with AI where appropriate, the system's
+  purpose, capabilities and limitations, correct use, and how to raise
+  issues.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [transparency-communication]
+evidence_expectations:
+  - "User-facing documentation per system covering purpose, limitations and proper use"
+  - "AI interaction disclosure where the context requires it"
+tags: [transparency, users]

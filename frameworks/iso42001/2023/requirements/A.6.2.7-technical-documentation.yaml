@@ -1,0 +1,20 @@
+id: iso42001/2023/A.6.2.7
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.2.7"
+title: AI system technical documentation
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Provide and maintain technical documentation for each AI system
+  appropriate to its audiences (operators, users, auditors, regulators):
+  what the system does, how it was built and evaluated, its limitations,
+  and how to operate it safely.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [ai-lifecycle, transparency-communication]
+evidence_expectations:
+  - "Up-to-date technical documentation per system appropriate to each audience"
+tags: [lifecycle, documentation]

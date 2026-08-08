@@ -1,0 +1,19 @@
+id: iso42001/2023/A.4.6
+framework: iso42001
+framework_version: "2023"
+ref: "A.4.6"
+title: Human resources
+type: control
+authority: certifiable
+objective: "A.4"
+text_summary: >
+  Document the human competences the organization's AI activity depends
+  on — development, data science, oversight, ethics, security, domain
+  expertise — and how those needs are met across the lifecycle.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [resources-competence]
+evidence_expectations:
+  - "Competency mapping for AI lifecycle roles with identified gaps and plans"
+tags: [people, competence]
