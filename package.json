@@ -6,7 +6,7 @@
   "description": "Versioned ISMS+AIMS governance content corpus with SurrealDB tooling",
   "scripts": {
     "lint": "npm run lint:corpus && npm run lint:js",
-    "lint:corpus": "python3 tools/validate.py",
+    "lint:corpus": "python3 tools/ensure_python_deps.py && python3 tools/validate.py",
     "lint:js": "eslint src scripts eslint.config.js",
     "validate": "npm run lint:corpus",
     "db:ping": "node scripts/ping-db.js",
