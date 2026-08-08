@@ -25,6 +25,24 @@ def missing_modules() -> list[str]:
     return absent
 
 
+def pip_install(req: Path, *extra_args: str) -> bool:
+    cmd = [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        *extra_args,
+        "-r",
+        str(req),
+    ]
+    try:
+        subprocess.check_call(cmd)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def main() -> int:
     absent = missing_modules()
     if not absent:
@@ -36,41 +54,37 @@ def main() -> int:
         f"Installing from {req.name} …",
         file=sys.stderr,
     )
-    cmd = [
-        sys.executable,
-        "-m",
-        "pip",
-        "install",
-        "--user",
-        "-q",
-        "-r",
-        str(req),
-    ]
-    try:
-        subprocess.check_call(cmd)
-    except subprocess.CalledProcessError:
-        # Some environments disallow --user; retry without it.
-        cmd = [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "-q",
-            "-r",
-            str(req),
-        ]
-        subprocess.check_call(cmd)
 
-    still = missing_modules()
-    if still:
+    # Prefer env/interpreter install (venv, setup-python/CI). Fall back to
+    # --user for local machines, then --break-system-packages for PEP 668 hosts.
+    # Important: pip --user can exit 0 while leaving modules unimportable
+    # (e.g. user site disabled), so always re-check after each attempt.
+    strategies = (
+        (),
+        ("--user",),
+        ("--break-system-packages",),
+    )
+    for extra in strategies:
+        label = " ".join(extra) if extra else "(default)"
+        if not pip_install(req, *extra):
+            print(f"pip install {label} failed; trying next strategy …", file=sys.stderr)
+            continue
+        if not missing_modules():
+            return 0
         print(
-            "Still missing after install: "
-            + ", ".join(still)
-            + f". Try manually: {sys.executable} -m pip install -r requirements.txt",
+            f"pip install {label} finished but modules still missing; "
+            "trying next strategy …",
             file=sys.stderr,
         )
-        return 1
-    return 0
+
+    still = missing_modules()
+    print(
+        "Still missing after install: "
+        + ", ".join(still)
+        + f". Try manually: {sys.executable} -m pip install -r requirements.txt",
+        file=sys.stderr,
+    )
+    return 1
 
 
 if __name__ == "__main__":

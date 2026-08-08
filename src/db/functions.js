@@ -132,11 +132,83 @@ export async function ensureCorpusFunctions(db) {
         frameworks: (SELECT count() FROM framework WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         requirements: (SELECT count() FROM requirement WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         mapping_sets: (SELECT count() FROM mapping_set WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
+        maps_to: (SELECT count() FROM maps_to WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         rulesets: (SELECT count() FROM ruleset WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         rubrics: (SELECT count() FROM rubric WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0
       };
     }
-    COMMENT "Counts of content_source=$isomer_content_source records"
+    COMMENT "Counts of content_source=$isomer_content_source records/edges"
+    PERMISSIONS FULL;
+
+    -- Outgoing mapping edges from a requirement (optionally filter by relation types).
+    DEFINE FUNCTION OVERWRITE fn::isomer::maps_to(
+      $corpus_id: string,
+      $relations: option<array>
+    ) -> array
+    {
+      LET $rid = type::record("requirement", $corpus_id);
+      RETURN (
+        SELECT
+          id,
+          edge_key,
+          relation,
+          strength,
+          note,
+          reviewed,
+          reviewer,
+          mapping_set,
+          out AS target,
+          out.corpus_id AS target_corpus_id,
+          out.title AS target_title,
+          out.framework AS target_framework
+        FROM maps_to
+        WHERE in = $rid
+          AND content_source = $isomer_content_source
+          AND ($relations = NONE OR relation IN $relations)
+        ORDER BY edge_key ASC
+      );
+    }
+    COMMENT "Outgoing maps_to edges from a requirement (graph coverage)"
+    PERMISSIONS FULL;
+
+    -- Incoming mapping edges to a requirement (optionally filter by relation types).
+    DEFINE FUNCTION OVERWRITE fn::isomer::mapped_from(
+      $corpus_id: string,
+      $relations: option<array>
+    ) -> array
+    {
+      LET $rid = type::record("requirement", $corpus_id);
+      RETURN (
+        SELECT
+          id,
+          edge_key,
+          relation,
+          strength,
+          note,
+          reviewed,
+          reviewer,
+          mapping_set,
+          in AS source,
+          in.corpus_id AS source_corpus_id,
+          in.title AS source_title,
+          in.framework AS source_framework
+        FROM maps_to
+        WHERE out = $rid
+          AND content_source = $isomer_content_source
+          AND ($relations = NONE OR relation IN $relations)
+        ORDER BY edge_key ASC
+      );
+    }
+    COMMENT "Incoming maps_to edges to a requirement"
+    PERMISSIONS FULL;
+
+    -- Product's primary coverage view: requirements that satisfy $corpus_id
+    -- (outgoing edges whose relation is in $isomer_satisfaction_relations).
+    DEFINE FUNCTION OVERWRITE fn::isomer::satisfiers($corpus_id: string) -> array
+    {
+      RETURN fn::isomer::maps_to($corpus_id, $isomer_satisfaction_relations);
+    }
+    COMMENT "Show everything satisfying a requirement via maps_to"
     PERMISSIONS FULL;
 
     -- Fetch a domain maturity rubric by domain id.

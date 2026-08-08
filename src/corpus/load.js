@@ -125,3 +125,44 @@ export function requirementKey(doc) {
 export function rubricKey(doc) {
   return doc.domain;
 }
+
+/**
+ * Deterministic maps_to edge key for a directed mapping row.
+ * Format: `<mapping_set>|<from>|<to>|<relation>`
+ */
+export function mapsToEdgeKey({ mappingSetId, from, to, relation }) {
+  return `${mappingSetId}|${from}|${to}|${relation}`;
+}
+
+/**
+ * Flatten mapping-set YAML docs into edge descriptors for Surreal RELATE/UPSERT.
+ */
+export function flattenMappingEdges(mappingSets) {
+  const edges = [];
+  for (const doc of mappingSets) {
+    const mappingSetId = mappingSetKey(doc);
+    for (const m of doc.mappings || []) {
+      edges.push({
+        key: mapsToEdgeKey({
+          mappingSetId,
+          from: m.from,
+          to: m.to,
+          relation: m.relation,
+        }),
+        mappingSetId,
+        from: m.from,
+        to: m.to,
+        relation: m.relation,
+        strength: m.strength,
+        note: m.note ?? null,
+        reviewed: m.reviewed,
+        reviewer: m.reviewer,
+        source_path: doc.source_path,
+        set_status: doc.status ?? "draft",
+        from_framework: doc.from_framework,
+        to_framework: doc.to_framework,
+      });
+    }
+  }
+  return edges;
+}

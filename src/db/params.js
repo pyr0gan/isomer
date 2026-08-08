@@ -52,7 +52,16 @@ export const MAPPING_RELATIONS = [
   "conflicts",
 ];
 
-/** Tables owned by the corpus sync (pruned when absent from disk). */
+/**
+ * Relations meaning "to satisfies / partially satisfies from".
+ * Used by fn::isomer::satisfiers for the product's primary coverage view.
+ */
+export const SATISFACTION_RELATIONS = [
+  "satisfied_by",
+  "partially_satisfied_by",
+];
+
+/** Normal tables owned by the corpus sync (pruned when absent from disk). */
 export const CORPUS_TABLES = [
   "domain",
   "framework",
@@ -61,6 +70,9 @@ export const CORPUS_TABLES = [
   "ruleset",
   "rubric",
 ];
+
+/** Graph edge tables owned by the corpus sync. */
+export const CORPUS_RELATION_TABLES = ["maps_to"];
 
 function surrealStringArray(values) {
   return `[${values.map((v) => JSON.stringify(v)).join(", ")}]`;
@@ -109,6 +121,16 @@ export async function ensureCorpusParams(db) {
     DEFINE PARAM OVERWRITE $isomer_mapping_relations
       VALUE ${surrealStringArray(MAPPING_RELATIONS)}
       COMMENT "Valid mapping.relation values"
+      PERMISSIONS FULL;
+
+    DEFINE PARAM OVERWRITE $isomer_satisfaction_relations
+      VALUE ${surrealStringArray(SATISFACTION_RELATIONS)}
+      COMMENT "Relations used by fn::isomer::satisfiers (coverage view)"
+      PERMISSIONS FULL;
+
+    DEFINE PARAM OVERWRITE $isomer_corpus_relation_tables
+      VALUE ${surrealStringArray(CORPUS_RELATION_TABLES)}
+      COMMENT "Graph edge tables upserted/pruned by npm run db:sync"
       PERMISSIONS FULL;
   `);
 }

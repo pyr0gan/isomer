@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "npm run lint:corpus && npm run lint:js",
     "lint:corpus": "python3 tools/ensure_python_deps.py && python3 tools/validate.py",
-    "lint:js": "eslint src scripts eslint.config.js",
+    "lint:js": "node scripts/ensure-node-deps.js && node node_modules/eslint/bin/eslint.js src scripts eslint.config.js",
     "validate": "npm run lint:corpus",
     "db:ping": "node scripts/ping-db.js",
     "db:ping:op": "op run --env-file=.env -- node scripts/ping-db.js",
