@@ -1,0 +1,18 @@
+id: iso27001/2022/7.13
+framework: iso27001
+framework_version: "2022"
+ref: "7.13"
+title: Equipment maintenance
+type: control
+authority: certifiable
+objective: "7"
+text_summary: >
+  Maintain equipment correctly to preserve availability, integrity and
+  confidentiality of information.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [physical-environment, security-operations]
+evidence_expectations:
+  - "Maintenance schedules and records with security provisions for service access"
+tags: [facilities]

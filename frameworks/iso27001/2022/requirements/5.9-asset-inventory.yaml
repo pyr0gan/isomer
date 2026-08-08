@@ -1,0 +1,20 @@
+id: iso27001/2022/5.9
+framework: iso27001
+framework_version: "2022"
+ref: "5.9"
+title: Inventory of information and other associated assets
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Develop and maintain an inventory of information and associated assets,
+  including owners. For AI-era scope this includes models, datasets, and AI
+  services as assets.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [data-governance, security-operations]
+evidence_expectations:
+  - "Asset inventory with ownership, kept current"
+  - "AI-relevant assets (models, datasets, AI services) represented"
+tags: [inventory]

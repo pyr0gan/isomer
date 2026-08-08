@@ -1,0 +1,19 @@
+id: iso27001/2022/8.34
+framework: iso27001
+framework_version: "2022"
+ref: "8.34"
+title: Protection of information systems during audit testing
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Plan and agree audit tests and assurance activities involving operational
+  systems between tester and appropriate management to minimize operational
+  impact.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [security-operations, monitoring-improvement]
+evidence_expectations:
+  - "Audit/pentest engagement records showing scoping and authorization"
+tags: [audit]

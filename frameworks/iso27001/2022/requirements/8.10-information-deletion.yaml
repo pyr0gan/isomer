@@ -1,0 +1,18 @@
+id: iso27001/2022/8.10
+framework: iso27001
+framework_version: "2022"
+ref: "8.10"
+title: Information deletion
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Delete information stored in systems and media when no longer required —
+  including training data and derived datasets where retention lapses.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [data-governance]
+evidence_expectations:
+  - "Deletion procedures tied to retention schedule with execution records"
+tags: [retention]

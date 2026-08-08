@@ -1,0 +1,18 @@
+id: iso27001/2022/7.10
+framework: iso27001
+framework_version: "2022"
+ref: "7.10"
+title: Storage media
+type: control
+authority: certifiable
+objective: "7"
+text_summary: >
+  Manage storage media through its lifecycle: acquisition, use, transport and
+  disposal, per classification and handling requirements.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [physical-environment, data-governance]
+evidence_expectations:
+  - "Media handling procedure covering lifecycle including secure disposal"
+tags: [media]

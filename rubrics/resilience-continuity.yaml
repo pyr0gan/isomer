@@ -1,0 +1,52 @@
+domain: resilience-continuity
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No continuity planning: no backups verified, single points of
+      failure unknown, disruption response improvised.
+    observable_criteria:
+      - "No tested backups"
+      - "No continuity or recovery planning"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Recovery basics exist: backups running for key systems,
+      critical systems identified.
+    observable_criteria:
+      - "Backup coverage of key systems with schedule"
+      - "Critical system/process identification recorded"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Continuity is planned: recovery objectives set, backups
+      tested by restore, redundancy matched to availability needs,
+      security maintained in disruption plans, ICT continuity
+      tested.
+    observable_criteria:
+      - "Documented RTO/RPO per critical system"
+      - "Restore tests executed with results"
+      - "Redundancy consistent with availability requirements"
+      - "Continuity plans covering security during disruption, exercised at least once"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Resilience is demonstrated: exercises run on cadence with
+      findings fixed, real disruptions recovered within
+      objectives, dependencies (including suppliers) covered.
+    observable_criteria:
+      - "Exercise cadence met with tracked remediations"
+      - "Recovery within objectives demonstrated (incident or full test)"
+      - "Third-party/supply-chain dependencies in continuity scope"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Resilience is engineered: chaos/failure testing in practice,
+      degradation modes designed (including AI system fallbacks),
+      resilience metrics drive investment.
+    observable_criteria:
+      - "Failure-injection or chaos testing with findings addressed"
+      - "Designed fallback/degradation modes for critical (incl. AI-dependent) services"
+      - "Resilience metrics trended and driving investment decisions"

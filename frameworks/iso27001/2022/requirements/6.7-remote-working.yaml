@@ -1,0 +1,18 @@
+id: iso27001/2022/6.7
+framework: iso27001
+framework_version: "2022"
+ref: "6.7"
+title: Remote working
+type: control
+authority: certifiable
+objective: "6"
+text_summary: >
+  Implement security measures for remote work protecting information accessed,
+  processed or stored outside premises.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [security-operations, resources-competence]
+evidence_expectations:
+  - "Remote work policy with technical controls (device, network, access) evidenced"
+tags: [remote]

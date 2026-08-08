@@ -1,0 +1,18 @@
+id: iso27001/2022/8.1
+framework: iso27001
+framework_version: "2022"
+ref: "8.1"
+title: User endpoint devices
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Protect information stored on, processed by or accessible via user endpoint
+  devices.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [security-operations]
+evidence_expectations:
+  - "Endpoint protection baseline (encryption, patching, EDR) with coverage evidence"
+tags: [endpoints]

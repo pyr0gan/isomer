@@ -1,0 +1,18 @@
+id: iso27001/2022/5.20
+framework: iso27001
+framework_version: "2022"
+ref: "5.20"
+title: Addressing information security within supplier agreements
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Establish and agree relevant security requirements with each supplier
+  according to the relationship type.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [third-party]
+evidence_expectations:
+  - "Security clauses in supplier agreements appropriate to relationship risk"
+tags: [suppliers, contracts]

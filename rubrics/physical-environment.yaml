@@ -1,0 +1,49 @@
+domain: physical-environment
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No physical security consideration: facilities and equipment
+      unprotected, media unmanaged.
+    observable_criteria:
+      - "No defined secure areas or entry controls"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Premises are controlled: entry restricted to authorized
+      people, equipment sited sensibly.
+    observable_criteria:
+      - "Entry controls on premises with authorization records"
+      - "Basic equipment protection in place"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Physical security is designed: defined perimeters and secure
+      areas, monitoring, environmental protections, media lifecycle
+      including verified sanitization and disposal.
+    observable_criteria:
+      - "Defined secure areas with entry control and monitoring"
+      - "Environmental/utility protections with maintenance records"
+      - "Media handling through lifecycle with verified sanitization on disposal"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Physical security is verified: monitoring alerts handled to
+      closure, physical access reviewed like logical access,
+      protections tested.
+    observable_criteria:
+      - "Physical access reviews with remediation"
+      - "Alarm/monitoring events triaged with records"
+      - "Environmental protections tested (e.g. failover of utilities)"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Physical and logical converge: unified access governance,
+      physical telemetry in security monitoring, site risk feeds
+      location and resilience strategy.
+    observable_criteria:
+      - "Physical and logical access governed under one review process"
+      - "Physical security events integrated into security monitoring"
+      - "Site risk assessments feeding facility/resilience decisions"

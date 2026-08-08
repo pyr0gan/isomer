@@ -1,0 +1,18 @@
+id: iso27001/2022/5.35
+framework: iso27001
+framework_version: "2022"
+ref: "5.35"
+title: Independent review of information security
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Review the organization's approach to managing information security
+  independently at planned intervals and on significant change.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [monitoring-improvement]
+evidence_expectations:
+  - "Independent review reports (internal audit or external) with management response"
+tags: [audit]

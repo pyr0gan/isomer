@@ -1,0 +1,18 @@
+id: iso27001/2022/8.16
+framework: iso27001
+framework_version: "2022"
+ref: "8.16"
+title: Monitoring activities
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Monitor networks, systems and applications for anomalous behavior and take
+  appropriate action to evaluate potential incidents.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [security-operations]
+evidence_expectations:
+  - "Detection/monitoring coverage with alert triage records"
+tags: [monitoring]

@@ -1,0 +1,18 @@
+id: iso27001/2022/5.10
+framework: iso27001
+framework_version: "2022"
+ref: "5.10"
+title: Acceptable use of information and other associated assets
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Identify, document and implement rules for acceptable use and handling of
+  information and assets.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [responsible-use, leadership-policy]
+evidence_expectations:
+  - "Acceptable-use rules communicated with acknowledgement records"
+tags: [aup]

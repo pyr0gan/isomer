@@ -1,0 +1,18 @@
+id: iso27001/2022/6.4
+framework: iso27001
+framework_version: "2022"
+ref: "6.4"
+title: Disciplinary process
+type: control
+authority: certifiable
+objective: "6"
+text_summary: >
+  Formalize and communicate a disciplinary process for personnel who commit
+  security policy violations.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [resources-competence, leadership-policy]
+evidence_expectations:
+  - "Documented disciplinary process communicated to staff"
+tags: [hr]

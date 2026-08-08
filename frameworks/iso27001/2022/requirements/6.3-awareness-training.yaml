@@ -1,0 +1,19 @@
+id: iso27001/2022/6.3
+framework: iso27001
+framework_version: "2022"
+ref: "6.3"
+title: Information security awareness, education and training
+type: control
+authority: certifiable
+objective: "6"
+text_summary: >
+  Provide role-appropriate security awareness, education, training and policy
+  updates to personnel and relevant interested parties.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [resources-competence]
+evidence_expectations:
+  - "Awareness program with completion records"
+  - "Role-specific training for sensitive roles"
+tags: [training]

@@ -1,0 +1,19 @@
+id: iso27001/2022/8.8
+framework: iso27001
+framework_version: "2022"
+ref: "8.8"
+title: Management of technical vulnerabilities
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Obtain information about technical vulnerabilities, evaluate exposure, and
+  take appropriate measures — covering infrastructure, applications and
+  dependencies.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [security-operations]
+evidence_expectations:
+  - "Vulnerability scanning/intel feed with remediation SLAs and records"
+tags: [vulnerability]

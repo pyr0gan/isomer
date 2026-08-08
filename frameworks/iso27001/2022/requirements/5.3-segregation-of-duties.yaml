@@ -1,0 +1,18 @@
+id: iso27001/2022/5.3
+framework: iso27001
+framework_version: "2022"
+ref: "5.3"
+title: Segregation of duties
+type: control
+authority: certifiable
+objective: "5"
+text_summary: >
+  Segregate conflicting duties and areas of responsibility to reduce fraud,
+  error and control-bypass risk; compensate where segregation is impractical.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [leadership-policy, identity-access]
+evidence_expectations:
+  - "Conflicting-duty analysis with segregation or compensating controls recorded"
+tags: [sod]

@@ -1,0 +1,18 @@
+id: iso27001/2022/8.11
+framework: iso27001
+framework_version: "2022"
+ref: "8.11"
+title: Data masking
+type: control
+authority: certifiable
+objective: "8"
+text_summary: >
+  Use data masking per access control policy and business/legal requirements —
+  including de-identification for analytics and model development.
+applicability:
+  ai_roles: [all]
+  min_maturity: L3
+domains: [data-governance]
+evidence_expectations:
+  - "Masking/pseudonymization applied where policy requires, with technique documentation"
+tags: [privacy]
