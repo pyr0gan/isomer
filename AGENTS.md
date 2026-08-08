@@ -22,6 +22,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Maturity rubrics live in `rubrics/<domain>.yaml` (one per vocab domain, levels L0–L4). Synced to Surreal table `rubric`. Vocab has 13 domains: 9 AIMS-oriented plus 4 ISMS-oriented (`identity-access`, `security-operations`, `physical-environment`, `resilience-continuity`) for ISO/IEC 27001 Annex A.
 - Frameworks on disk: `annex-sl-core/1.0` (27 clauses), `iso42001/2023` (38 Annex A controls), `iso27001/2022` (93 Annex A controls). Both standards inherit annex-sl-core; theme/objective headers are not authored as requirements.
 - Cross-framework mappings sync as graph edges: `requirement:⟨from⟩ -> maps_to -> requirement:⟨to⟩` with `relation`, `strength`, `note`, `reviewed`, `reviewer` on the edge. Coverage view: `fn::isomer::satisfiers($corpus_id)` (also `maps_to` / `mapped_from`). Mapping-set YAML metadata stays on `mapping_set`; individual rows become `maps_to` edges.
+- First mapping set: `mappings/iso42001-2023--iso27001-2022.yaml` (ISO 42001 Annex A → ISO 27001 Annex A). Run `npm run report:delta -- mappings/iso42001-2023--iso27001-2022.yaml` for the ISMS→AIMS integration delta (`covered` / `partial` / `adjacent` / `net-new`). Validator normalizes YAML 1.1 dates so `reviewed` schema-checks as ISO strings.
 - Vault secret read: `src/vault/secrets.js` (token or AppRole; KV v1/v2).
 - Config via `.env` (see `.env.example`). Surreal password comes from Vault (`VAULT_SECRET_PATH` / `VAULT_SECRET_FIELD`), not from a `SURREAL_PASSWORD` env var.
 - `VAULT_SECRET_PATH` is the path after `/v1/` (e.g. `kv/data/surreal`). A leading `v1/` is stripped automatically if present.
@@ -38,7 +39,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 ### Gotchas
 
 - Run the validator and Node scripts from the **repo root**.
-- `mappings/` and `rulesets/` may be empty or absent; the validator skips them when no YAML files are present. If any `rubrics/` exist, the validator expects one file per vocab domain (filename = domain id).
+- `rulesets/` may be empty or absent; the validator skips them when no YAML files are present. `mappings/` now has at least one set. If any `rubrics/` exist, missing domain rubrics are warnings (filename = domain id).
 - Prefer `npm run lint:corpus` over calling `tools/validate.py` directly so Python deps are ensured. `pip install --user` may place console scripts under `~/.local/bin` (not always on `PATH`).
 - Prefer `npm run lint:js` over calling bare `eslint` so Node deps are ensured and the local binary is used.
 - Do not put the SurrealDB password in git or in plain `SURREAL_*` env vars for this phase — store it in Vault and point `VAULT_SECRET_*` at it.

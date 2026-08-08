@@ -1,0 +1,336 @@
+id: iso42001-2023--iso27001-2022
+from_framework: iso42001/2023
+to_framework: iso27001/2022
+status: draft
+mappings:
+  # ---- A.2 Policies ----
+  - from: iso42001/2023/A.2.2
+    to: iso27001/2022/5.1
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Policy governance machinery (approval, publication, acknowledgement,
+      review) is reusable; AI-specific content — principles, risk appetite for
+      AI, regulatory posture — must be authored. Gap: AI policy content.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.2.3
+    to: iso27001/2022/5.1
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      27001's topic-specific policy structure is the natural place to hang the
+      AI policy; the alignment analysis across security, privacy and ethics
+      policies is new work. Gap: cross-policy alignment map.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.2.4
+    to: iso27001/2022/5.1
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Review-at-planned-intervals machinery is identical; only the review
+      scope extends to the AI policy. Gap: AI policy added to review calendar.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- A.3 Internal organization ----
+  - from: iso42001/2023/A.3.2
+    to: iso27001/2022/5.2
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Role definition/allocation machinery reusable; AI lifecycle roles
+      (impact assessor, model owner, human oversight) are net-new
+      assignments. Gap: AI role matrix.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.3.2
+    to: iso27001/2022/5.3
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.3.3
+    to: iso27001/2022/6.8
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Event-reporting channel and triage flow reusable; scope extends from
+      security events to AI concerns (ethics, misuse, unexpected behavior)
+      and needs explicit anti-reprisal framing. Gap: channel scope + handling
+      criteria for AI concerns.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- A.4 Resources ----
+  - from: iso42001/2023/A.4.2
+    to: iso27001/2022/5.9
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Asset inventory process extends naturally; models, datasets, AI
+      services and their dependencies become inventory entries. Gap:
+      AI resource types represented with owners.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.4.3
+    to: iso27001/2022/5.9
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Inventory covers existence/ownership; data-resource specifics
+      (provenance, categories, quality traits, intended use) are additional
+      documentation. Gap: data resource records.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.4.3
+    to: iso27001/2022/5.34
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.4.4
+    to: iso27001/2022/5.9
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.4.5
+    to: iso27001/2022/5.9
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Compute/environments enter the asset inventory; hosting-location and
+      capacity documentation for AI workloads is the extra. Gap: per-system
+      compute documentation.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.4.6
+    to: iso27001/2022/6.3
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- A.6 Lifecycle ----
+  - from: iso42001/2023/A.6.1.2
+    to: iso27001/2022/8.25
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.1.3
+    to: iso27001/2022/8.25
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Secure SDLC stage-gate skeleton is the right chassis; responsible-AI
+      gates (impact assessment checkpoints, fairness/robustness criteria) are
+      added stations, not a new railway. Gap: AI gates in the SDLC.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.2
+    to: iso27001/2022/8.26
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Requirements-capture machinery reusable; responsible-AI requirement
+      classes (performance thresholds, fairness constraints, oversight needs)
+      extend the template. Gap: AI requirement classes.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.3
+    to: iso27001/2022/8.27
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Design documentation discipline reusable; model/algorithm selection
+      rationale, training approach and data choices are AI-specific content.
+      Gap: AI design record content.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.4
+    to: iso27001/2022/8.29
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Test-gating machinery reusable; AI V&V differs in substance —
+      evaluation datasets, statistical acceptance criteria, fairness and
+      robustness checks. Gap: AI evaluation methodology.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.5
+    to: iso27001/2022/8.32
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Change/release control covers deployment discipline; AI release
+      criteria and affected-user communication are additions. Gap: AI release
+      criteria in change process.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.5
+    to: iso27001/2022/8.31
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.6
+    to: iso27001/2022/8.16
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Monitoring infrastructure and alert triage reusable; model performance,
+      drift detection and re-validation triggers are AI-specific signals.
+      Gap: model monitoring signals + triggers.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.7
+    to: iso27001/2022/5.37
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.6.2.8
+    to: iso27001/2022/8.15
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Log production, protection and retention machinery reusable; AI event
+      content (decisions, overrides, model/version context) extends the
+      logging spec. Gap: AI event schema in logging standard.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- A.7 Data ----
+  - from: iso42001/2023/A.7.2
+    to: iso27001/2022/5.34
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Privacy requirement identification and PII handling reusable where AI
+      data is personal; quality management and lifecycle-stage data handling
+      for AI development are new. Gap: AI data management process.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.7.3
+    to: iso27001/2022/5.32
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      IP/licensing compliance machinery covers rights-to-use for acquired
+      data and models; source selection criteria and acquisition
+      documentation are additional. Gap: acquisition records.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.7.3
+    to: iso27001/2022/5.14
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.7.5
+    to: iso27001/2022/5.33
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.7.6
+    to: iso27001/2022/8.33
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- A.8 Information for interested parties ----
+  - from: iso42001/2023/A.8.4
+    to: iso27001/2022/5.24
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Incident comms planning within IR is the chassis; AI incident
+      thresholds and affected-user notification content are additions,
+      including regulatory notification alignment. Gap: AI incident comms
+      plan.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.8.4
+    to: iso27001/2022/5.26
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.8.5
+    to: iso27001/2022/5.31
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      The legal/contractual requirements register is where AI reporting
+      obligations get identified and tracked; the obligations themselves and
+      fulfilment artifacts are new. Gap: AI reporting obligations in
+      register.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- A.9 Use ----
+  - from: iso42001/2023/A.9.2
+    to: iso27001/2022/5.10
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Acceptable-use rule-making, communication and acknowledgement machinery
+      reusable; AI use approval, prohibited applications and oversight
+      requirements are content additions. Gap: AI acceptable-use content +
+      approval register.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.9.3
+    to: iso27001/2022/5.10
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.9.4
+    to: iso27001/2022/5.10
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  # ---- A.10 Third parties ----
+  - from: iso42001/2023/A.10.2
+    to: iso27001/2022/5.20
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      Supplier agreement machinery carries the responsibility allocation; AI
+      duty split (data, model performance, incidents, compliance roles) is
+      new clause content. Gap: AI responsibility clauses.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.10.3
+    to: iso27001/2022/5.19
+    relation: partially_satisfied_by
+    strength: strong
+    note: >
+      Supplier security risk process is the chassis; AI-specific due
+      diligence dimensions (model provenance, training data rights, drift
+      and update behavior) extend it. Gap: AI due diligence criteria.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.10.3
+    to: iso27001/2022/5.21
+    relation: partially_satisfied_by
+    strength: moderate
+    note: >
+      ICT supply-chain visibility extends to model and dataset dependencies;
+      sub-supplier flow-down for AI components is the added reach. Gap: AI
+      dependency visibility.
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.10.3
+    to: iso27001/2022/5.22
+    relation: related
+    strength: moderate
+    reviewed: 2026-08-08
+    reviewer: claude-draft
+  - from: iso42001/2023/A.10.4
+    to: iso27001/2022/5.20
+    relation: related
+    strength: weak
+    reviewed: 2026-08-08
+    reviewer: claude-draft
