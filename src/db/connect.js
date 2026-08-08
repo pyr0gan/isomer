@@ -40,8 +40,9 @@ export async function connectSurreal(overrides = {}) {
  * Run a small connectivity probe and return a summary object.
  */
 export async function pingSurreal(overrides = {}) {
-  const db = await connectSurreal(overrides);
+  let db;
   try {
+    db = await connectSurreal(overrides);
     const surreal = { ...getSurrealConfig(), ...overrides };
     // Lightweight round-trip; works on SurrealDB 2.x/3.x cloud instances.
     const result = await db.query("RETURN 'isomer-ok';");
@@ -52,7 +53,18 @@ export async function pingSurreal(overrides = {}) {
       database: surreal.database,
       result,
     };
+  } catch (err) {
+    if (err?.isInvalidAuth) {
+      const wrapped = new Error(
+        "SurrealDB authentication failed (InvalidAuth). " +
+          "Confirm the password stored in Vault matches a Root user in Surrealist " +
+          "(Authentication → Root Authentication), and that SURREAL_USERNAME matches that user.",
+      );
+      wrapped.cause = err;
+      throw wrapped;
+    }
+    throw err;
   } finally {
-    await db.close();
+    if (db) await db.close();
   }
 }
