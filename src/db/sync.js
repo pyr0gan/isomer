@@ -8,11 +8,13 @@ import {
   rulesetKey,
 } from "../corpus/load.js";
 import { connectSurreal } from "./connect.js";
+import { CONTENT_SOURCE_REPO } from "./params.js";
 import { ensureCorpusSchema } from "./schema.js";
 
 function syncMeta({ sourcePath, syncSha, syncedAt }) {
   return {
-    content_source: "repo",
+    // Value matches DEFINE PARAM $isomer_content_source
+    content_source: CONTENT_SOURCE_REPO,
     source_path: sourcePath,
     sync_sha: syncSha,
     synced_at: syncedAt,
@@ -25,8 +27,9 @@ async function upsertRecord(db, table, key, content) {
 }
 
 async function listCorpusManagedIds(db, table) {
+  // $isomer_content_source is a database DEFINE PARAM (not a bind var).
   const result = await db.query(
-    `SELECT id FROM type::table($table) WHERE content_source = "repo";`,
+    `SELECT id FROM type::table($table) WHERE content_source = $isomer_content_source;`,
     { table },
   );
   const rows = result?.[0] ?? [];
@@ -191,7 +194,7 @@ export async function syncCorpus(options = {}) {
       deleted_counts: Object.fromEntries(
         Object.entries(plan.deleted).map(([k, v]) => [k, v.length]),
       ),
-      content_source: "repo",
+      content_source: CONTENT_SOURCE_REPO,
     });
 
     return { ok: true, ...plan, written: true, sync_run: runId };
