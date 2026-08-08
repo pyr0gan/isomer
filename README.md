@@ -48,4 +48,5 @@ python3 tools/validate.py
 
 Checks schema conformance, ID uniqueness, ID/path coherence, domain
 vocabulary resolution, mapping endpoint resolution, mandatory gap notes,
-and effective dates on legal obligations.
+effective dates on legal obligations, and maturity-rubric coverage
+(one `rubrics/<domain>.yaml` per vocab domain, levels L0–L4 in order).
