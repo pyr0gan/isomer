@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { RecordId } from "surrealdb";
 import { connectSurreal } from "../src/db/connect.js";
+import { CONTENT_SOURCE_REPO } from "../src/db/params.js";
 
 function parseYaml(text) {
   return JSON.parse(
@@ -39,7 +40,7 @@ try {
     const content = {
       ...fields,
       corpus_id: key,
-      content_source: "repo",
+      content_source: CONTENT_SOURCE_REPO,
       source_path: path,
       ingested_at: new Date().toISOString(),
     };

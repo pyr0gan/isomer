@@ -1,6 +1,8 @@
+import { ensureCorpusParams } from "./params.js";
+
 /**
- * Ensure Surreal tables used by the corpus sync exist.
- * SCHEMALESS for the initial implementation phase; tighten later.
+ * Ensure Surreal tables, indexes, and database params used by the corpus sync exist.
+ * SCHEMALESS tables for the initial implementation phase; tighten later.
  */
 export async function ensureCorpusSchema(db) {
   await db.query(`
@@ -16,4 +18,6 @@ export async function ensureCorpusSchema(db) {
     DEFINE INDEX IF NOT EXISTS mapping_set_corpus_id ON mapping_set FIELDS corpus_id UNIQUE;
     DEFINE INDEX IF NOT EXISTS ruleset_corpus_id ON ruleset FIELDS corpus_id UNIQUE;
   `);
+
+  await ensureCorpusParams(db);
 }
