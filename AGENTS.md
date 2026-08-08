@@ -6,9 +6,9 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 
 ### Core workflow
 
-- Corpus validation: see root `README.md` (Validation section) — `python3 tools/validate.py`.
+- Lint before sync: `npm run lint` (corpus YAML/schema via `tools/validate.py` + ESLint on `src/`/`scripts/`). See root `README.md`.
 - Python deps: `pyyaml` and `jsonschema` (`pip install pyyaml jsonschema`).
-- Node deps: `npm install` (SurrealDB client + dotenv). Package scripts live in `package.json`.
+- Node deps: `npm install` (SurrealDB client + dotenv + ESLint). Package scripts live in `package.json`.
 - SurrealDB smoke test: `npm run db:ping` (password is read from HashiCorp Vault; never commit `.env`).
 - Full corpus→DB sync: `npm run db:sync` (or `npm run db:sync:dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`; prunes stale `content_source="repo"` rows; writes a `sync_run` record.
 - Sample single-requirement write: `npm run db:ingest-sample`.
@@ -29,7 +29,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 
 ### CI
 
-- `.github/workflows/ci.yml` — validate corpus on PR/push; dry-run sync load on PRs.
+- `.github/workflows/ci.yml` — `npm run lint` on PR/push (corpus + JS). No Surreal dry-run in CI; live sync is separate.
 - `.github/workflows/sync-corpus.yml` — on push to `main` (and `workflow_dispatch`), validate then `npm run db:sync`.
 - Required GitHub Actions secrets for live sync: `SURREAL_URL`, `SURREAL_NAMESPACE`, `SURREAL_DATABASE`, `SURREAL_USERNAME`, `VAULT_ADDR`, `VAULT_TOKEN`, `VAULT_SECRET_PATH`, `VAULT_SECRET_FIELD`.
 
