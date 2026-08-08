@@ -35,8 +35,11 @@ try {
   try {
     const key = doc.id;
     const rid = new RecordId("requirement", key);
+    const { id: _id, ...fields } = doc;
     const content = {
-      ...doc,
+      ...fields,
+      corpus_id: key,
+      content_source: "repo",
       source_path: path,
       ingested_at: new Date().toISOString(),
     };
