@@ -39,14 +39,22 @@ tools/validate.py                                    CI validator
   requirement's `specializations` and the manifest's `extension_points`
   (notably 42001's 6.1.4 and 8.4 impact assessment clauses).
 
-## Validation
+## Lint / validation
+
+Keep source files clean before sync:
 
 ```
 pip install pyyaml jsonschema
-python3 tools/validate.py
+npm install
+npm run lint              # corpus validator + ESLint
+npm run lint:corpus       # YAML / JSON Schema checks (tools/validate.py)
+npm run lint:js           # JavaScript (src/, scripts/)
 ```
 
-Checks schema conformance, ID uniqueness, ID/path coherence, domain
-vocabulary resolution, mapping endpoint resolution, mandatory gap notes,
-effective dates on legal obligations, and maturity-rubric coverage
+`lint:corpus` checks schema conformance, ID uniqueness, ID/path coherence,
+domain vocabulary resolution, mapping endpoint resolution, mandatory gap
+notes, effective dates on legal obligations, and maturity-rubric coverage
 (one `rubrics/<domain>.yaml` per vocab domain, levels L0–L4 in order).
+
+CI runs `npm run lint` on every PR and push to `main`. Live Surreal sync
+runs separately on `main` (see `.github/workflows/sync-corpus.yml`).
