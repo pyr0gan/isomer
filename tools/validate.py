@@ -16,6 +16,7 @@ Checks, in order:
 Exit code 0 = clean, 1 = failures (prints a report either way).
 """
 
+import datetime
 import glob
 import json
 import os
@@ -31,9 +32,20 @@ errors: list[str] = []
 warnings: list[str] = []
 
 
+def _normalize(obj):
+    """YAML 1.1 parses unquoted dates into date objects; schemas expect ISO strings."""
+    if isinstance(obj, (datetime.date, datetime.datetime)):
+        return obj.isoformat()
+    if isinstance(obj, dict):
+        return {k: _normalize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_normalize(v) for v in obj]
+    return obj
+
+
 def load_yaml(path):
     with open(path) as f:
-        return yaml.safe_load(f)
+        return _normalize(yaml.safe_load(f))
 
 
 def load_schema(name):

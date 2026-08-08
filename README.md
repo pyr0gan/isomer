@@ -15,10 +15,18 @@ rubrics/<domain>.yaml                                per-domain maturity rubrics
 vocab/domains.yaml                                   maturity domains (9 AIMS + 4 ISMS)
 schemas/*.schema.json                                JSON Schema 2020-12 definitions
 tools/validate.py                                    CI validator
+tools/delta_report.py                                ISMS→AIMS coverage delta
 ```
 
 Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
 `iso42001/2023` (Annex A, 38 controls), `iso27001/2022` (Annex A, 93 controls).
+
+Cross-framework mapping: `mappings/iso42001-2023--iso27001-2022.yaml`
+(38 edges). Integration delta (what an ISMS org still builds for AIMS):
+
+```
+npm run report:delta -- mappings/iso42001-2023--iso27001-2022.yaml
+```
 
 ## Conventions
 
