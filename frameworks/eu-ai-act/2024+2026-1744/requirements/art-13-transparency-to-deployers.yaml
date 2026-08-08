@@ -1,0 +1,20 @@
+id: eu-ai-act/2024+2026-1744/art-13
+framework: eu-ai-act
+framework_version: "2024+2026-1744"
+ref: "art-13"
+title: Transparency and information to deployers (high-risk)
+type: obligation
+authority: legal
+text_summary: >
+  High-risk systems are designed for sufficiently transparent operation and
+  ship with instructions for use: provider identity, characteristics,
+  capabilities and limitations, performance, human oversight measures, and
+  expected lifetime/maintenance.
+applicability:
+  ai_roles: [provider]
+  min_maturity: L2
+domains: [transparency-communication]
+evidence_expectations:
+  - "Instructions-for-use pack meeting the required content elements"
+applicable_from: "2027-12-02"
+tags: [hrais, transparency]

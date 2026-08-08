@@ -1,0 +1,20 @@
+id: eu-ai-act
+version: "2024+2026-1744"
+name: EU AI Act — Regulation (EU) 2024/1689 as amended by Regulation (EU) 2026/1744
+type: regulation
+authority: legal
+status: draft
+description: >
+  Consolidated obligation set of the EU AI Act reflecting the Digital Omnibus
+  on AI (Regulation (EU) 2026/1744, in force 2026-07-27): Annex III high-risk
+  obligations apply from 2027-12-02, Annex I from 2028-08-02, Article 50
+  transparency from 2026-08-02, Articles 4 and 5 since 2025-02-02. Scope of
+  this release: prohibitions, literacy, transparency, and the high-risk
+  provider and deployer core. GPAI provider obligations (arts 53-55) are a
+  follow-up release. Summaries are paraphrases for governance tooling, not
+  legal advice.
+notes: >
+  Effective-date precedence: a ruleset outcome's applicable_from (per
+  classification pathway) overrides the requirement-level applicable_from,
+  which records the earliest binding pathway (Annex III). Annex I systems
+  inherit the same articles at 2028-08-02 via the ruleset.

@@ -1,0 +1,22 @@
+id: eu-ai-act/2024+2026-1744/art-4
+framework: eu-ai-act
+framework_version: "2024+2026-1744"
+ref: "art-4"
+title: AI literacy
+type: obligation
+authority: legal
+text_summary: >
+  Providers and deployers take measures to ensure a sufficient level of AI
+  literacy among staff and others operating or using AI systems on their
+  behalf, accounting for their roles, context and the persons affected. (Duty
+  softened in form by the 2026/1744 amendment; the substantive expectation of
+  role-appropriate literacy remains.)
+applicability:
+  ai_roles: [provider, deployer]
+  min_maturity: L1
+domains: [resources-competence]
+evidence_expectations:
+  - "Role-appropriate AI literacy measures with participation records"
+  - "Coverage includes staff operating or affected by AI systems"
+applicable_from: "2025-02-02"
+tags: [literacy]

@@ -19,7 +19,8 @@ tools/delta_report.py                                ISMS→AIMS coverage delta
 ```
 
 Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
-`iso42001/2023` (Annex A, 38 controls), `iso27001/2022` (Annex A, 93 controls).
+`iso42001/2023` (Annex A, 38 controls), `iso27001/2022` (Annex A, 93 controls),
+`eu-ai-act/2024+2026-1744` (18 obligations; consolidated post-Omnibus).
 
 Cross-framework mapping: `mappings/iso42001-2023--iso27001-2022.yaml`
 (38 edges). Integration delta (what an ISMS org still builds for AIMS):
@@ -28,19 +29,43 @@ Cross-framework mapping: `mappings/iso42001-2023--iso27001-2022.yaml`
 npm run report:delta -- mappings/iso42001-2023--iso27001-2022.yaml
 ```
 
+Classification ruleset: `rulesets/eu-ai-act-classification.yaml`.
+Evaluate with first-match semantics (outcome order is semantic):
+
+```
+npm run ruleset:evaluate -- \
+  --ruleset rulesets/eu-ai-act-classification.yaml \
+  --answers '{"role":"provider","annex-iii-area":"employment"}'
+```
+
 ## Conventions
 
 - **No verbatim standard text.** `text_summary` is always an original
-  paraphrase. Customers hold their own licensed copies of ISO standards.
+  paraphrase. Customers hold their own licensed copies of ISO standards
+  (and should treat legal-obligation paraphrases as tooling aids pending
+  Official Journal review, not legal advice).
 - **IDs** are `<framework>/<version>/<ref>` and must match the file's
   directory. Refs use the source document's own numbering (`6.1.3`,
-  `A.6.2.4`, `art-26`).
+  `A.6.2.4`, `art-26`). Framework versions may encode amendments
+  (`2024+2026-1744`); a later amendment is a new version directory, not
+  an in-place edit.
 - **`evidence_expectations` is mandatory** on every requirement — it is
   what the product tracks artifacts against.
 - **Obligations** (`type: obligation`, `authority: legal`) must carry
   `applicable_from`; effective dates are data, never code. (Regulation
   (EU) 2026/1744 moving the AI Act high-risk dates is the canonical
   example of why.)
+- **Effective-date precedence (rulesets):** when a classification ruleset
+  outcome carries `applicable_from`, that date **overrides** the
+  requirement-level `applicable_from` for activated obligations. The
+  requirement date records the earliest binding pathway (e.g. Annex III
+  high-risk articles at `2027-12-02`); pathway-specific later dates
+  (e.g. Annex I at `2028-08-02`) live on the matching outcome. Same
+  article, two dates, resolved by classification.
+- **Ruleset evaluation is first-match.** `outcomes[]` order is semantic,
+  not cosmetic: prohibited screens first, then high-risk before
+  transparency, transparency before the minimal-risk default. Implementers
+  must walk outcomes in file order and stop at the first match.
 - **Mappings** are directed and typed; `partially_satisfied_by` and
   `conflicts` require a gap note. Mappings reference framework
   *versions*, and go `status: stale` when either side revs.
