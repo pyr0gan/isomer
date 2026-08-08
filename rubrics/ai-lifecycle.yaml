@@ -1,0 +1,52 @@
+domain: ai-lifecycle
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No AI system inventory; systems are built or adopted without
+      defined process; shadow AI is unmanaged.
+    observable_criteria:
+      - "No AI system register exists"
+      - "No defined development or adoption process for AI systems"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      The organization knows what AI it has: an inventory exists
+      with owners, and new systems enter through a basic intake.
+    observable_criteria:
+      - "AI system register listing systems, purpose and named owner"
+      - "Intake step through which new AI systems/uses are registered"
+      - "Shadow-AI discovery performed at least once"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      The lifecycle is defined and enforced: requirements, design
+      documentation, V&V with acceptance criteria, controlled
+      deployment, production monitoring and logging.
+    observable_criteria:
+      - "Documented AI lifecycle with stage gates applied to in-scope systems"
+      - "Requirement specs and design records exist for systems built or materially changed"
+      - "V&V results with acceptance criteria gate releases"
+      - "Production monitoring and event logging active with defined retention"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Lifecycle performance is measured: gate compliance and
+      monitoring metrics are tracked, incidents feed back into
+      the process, re-validation triggers fire in practice.
+    observable_criteria:
+      - "Lifecycle KPIs (gate pass rates, drift alerts, incident counts) tracked and reviewed"
+      - "Documented case of monitoring or incident output triggering re-validation, retraining or retirement"
+      - "Log-based reconstruction of a decision or incident demonstrated"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      The lifecycle improves itself: control evidence is captured
+      automatically, lifecycle data drives process changes,
+      governance requirements are embedded in tooling.
+    observable_criteria:
+      - "Automated evidence capture from pipelines/registries into the governance system"
+      - "Process changes traceable to lifecycle metric analysis"
+      - "Governance checks enforced in CI/CD or MLOps tooling rather than manual review"

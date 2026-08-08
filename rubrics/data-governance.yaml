@@ -1,0 +1,52 @@
+domain: data-governance
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      Data used by AI systems is unmapped: unknown origin, rights
+      and quality; no preparation standards.
+    observable_criteria:
+      - "No documentation of data sources used by AI systems"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Data sources are identified: per-system records of what data
+      is used, its origin and ownership, with sensitive data
+      flagged.
+    observable_criteria:
+      - "Per-system data source records covering origin and ownership"
+      - "Personal/sensitive data identified and flagged to privacy handling"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Data governance is operational: documented acquisition rights,
+      quality criteria with verification, provenance/lineage
+      records, and controlled preparation and labeling.
+    observable_criteria:
+      - "Acquisition records demonstrating rights/legal basis for AI data use"
+      - "Quality criteria per system with verification results and issue dispositions"
+      - "Lineage records from source through transformation to training data"
+      - "Documented preparation/labeling procedures with quality control"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Data governance is measured: quality metrics trended, lineage
+      queried in practice (incidents, audits), representativeness
+      reviewed against deployment population.
+    observable_criteria:
+      - "Data quality metrics tracked and reviewed on cadence"
+      - "Lineage demonstrably used to answer an audit or incident question"
+      - "Representativeness/bias review of training data recorded for in-scope systems"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Data governance is automated and preventive: lineage and
+      quality checks embedded in pipelines, drift in data quality
+      alerts before model impact, findings improve upstream
+      sourcing.
+    observable_criteria:
+      - "Automated lineage and quality validation in data pipelines"
+      - "Data quality alerting with recorded preventive interventions"
+      - "Sourcing or contract changes traceable to data governance findings"

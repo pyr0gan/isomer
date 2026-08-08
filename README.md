@@ -11,6 +11,7 @@ frameworks/<framework>/<version>/framework.yaml      manifest
 frameworks/<framework>/<version>/requirements/*.yaml one file per requirement
 mappings/<from>--<to>.yaml                           typed cross-framework mappings
 rulesets/*.yaml                                      regulatory classification rulesets
+rubrics/<domain>.yaml                                per-domain maturity rubrics (L0–L4)
 vocab/domains.yaml                                   the nine maturity domains
 schemas/*.schema.json                                JSON Schema 2020-12 definitions
 tools/validate.py                                    CI validator
@@ -47,4 +48,5 @@ python3 tools/validate.py
 
 Checks schema conformance, ID uniqueness, ID/path coherence, domain
 vocabulary resolution, mapping endpoint resolution, mandatory gap notes,
-and effective dates on legal obligations.
+effective dates on legal obligations, and maturity-rubric coverage
+(one `rubrics/<domain>.yaml` per vocab domain, levels L0–L4 in order).

@@ -1,0 +1,52 @@
+domain: leadership-policy
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No AI or security policy exists; no executive owns the topic;
+      AI adoption happens without governance awareness.
+    observable_criteria:
+      - "No approved AI or information security policy on record"
+      - "No named accountable executive for AI or security"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Executive sponsorship exists and first policies are approved
+      and communicated; governance exists on paper.
+    observable_criteria:
+      - "Approved, dated AI policy and information security policy signed by top management"
+      - "Named accountable executive and governance lead with documented mandate"
+      - "Policy communicated to staff with completion/attestation records"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Policy is a working system: aligned with other organizational
+      policies, reviewed on cadence, backed by objectives and
+      scoped management system with leadership engagement.
+    observable_criteria:
+      - "Cross-reference map aligning AI policy with security, privacy and related policies"
+      - "Approved management system scope and measurable objectives with owners"
+      - "Policy review cycle executed at least once with recorded changes"
+      - "Management review meetings held with required inputs and recorded decisions"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Leadership steers by measurement: certified or audit-proven
+      system, KPIs at executive level, governance embedded in
+      business decision-making.
+    observable_criteria:
+      - "Certification achieved or clean external/internal audit cycle completed"
+      - "Governance KPIs reported to executive level on a defined cadence"
+      - "Evidence of business decisions (funding, product, procurement) shaped by governance input"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Governance is a strategic capability: policy anticipates
+      regulatory change, leadership sponsors improvement
+      investment, governance posture is externally visible.
+    observable_criteria:
+      - "Documented regulatory horizon-scanning feeding policy updates before obligations bind"
+      - "Improvement investments traceable to governance strategy"
+      - "Public governance commitments (reports, certifications) maintained over multiple cycles"

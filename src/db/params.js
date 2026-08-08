@@ -59,6 +59,7 @@ export const CORPUS_TABLES = [
   "requirement",
   "mapping_set",
   "ruleset",
+  "rubric",
 ];
 
 function surrealStringArray(values) {

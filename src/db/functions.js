@@ -132,10 +132,40 @@ export async function ensureCorpusFunctions(db) {
         frameworks: (SELECT count() FROM framework WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         requirements: (SELECT count() FROM requirement WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         mapping_sets: (SELECT count() FROM mapping_set WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
-        rulesets: (SELECT count() FROM ruleset WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0
+        rulesets: (SELECT count() FROM ruleset WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
+        rubrics: (SELECT count() FROM rubric WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0
       };
     }
     COMMENT "Counts of content_source=$isomer_content_source records"
+    PERMISSIONS FULL;
+
+    -- Fetch a domain maturity rubric by domain id.
+    DEFINE FUNCTION OVERWRITE fn::isomer::rubric($domain: string) -> option<object>
+    {
+      RETURN (
+        SELECT * FROM ONLY rubric
+        WHERE domain = $domain
+          AND content_source = $isomer_content_source
+        LIMIT 1
+      );
+    }
+    COMMENT "Repo-synced maturity rubric for a domain"
+    PERMISSIONS FULL;
+
+    -- One level block from a domain rubric (L0..L4).
+    DEFINE FUNCTION OVERWRITE fn::isomer::rubric_level(
+      $domain: string,
+      $level: string
+    ) -> option<object>
+    {
+      LET $rub = fn::isomer::rubric($domain);
+      RETURN IF $rub = NONE {
+        NONE
+      } ELSE {
+        array::find($rub.levels, |$l| $l.level = $level)
+      };
+    }
+    COMMENT "Single maturity level entry from a domain rubric"
     PERMISSIONS FULL;
   `);
 }

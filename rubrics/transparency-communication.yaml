@@ -1,0 +1,52 @@
+domain: transparency-communication
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      Users and stakeholders are not informed: no disclosure of AI
+      interaction, no channel for concerns, no incident
+      communication plan.
+    observable_criteria:
+      - "No user-facing information about AI system purpose or limitations"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Basic disclosure exists: users are told where they interact
+      with AI and can find what the system is for.
+    observable_criteria:
+      - "AI interaction disclosure present where context requires it"
+      - "Per-system statement of purpose available to users"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Communication is systematic: user documentation covering
+      capabilities and limitations, external reporting channel,
+      incident communication plan aligned with legal duties.
+    observable_criteria:
+      - "User documentation per system covering capabilities, limitations and proper use"
+      - "Externally accessible channel for AI concerns with handling process"
+      - "Incident communication plan with thresholds mapped to notification obligations"
+      - "Register of reporting obligations to regulators/customers with fulfilment evidence"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Communication works under load: reports received are handled
+      to closure on SLA, incident communications executed as
+      planned, stakeholder feedback reaches governance review.
+    observable_criteria:
+      - "External reports triaged and closed within defined timeframes"
+      - "Executed incident communication consistent with the plan (real or exercised)"
+      - "Stakeholder feedback appearing as management review input"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Transparency is proactive: published system information
+      (model/system cards or equivalent), communication
+      effectiveness measured, disclosure practices ahead of
+      binding requirements.
+    observable_criteria:
+      - "Published system-level transparency artifacts maintained across releases"
+      - "Communication effectiveness metrics (reach, comprehension, response) reviewed"
+      - "Disclosure practices exceeding current binding obligations, documented deliberately"

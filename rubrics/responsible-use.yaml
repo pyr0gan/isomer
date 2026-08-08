@@ -1,0 +1,53 @@
+domain: responsible-use
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No rules for AI use: staff adopt tools ad hoc; no approval,
+      oversight or prohibited-use definition.
+    observable_criteria:
+      - "No acceptable-use rules covering AI"
+      - "No approval step for new AI uses"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Acceptable use is defined: rules communicated, approval
+      process for new uses, prohibited applications named.
+    observable_criteria:
+      - "Approved AI acceptable-use rules communicated to staff"
+      - "Approval process with a register of approved uses"
+      - "Explicitly prohibited applications documented"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Responsible use is governed: documented objectives applied in
+      approvals, use monitored against intended purpose, concern
+      reporting available and safe, human oversight defined where
+      needed.
+    observable_criteria:
+      - "Responsible-use objectives referenced in use approval records"
+      - "Use monitoring against documented intended purpose with exception handling"
+      - "Internal concern-reporting channel with anti-retaliation provisions and triage records"
+      - "Human oversight requirements defined per system where impact warrants it"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Responsible use is verified: oversight effectiveness checked,
+      deviations detected and handled in practice, concerns raised
+      and resolved with recorded outcomes.
+    observable_criteria:
+      - "Oversight effectiveness reviews (can overseers actually intervene) recorded"
+      - "Detected use deviations with documented resolution"
+      - "Concern reports handled to closure with outcomes fed to governance"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Responsible use shapes design: ethics findings feed product
+      and procurement decisions, oversight is designed-in,
+      organization contributes to external practice.
+    observable_criteria:
+      - "Design or purchase decisions changed by responsible-use findings, documented"
+      - "Oversight affordances built into systems rather than bolted on"
+      - "External contribution to responsible-AI practice (standards, publications, communities)"

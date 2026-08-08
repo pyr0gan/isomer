@@ -1,0 +1,52 @@
+domain: monitoring-improvement
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      Nothing is measured: no metrics, no audits, no corrective
+      action tracking; documents unmanaged.
+    observable_criteria:
+      - "No governance metrics defined"
+      - "No internal audit activity"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Basic tracking exists: key documents controlled and versioned,
+      issues logged when found, first metrics identified.
+    observable_criteria:
+      - "Document control with versions and approvals on core artifacts"
+      - "Issue/action log in use"
+      - "Initial metrics identified with owners"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      The evaluation loop is built: metrics defined with methods and
+      cadence, internal audit program covering the scope, management
+      review operating, CAPA with root-cause analysis.
+    observable_criteria:
+      - "Metrics/KPIs with methods, frequency and ownership producing results"
+      - "Internal audit program executed with independent auditors and reported findings"
+      - "Management review cycle operating with tracked follow-ups"
+      - "CAPA register with root-cause analysis and effectiveness review"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      The loop demonstrably corrects: findings close on time, metric
+      trends drive decisions, audit cycle sustained across periods,
+      certification maintained where pursued.
+    observable_criteria:
+      - "Corrective actions closed within defined timeframes over a full cycle"
+      - "Decisions traceable to metric trends in review minutes"
+      - "Multi-period audit history with recurring-finding analysis"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Improvement is systemic: leading indicators in use, control
+      evidence collection automated, improvement portfolio managed
+      with measured returns.
+    observable_criteria:
+      - "Leading (not only lagging) indicators defined and reviewed"
+      - "Automated evidence collection for a material share of controls"
+      - "Improvement initiatives tracked with before/after measurement"

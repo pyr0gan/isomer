@@ -1,0 +1,53 @@
+domain: resources-competence
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No dedicated resources or defined competences: governance is
+      nobody's job; system dependencies undocumented.
+    observable_criteria:
+      - "No budget, headcount or tooling attributable to AI/security governance"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Resourcing is explicit: governance roles staffed or assigned,
+      per-system resource documentation started, competency needs
+      identified.
+    observable_criteria:
+      - "Governance responsibilities assigned with time/budget allocation"
+      - "Per-system resource documentation (data, tooling, compute, people) begun"
+      - "Competency needs identified for AI lifecycle roles"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Competence is managed: requirements defined per role, training
+      delivered with effectiveness checks, awareness program
+      running, resource documentation complete for in-scope
+      systems.
+    observable_criteria:
+      - "Competency requirements defined for key roles with gap plans"
+      - "Training records including effectiveness evaluation"
+      - "Awareness program executed with completion records"
+      - "Resource documentation complete across in-scope systems"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Capability is measured: competence coverage tracked against
+      need, awareness tested not just delivered, resourcing
+      reviewed against governance workload.
+    observable_criteria:
+      - "Competence coverage metrics reviewed on cadence"
+      - "Awareness effectiveness tested (assessments, simulations) with results acted on"
+      - "Resourcing adjustments traceable to governance workload review"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Capability compounds: career paths for governance skills,
+      internal practice-sharing, capacity planned ahead of adoption
+      growth.
+    observable_criteria:
+      - "Defined development paths for AI governance competences"
+      - "Internal knowledge-sharing structures operating (guilds, playbooks, training others)"
+      - "Capacity planning anticipating AI adoption growth, documented"
