@@ -1,0 +1,22 @@
+id: iso42001/2023/A.3.3
+framework: iso42001
+framework_version: "2023"
+ref: "A.3.3"
+title: Reporting of concerns
+type: control
+authority: certifiable
+objective: "A.3"
+text_summary: >
+  Provide a defined process for anyone working under the organization's
+  control to report concerns about the organization's role in or use of
+  AI systems, with protection from reprisal and defined handling and
+  escalation of reports.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [leadership-policy, responsible-use]
+evidence_expectations:
+  - "Documented reporting channel covering AI-specific concerns"
+  - "Handling procedure with escalation paths and anti-retaliation provisions"
+  - "Records showing reports are triaged and resolved"
+tags: [whistleblowing, ethics]

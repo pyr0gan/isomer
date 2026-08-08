@@ -1,0 +1,20 @@
+id: iso42001/2023/A.6.2.3
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.2.3"
+title: Documentation of AI system design and development
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Document design and development choices for each AI system: architecture,
+  model and algorithm selection rationale, training approach, data
+  choices, and evaluation design — sufficient for reviewers to understand
+  why the system is built the way it is.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [ai-lifecycle]
+evidence_expectations:
+  - "Design records per system covering architecture, model choice rationale and training approach"
+tags: [lifecycle, documentation]

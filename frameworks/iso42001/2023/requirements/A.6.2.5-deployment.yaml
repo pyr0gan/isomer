@@ -1,0 +1,20 @@
+id: iso42001/2023/A.6.2.5
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.2.5"
+title: AI system deployment
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Document a deployment plan and require that release criteria are met
+  before an AI system goes live: approvals, rollback provisions,
+  environment requirements, and communication to affected users.
+applicability:
+  ai_roles: [provider, deployer]
+  min_maturity: L2
+domains: [ai-lifecycle]
+evidence_expectations:
+  - "Deployment plans with release criteria and approval records"
+  - "Rollback/contingency provisions documented and tested"
+tags: [lifecycle, deployment]

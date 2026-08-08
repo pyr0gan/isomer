@@ -1,0 +1,19 @@
+id: iso42001/2023/A.4.4
+framework: iso42001
+framework_version: "2023"
+ref: "A.4.4"
+title: Tooling resources
+type: control
+authority: certifiable
+objective: "A.4"
+text_summary: >
+  Document the tooling used across the AI system lifecycle — frameworks,
+  libraries, model registries, evaluation and monitoring tools — including
+  versioning and the lifecycle stages where each is used.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [resources-competence, ai-lifecycle]
+evidence_expectations:
+  - "Tooling inventory with versions mapped to lifecycle stages"
+tags: [tooling]

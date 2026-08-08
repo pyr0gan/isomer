@@ -1,0 +1,21 @@
+id: iso42001/2023/A.6.1.3
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.1.3"
+title: Processes for responsible design and development
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Define and document the design and development processes for AI
+  systems: stage gates, review and approval points, testing expectations,
+  and how responsible-AI objectives and risk/impact assessment outputs
+  are enforced through the lifecycle.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [ai-lifecycle]
+evidence_expectations:
+  - "Documented AI development lifecycle with gates and approvals"
+  - "Evidence of gate reviews executed for in-scope systems"
+tags: [lifecycle, sdlc]

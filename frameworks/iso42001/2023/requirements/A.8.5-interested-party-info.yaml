@@ -1,0 +1,19 @@
+id: iso42001/2023/A.8.5
+framework: iso42001
+framework_version: "2023"
+ref: "A.8.5"
+title: Information for interested parties
+type: control
+authority: certifiable
+objective: "A.8"
+text_summary: >
+  Determine the organization's obligations to report information about
+  its AI systems to interested parties — regulators, customers, the
+  public — and meet them, documenting what is provided to whom.
+applicability:
+  ai_roles: [all]
+  min_maturity: L2
+domains: [transparency-communication]
+evidence_expectations:
+  - "Register of reporting obligations mapped to fulfilment evidence"
+tags: [transparency, obligations]

@@ -1,0 +1,21 @@
+id: iso42001
+version: "2023"
+name: ISO/IEC 42001:2023 — AI management system (Annex A reference controls)
+type: standard
+authority: certifiable
+status: draft
+description: >
+  Reference control set of ISO/IEC 42001:2023 Annex A - 38 controls under 9
+  control objectives (A.2-A.10), entered via the risk treatment process
+  (annex-sl-core 6.1.3) and recorded in the Statement of Applicability.
+  Management-system clauses 4-10 are inherited from annex-sl-core; the
+  42001-specific impact assessment clauses (6.1.4, 8.4) are realized here
+  through objective A.5. All summaries are original paraphrases; organizations
+  must hold a licensed copy of the standard.
+inherits:
+  - framework: annex-sl-core
+    version: "1.0"
+notes: >
+  Objective refs (A.2-A.10) are groupings, not requirements; only the 38
+  controls are authored as requirements. Annex B implementation guidance
+  informs evidence_expectations but is not reproduced.

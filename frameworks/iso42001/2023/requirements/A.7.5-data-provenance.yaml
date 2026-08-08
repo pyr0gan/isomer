@@ -1,0 +1,19 @@
+id: iso42001/2023/A.7.5
+framework: iso42001
+framework_version: "2023"
+ref: "A.7.5"
+title: Data provenance
+type: control
+authority: certifiable
+objective: "A.7"
+text_summary: >
+  Record and maintain provenance for data used in AI systems: origin,
+  chain of custody, and transformations applied, so lineage can be
+  demonstrated from source to trained system.
+applicability:
+  ai_roles: [provider, developer]
+  min_maturity: L2
+domains: [data-governance]
+evidence_expectations:
+  - "Provenance/lineage records from source through transformations to training sets"
+tags: [data, lineage]

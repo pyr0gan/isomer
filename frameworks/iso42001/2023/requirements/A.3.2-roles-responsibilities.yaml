@@ -1,0 +1,21 @@
+id: iso42001/2023/A.3.2
+framework: iso42001
+framework_version: "2023"
+ref: "A.3.2"
+title: AI roles and responsibilities
+type: control
+authority: certifiable
+objective: "A.3"
+text_summary: >
+  Define and allocate responsibilities for AI across the lifecycle and
+  governance functions: who owns risk decisions, impact assessments,
+  data quality, security, privacy, development, deployment, monitoring
+  and human oversight for each AI system.
+applicability:
+  ai_roles: [all]
+  min_maturity: L1
+domains: [leadership-policy, resources-competence]
+evidence_expectations:
+  - "Role matrix covering lifecycle and oversight duties per AI system"
+  - "Named accountable owner for every AI system in the inventory"
+tags: [roles, accountability]

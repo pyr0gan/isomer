@@ -1,0 +1,21 @@
+id: iso42001/2023/A.6.2.8
+framework: iso42001
+framework_version: "2023"
+ref: "A.6.2.8"
+title: AI system recording of event logs
+type: control
+authority: certifiable
+objective: "A.6"
+text_summary: >
+  Enable and retain event logging for AI systems, at minimum during
+  operation, sufficient to reconstruct system behavior: inputs/outputs
+  where appropriate, decisions, overrides, errors and version context,
+  with defined retention.
+applicability:
+  ai_roles: [provider, deployer]
+  min_maturity: L2
+domains: [ai-lifecycle, monitoring-improvement]
+evidence_expectations:
+  - "Logging specification per system with retention periods"
+  - "Demonstrated ability to reconstruct a decision or incident from logs"
+tags: [lifecycle, logging, traceability]

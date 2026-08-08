@@ -1,0 +1,19 @@
+id: iso42001/2023/A.9.3
+framework: iso42001
+framework_version: "2023"
+ref: "A.9.3"
+title: Objectives for responsible use
+type: control
+authority: certifiable
+objective: "A.9"
+text_summary: >
+  Identify and document the objectives guiding responsible use of AI —
+  e.g. fairness, accountability, safety, human oversight — and apply
+  them when deciding whether and how to use an AI system.
+applicability:
+  ai_roles: [deployer, user]
+  min_maturity: L2
+domains: [responsible-use]
+evidence_expectations:
+  - "Responsible-use objectives documented and referenced in use approvals"
+tags: [use, responsible-ai]
