@@ -7,7 +7,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 ### Core workflow
 
 - Lint before sync: `npm run lint` (corpus YAML/schema via `tools/validate.py` + ESLint on `src/`/`scripts/`). See root `README.md`.
-- Python deps: `pyyaml` and `jsonschema` (`pip install pyyaml jsonschema`).
+- Python deps: `requirements.txt` (`pyyaml`, `jsonschema`). `npm run lint:corpus` runs `tools/ensure_python_deps.py` first so a bare `npm run lint:corpus` works without a manual pip step.
 - Node deps: `npm install` (SurrealDB client + dotenv + ESLint). Package scripts live in `package.json`.
 - SurrealDB smoke test: `npm run db:ping` (password is read from HashiCorp Vault; never commit `.env`).
 - Full corpus→DB sync: `npm run db:sync` (or `npm run db:sync:dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`; prunes stale `content_source="repo"` rows; writes a `sync_run` record.

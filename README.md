@@ -44,12 +44,15 @@ tools/validate.py                                    CI validator
 Keep source files clean before sync:
 
 ```
-pip install pyyaml jsonschema
 npm install
 npm run lint              # corpus validator + ESLint
 npm run lint:corpus       # YAML / JSON Schema checks (tools/validate.py)
 npm run lint:js           # JavaScript (src/, scripts/)
 ```
+
+`lint:corpus` auto-installs Python deps from `requirements.txt` when
+`pyyaml` / `jsonschema` are missing (you can also run
+`python3 -m pip install -r requirements.txt` yourself).
 
 `lint:corpus` checks schema conformance, ID uniqueness, ID/path coherence,
 domain vocabulary resolution, mapping endpoint resolution, mandatory gap
