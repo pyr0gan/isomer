@@ -37,5 +37,5 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 
 - Run the validator and Node scripts from the **repo root**.
 - `mappings/` and `rulesets/` may be empty or absent; the validator skips them when no YAML files are present. If any `rubrics/` exist, the validator expects one file per vocab domain (filename = domain id).
-- `pip install --user` may place console scripts under `~/.local/bin`; that directory may not be on `PATH`. Prefer `python3 tools/validate.py` over invoking a `jsonschema` CLI shim.
+- Prefer `npm run lint:corpus` over calling `tools/validate.py` directly so Python deps are ensured. `pip install --user` may place console scripts under `~/.local/bin` (not always on `PATH`).
 - Do not put the SurrealDB password in git or in plain `SURREAL_*` env vars for this phase — store it in Vault and point `VAULT_SECRET_*` at it.
