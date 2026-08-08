@@ -1,0 +1,19 @@
+{
+  "name": "isomer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Versioned ISMS+AIMS governance content corpus with SurrealDB tooling",
+  "scripts": {
+    "validate": "python3 tools/validate.py",
+    "db:ping": "node scripts/ping-db.js",
+    "db:ping:op": "op run --env-file=.env -- node scripts/ping-db.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "surrealdb": "^2.0.8"
+  }
+}
