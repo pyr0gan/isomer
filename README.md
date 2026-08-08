@@ -1,8 +1,9 @@
 # isomer
 
 Versioned, framework-agnostic corpus powering an integrated ISMS+AIMS
-playbook. Requirements, mappings, rubrics, and rulesets are data; 
-eventual product will render and provide a workflow engine for this repo.
+playbook. Requirements, mappings, rubrics, rulesets, questions, and
+templates are data; eventual product will render and provide a workflow
+engine for this repo. Content release **1.0.0** — see `CHANGELOG.md`.
 
 ## Layout
 
@@ -12,11 +13,14 @@ frameworks/<framework>/<version>/requirements/*.yaml one file per requirement
 mappings/<from>--<to>.yaml                           typed cross-framework mappings
 rulesets/*.yaml                                      regulatory classification rulesets
 rubrics/<domain>.yaml                                per-domain maturity rubrics (L0–L4)
+questions/<domain>.yaml                              assessment questions (L1/L2 focus)
+templates/tmpl-*.md                                  document templates + covers frontmatter
 vocab/domains.yaml                                   maturity domains (9 AIMS + 4 ISMS)
 schemas/*.schema.json                                JSON Schema 2020-12 definitions
 tools/validate.py                                    CI validator
 tools/delta_report.py                                coverage delta (covered/partial/…)
 tools/check_content_charset.py                       reject non-Latin letters in content
+CHANGELOG.md                                         content release notes
 ```
 
 Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
@@ -47,6 +51,11 @@ npm run ruleset:evaluate -- \
   --ruleset rulesets/eu-ai-act-classification.yaml \
   --answers '{"role":"provider","annex-iii-area":"employment"}'
 ```
+
+Assessment questions (`questions/<domain>.yaml`, 48 total) are L1/L2-weighted
+and may list multiple `requirements` (cross-framework probes). Templates under
+`templates/` carry `covers` frontmatter so completion can propose evidence
+links; unused `merge_fields` warn in CI.
 
 ## Conventions
 
@@ -81,6 +90,13 @@ npm run ruleset:evaluate -- \
   *versions*, and go `status: stale` when either side revs. Content YAML
   must not contain non-Latin letters (CJK etc.); `npm run lint:charset`
   enforces this (common typography like em dashes is allowed).
+- **Questions** key to rubric levels and requirement ids (`requirements` is
+  an array — one answer can claim coverage across frameworks). Prefer
+  L1/L2 self-report; L3/L4 distinction comes from rubric criteria against
+  evidence. Every question should carry an `evidence_prompt`.
+- **Templates** are markdown with YAML frontmatter (`covers`,
+  `merge_fields`). Completing a template is an evidence event for the
+  `covers` requirements (e.g. SoA → `annex-sl-core/1.0/6.1.3`).
 - **annex-sl-core** is a pseudo-framework holding the harmonized
   clauses 4-10 shared by ISO/IEC 27001:2022 and ISO/IEC 42001:2023.
   Both standards inherit it; standard-specific deltas live in each

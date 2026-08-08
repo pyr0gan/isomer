@@ -1,0 +1,33 @@
+domain: leadership-policy
+version: "1.0"
+questions:
+  - id: lp-01
+    level: L1
+    ask: "Is there an approved, dated AI policy signed by top management, and has it been communicated to staff?"
+    kind: boolean
+    evidence_prompt: "Attach the approved policy and a communication/acknowledgement record."
+    requirements:
+      - iso42001/2023/A.2.2
+      - annex-sl-core/1.0/5.2
+  - id: lp-02
+    level: L1
+    ask: "Is there a named accountable executive for AI governance and a governance lead with a documented mandate?"
+    kind: boolean
+    evidence_prompt: "Attach the role assignment or mandate document."
+    requirements:
+      - annex-sl-core/1.0/5.3
+      - iso42001/2023/A.3.2
+  - id: lp-03
+    level: L2
+    ask: "Has the AI policy been aligned against the information security, privacy and related policies, with a cross-reference map?"
+    kind: boolean
+    evidence_prompt: "Attach the alignment/cross-reference map and joint review record."
+    requirements:
+      - iso42001/2023/A.2.3
+  - id: lp-04
+    level: L2
+    ask: "Do management reviews run at planned intervals with the required inputs, and are decisions recorded and tracked?"
+    kind: boolean
+    evidence_prompt: "Attach the latest review minutes showing inputs and decisions."
+    requirements:
+      - annex-sl-core/1.0/9.3

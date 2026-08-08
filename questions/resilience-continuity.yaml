@@ -1,0 +1,25 @@
+domain: resilience-continuity
+version: "1.0"
+questions:
+  - id: rz-01
+    level: L1
+    ask: "Are backups running for key systems on a defined schedule?"
+    kind: boolean
+    evidence_prompt: "Attach backup coverage and schedule."
+    requirements:
+      - iso27001/2022/8.13
+  - id: rz-02
+    level: L2
+    ask: "Are recovery objectives (RTO/RPO) defined per critical system, with restore tests executed?"
+    kind: boolean
+    evidence_prompt: "Attach the objectives and the latest restore test result."
+    requirements:
+      - iso27001/2022/8.13
+      - iso27001/2022/5.30
+  - id: rz-03
+    level: L2
+    ask: "Do continuity plans preserve security during disruption, and have they been exercised?"
+    kind: boolean
+    evidence_prompt: "Attach the plan section covering security in disruption and the exercise record."
+    requirements:
+      - iso27001/2022/5.29

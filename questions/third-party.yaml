@@ -1,0 +1,26 @@
+domain: third-party
+version: "1.0"
+questions:
+  - id: tp-01
+    level: L1
+    ask: "Are AI suppliers, third-party models/APIs and embedded AI in procured products inventoried and linked to your systems?"
+    kind: boolean
+    evidence_prompt: "Attach the supplier/component inventory with system linkage."
+    requirements:
+      - iso27001/2022/5.19
+      - iso42001/2023/A.10.3
+  - id: tp-02
+    level: L2
+    ask: "Do material AI suppliers undergo AI-specific due diligence, with contract clauses covering data, incidents and responsible-AI duties?"
+    kind: boolean
+    evidence_prompt: "Attach a due diligence record and the relevant contract clauses."
+    requirements:
+      - iso42001/2023/A.10.3
+      - iso27001/2022/5.20
+  - id: tp-03
+    level: L2
+    ask: "Is responsibility allocated per supply-chain relationship so no duty falls between parties?"
+    kind: boolean
+    evidence_prompt: "Attach a shared-responsibility matrix or contract allocation for one relationship."
+    requirements:
+      - iso42001/2023/A.10.2

@@ -1,0 +1,32 @@
+domain: risk-impact
+version: "1.0"
+questions:
+  - id: ri-01
+    level: L1
+    ask: "Does a risk register exist covering AI and information security risks, with owners?"
+    kind: boolean
+    evidence_prompt: "Attach the register showing AI and security entries with owners."
+    requirements:
+      - annex-sl-core/1.0/6.1.1
+  - id: ri-02
+    level: L2
+    ask: "Is there a documented risk methodology with acceptance criteria, applied repeatably?"
+    kind: boolean
+    evidence_prompt: "Attach the methodology and two assessments demonstrating consistent application."
+    requirements:
+      - annex-sl-core/1.0/6.1.2
+  - id: ri-03
+    level: L2
+    ask: "Does the Statement of Applicability record every reference control as included, excluded or modified, with justification — no silent exclusions?"
+    kind: boolean
+    evidence_prompt: "Attach the SoA; spot-check exclusions for written justification."
+    requirements:
+      - annex-sl-core/1.0/6.1.3
+  - id: ri-04
+    level: L2
+    ask: "Are AI system impact assessments completed before deployment, covering effects on individuals and groups?"
+    kind: boolean
+    evidence_prompt: "Attach a completed impact assessment for a deployed system."
+    requirements:
+      - iso42001/2023/A.5.2
+      - iso42001/2023/A.5.4

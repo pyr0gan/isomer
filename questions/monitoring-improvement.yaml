@@ -1,0 +1,31 @@
+domain: monitoring-improvement
+version: "1.0"
+questions:
+  - id: mi-01
+    level: L1
+    ask: "Are core governance documents version-controlled with approvals, and is an issue/action log in use?"
+    kind: boolean
+    evidence_prompt: "Attach a version history and the action log."
+    requirements:
+      - annex-sl-core/1.0/7.5.2
+  - id: mi-02
+    level: L2
+    ask: "Are metrics/KPIs defined with methods, frequency and owners, and producing results?"
+    kind: boolean
+    evidence_prompt: "Attach the metric definitions and a recent results report."
+    requirements:
+      - annex-sl-core/1.0/9.1
+  - id: mi-03
+    level: L2
+    ask: "Has internal audit executed against the program with independent auditors and reported findings?"
+    kind: boolean
+    evidence_prompt: "Attach the audit program, a report, and the independence rationale."
+    requirements:
+      - annex-sl-core/1.0/9.2
+  - id: mi-04
+    level: L2
+    ask: "Does the CAPA process include root-cause analysis and effectiveness review, linked to findings?"
+    kind: boolean
+    evidence_prompt: "Attach a closed corrective action showing root cause and effectiveness check."
+    requirements:
+      - annex-sl-core/1.0/10.2

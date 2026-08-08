@@ -1,0 +1,34 @@
+domain: responsible-use
+version: "1.0"
+questions:
+  - id: ru-01
+    level: L1
+    ask: "Are acceptable-use rules for AI communicated, including explicitly prohibited applications?"
+    kind: boolean
+    evidence_prompt: "Attach the rules and communication record; check prohibited list against Article 5 practices."
+    requirements:
+      - iso42001/2023/A.9.2
+      - eu-ai-act/2024+2026-1744/art-5
+  - id: ru-02
+    level: L2
+    ask: "Is AI use monitored against documented intended purpose, with deviations handled through approvals?"
+    kind: boolean
+    evidence_prompt: "Attach a monitoring record and one exception/deviation record."
+    requirements:
+      - iso42001/2023/A.9.4
+      - eu-ai-act/2024+2026-1744/art-26
+  - id: ru-03
+    level: L2
+    ask: "Can anyone working under your control report AI concerns through a protected channel, and are reports triaged to closure?"
+    kind: boolean
+    evidence_prompt: "Attach the channel description, anti-retaliation provision, and a triage record."
+    requirements:
+      - iso42001/2023/A.3.3
+  - id: ru-04
+    level: L2
+    ask: "Are human oversight requirements defined per system where impact warrants, with named competent persons?"
+    kind: boolean
+    evidence_prompt: "Attach oversight definitions and assignment for one high-impact system."
+    requirements:
+      - eu-ai-act/2024+2026-1744/art-14
+      - iso42001/2023/A.9.2

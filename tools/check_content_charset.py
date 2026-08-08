@@ -15,7 +15,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-SCAN_DIRS = ("frameworks", "mappings", "rulesets", "rubrics", "vocab", "schemas")
+SCAN_DIRS = (
+    "frameworks",
+    "mappings",
+    "rulesets",
+    "rubrics",
+    "questions",
+    "templates",
+    "vocab",
+    "schemas",
+)
 SCAN_SUFFIXES = {".yaml", ".yml", ".md", ".json"}
 
 # Common typography already present in the corpus / docs.

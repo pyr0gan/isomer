@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/template.schema.json",
+  "title": "TemplateFrontmatter",
+  "description": "YAML frontmatter of a document template (.md).",
+  "type": "object",
+  "required": ["id", "name", "version", "kind", "covers", "merge_fields"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^tmpl-[a-z0-9-]+$" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "kind": { "enum": ["template"] },
+    "covers": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Requirement ids whose evidence this document (when completed) contributes to"
+    },
+    "merge_fields": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_.]+$" } }
+  }
+}

@@ -69,6 +69,8 @@ export const CORPUS_TABLES = [
   "mapping_set",
   "ruleset",
   "rubric",
+  "question_set",
+  "template",
 ];
 
 /** Graph edge tables owned by the corpus sync. */

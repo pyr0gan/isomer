@@ -1,0 +1,19 @@
+domain: physical-environment
+version: "1.0"
+questions:
+  - id: pe-01
+    level: L1
+    ask: "Is physical entry to premises restricted to authorized persons with records?"
+    kind: boolean
+    evidence_prompt: "Attach entry control description and an access record sample."
+    requirements:
+      - iso27001/2022/7.2
+  - id: pe-02
+    level: L2
+    ask: "Are secure areas defined with monitoring, and is storage media sanitized with verification before disposal or re-use?"
+    kind: boolean
+    evidence_prompt: "Attach secure-area definition, a monitoring record, and a sanitization record."
+    requirements:
+      - iso27001/2022/7.1
+      - iso27001/2022/7.4
+      - iso27001/2022/7.14

@@ -134,7 +134,9 @@ export async function ensureCorpusFunctions(db) {
         mapping_sets: (SELECT count() FROM mapping_set WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         maps_to: (SELECT count() FROM maps_to WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
         rulesets: (SELECT count() FROM ruleset WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
-        rubrics: (SELECT count() FROM rubric WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0
+        rubrics: (SELECT count() FROM rubric WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
+        question_sets: (SELECT count() FROM question_set WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0,
+        templates: (SELECT count() FROM template WHERE content_source = $isomer_content_source GROUP ALL)[0].count OR 0
       };
     }
     COMMENT "Counts of content_source=$isomer_content_source records/edges"
