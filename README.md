@@ -11,6 +11,7 @@ frameworks/<framework>/<version>/framework.yaml      manifest
 frameworks/<framework>/<version>/requirements/*.yaml one file per requirement
 mappings/<from>--<to>.yaml                           typed cross-framework mappings
 rulesets/*.yaml                                      regulatory classification rulesets
+rubrics/<domain>.yaml                                per-domain maturity rubrics (L0–L4)
 vocab/domains.yaml                                   the nine maturity domains
 schemas/*.schema.json                                JSON Schema 2020-12 definitions
 tools/validate.py                                    CI validator

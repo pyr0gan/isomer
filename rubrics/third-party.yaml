@@ -1,0 +1,52 @@
+domain: third-party
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      AI supply chain is invisible: no inventory of AI suppliers,
+      models or embedded AI in purchased products; contracts are
+      silent on AI.
+    observable_criteria:
+      - "No inventory of third-party AI services, models or data suppliers"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      Supply chain is visible: AI suppliers and third-party models/
+      APIs inventoried and linked to the systems that use them.
+    observable_criteria:
+      - "Supplier/component inventory linked to the AI system register"
+      - "Embedded AI in procured products identified"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Supply chain is governed: AI-specific due diligence,
+      responsibility allocation per relationship, contract clauses
+      covering data, incidents and responsible-AI duties, customer
+      obligations addressed.
+    observable_criteria:
+      - "AI-specific due diligence records for material suppliers"
+      - "Responsibility allocation (contract or matrix) per supply-chain relationship"
+      - "Contract clauses covering responsible-AI, data use and incident duties"
+      - "Customer-facing information supporting customers' own compliance duties (provider orgs)"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Supply chain is monitored: periodic supplier reviews executed,
+      supplier incidents handled through the allocation, upstream
+      model/API changes tracked for impact.
+    observable_criteria:
+      - "Completed periodic supplier reviews with findings and actions"
+      - "Supplier-originated incident or change handled per the responsibility allocation"
+      - "Upstream model/version changes assessed for downstream impact"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Supply chain risk is anticipated: concentration risk assessed,
+      exit/portability plans for critical AI suppliers, supplier
+      governance posture influences sourcing strategy.
+    observable_criteria:
+      - "Concentration/dependency analysis across the AI supply chain"
+      - "Tested exit or substitution plan for at least one critical AI dependency"
+      - "Sourcing decisions documented as influenced by supplier governance posture"

@@ -1,0 +1,52 @@
+domain: risk-impact
+version: "1.0"
+scoring: all-criteria-cumulative
+levels:
+  - level: L0
+    name: Ad hoc / Unaware
+    descriptor: >
+      No defined risk method; AI and security risks are unassessed
+      or assessed inconsistently on request.
+    observable_criteria:
+      - "No documented risk assessment methodology"
+      - "No risk register covering AI or information security"
+  - level: L1
+    name: Foundational
+    descriptor: >
+      A risk register exists and top risks are identified, but
+      method and criteria are informal.
+    observable_criteria:
+      - "Risk register with identified AI and security risks and owners"
+      - "Initial risk discussion recorded at leadership level"
+  - level: L2
+    name: Defined (certification-ready)
+    descriptor: >
+      Risk runs as a process: documented methodology with
+      acceptance criteria, repeatable assessments, treatment
+      plans, SoA with justified decisions, and impact assessments
+      for AI systems.
+    observable_criteria:
+      - "Documented risk methodology with acceptance criteria applied repeatably"
+      - "Statement of Applicability with per-control justification, no silent exclusions"
+      - "Risk treatment plan with owner approval and residual risk acceptance"
+      - "AI system impact assessments completed for in-scope systems covering individual and group effects"
+  - level: L3
+    name: Measured / Certified
+    descriptor: >
+      Risk is measured and current: assessments run on schedule
+      and on change triggers, treatment effectiveness is tracked,
+      impact assessments influence design decisions.
+    observable_criteria:
+      - "Assessment cadence met over a full cycle including change-triggered assessments"
+      - "Treatment effectiveness reviewed with recorded outcomes"
+      - "Documented design or deployment decisions changed by impact assessment findings"
+  - level: L4
+    name: Optimizing
+    descriptor: >
+      Risk is quantified and forward-looking: quantitative or
+      calibrated methods where they add value, aggregated risk
+      reporting, scenario exercises for emerging AI risk.
+    observable_criteria:
+      - "Quantitative or calibrated scoring in use for material risk classes"
+      - "Aggregated risk posture reporting trended over time"
+      - "Emerging-risk exercises (scenarios, red-teaming) with recorded follow-through"

@@ -6,6 +6,7 @@ import {
   requirementKey,
   mappingSetKey,
   rulesetKey,
+  rubricKey,
 } from "../corpus/load.js";
 import { connectSurreal } from "./connect.js";
 import { CONTENT_SOURCE_REPO } from "./params.js";
@@ -91,6 +92,7 @@ export async function syncCorpus(options = {}) {
       requirement: corpus.requirements.map(requirementKey),
       mapping_set: corpus.mappingSets.map(mappingSetKey),
       ruleset: corpus.rulesets.map(rulesetKey),
+      rubric: corpus.rubrics.map(rubricKey),
     },
     deleted: {
       domain: [],
@@ -98,6 +100,7 @@ export async function syncCorpus(options = {}) {
       requirement: [],
       mapping_set: [],
       ruleset: [],
+      rubric: [],
     },
   };
 
@@ -162,6 +165,16 @@ export async function syncCorpus(options = {}) {
       });
     }
 
+    for (const doc of corpus.rubrics) {
+      const key = rubricKey(doc);
+      const { source_path, ...fields } = doc;
+      await upsertRecord(db, "rubric", key, {
+        ...fields,
+        corpus_id: key,
+        ...syncMeta({ sourcePath: source_path, syncSha, syncedAt }),
+      });
+    }
+
     if (prune) {
       plan.deleted.domain = await deleteMissing(db, "domain", plan.upserts.domain);
       plan.deleted.framework = await deleteMissing(
@@ -183,6 +196,11 @@ export async function syncCorpus(options = {}) {
         db,
         "ruleset",
         plan.upserts.ruleset,
+      );
+      plan.deleted.rubric = await deleteMissing(
+        db,
+        "rubric",
+        plan.upserts.rubric,
       );
     }
 

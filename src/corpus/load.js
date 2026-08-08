@@ -69,6 +69,14 @@ export function loadCorpus(root = ROOT) {
     source_path: relative(root, abs),
   }));
 
+  const rubricFiles = listFiles(join(root, "rubrics"), (_abs, name) =>
+    name.endsWith(".yaml"),
+  );
+  const rubrics = rubricFiles.map((abs) => ({
+    ...readYaml(abs),
+    source_path: relative(root, abs),
+  }));
+
   return {
     root,
     domains,
@@ -76,12 +84,14 @@ export function loadCorpus(root = ROOT) {
     requirements,
     mappingSets,
     rulesets,
+    rubrics,
     counts: {
       domains: domains.length,
       frameworks: frameworks.length,
       requirements: requirements.length,
       mappingSets: mappingSets.length,
       rulesets: rulesets.length,
+      rubrics: rubrics.length,
     },
   };
 }
@@ -109,4 +119,9 @@ export function domainKey(doc) {
 /** Requirement Surreal record key = corpus id. */
 export function requirementKey(doc) {
   return doc.id;
+}
+
+/** Rubric Surreal record key = domain id. */
+export function rubricKey(doc) {
+  return doc.domain;
 }

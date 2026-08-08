@@ -128,6 +128,29 @@ def main():
                 if req_ids and full not in req_ids:
                     warnings.append(f"{relpath}: outcomes[{i}] activates '{ref}' — {full} not yet authored")
 
+    # ---- rubrics ----
+    rub_schema = load_schema("rubric.schema.json")
+    rubric_domains = set()
+    for path in sorted(glob.glob(os.path.join(ROOT, "rubrics", "*.yaml"))):
+        relpath = os.path.relpath(path, ROOT)
+        doc = load_yaml(path)
+        schema_check(rub_schema, doc, relpath)
+        dom = doc.get("domain", "")
+        if domain_ids and dom not in domain_ids:
+            errors.append(f"{relpath}: unknown domain '{dom}'")
+        if dom in rubric_domains:
+            errors.append(f"{relpath}: duplicate rubric for domain '{dom}'")
+        rubric_domains.add(dom)
+        fname = os.path.basename(path)
+        if fname != f"{dom}.yaml":
+            errors.append(f"{relpath}: filename does not match domain '{dom}'")
+        lvls = [l.get("level") for l in doc.get("levels", [])]
+        if lvls != ["L0", "L1", "L2", "L3", "L4"]:
+            errors.append(f"{relpath}: levels must be exactly L0..L4 in order, got {lvls}")
+    if rubric_domains and domain_ids:
+        for missing in sorted(domain_ids - rubric_domains):
+            warnings.append(f"rubrics: no rubric authored for domain '{missing}'")
+
     # ---- report ----
     print(f"requirements: {len(req_ids)}")
     for w in warnings:
