@@ -1,0 +1,34 @@
+domain: security-operations
+version: "1.0"
+questions:
+  - id: so-01
+    level: L1
+    ask: "Are endpoints protected (malware, encryption), key logs centrally collected, and security operations owned by a named person or team?"
+    kind: boolean
+    evidence_prompt: "Attach coverage evidence and the ownership assignment."
+    requirements:
+      - iso27001/2022/8.1
+      - iso27001/2022/8.7
+      - iso27001/2022/8.15
+  - id: so-02
+    level: L2
+    ask: "Does vulnerability management run with remediation SLAs and records?"
+    kind: boolean
+    evidence_prompt: "Attach a scan/remediation cycle demonstrating SLA handling."
+    requirements:
+      - iso27001/2022/8.8
+  - id: so-03
+    level: L2
+    ask: "Is there an incident response plan with roles and escalation, exercised at least once?"
+    kind: boolean
+    evidence_prompt: "Attach the plan and the exercise/test record."
+    requirements:
+      - iso27001/2022/5.24
+  - id: so-04
+    level: L2
+    ask: "Are hardening baselines defined with drift detection or periodic review, and changes to production controlled?"
+    kind: boolean
+    evidence_prompt: "Attach a baseline, a review/drift record, and a change record."
+    requirements:
+      - iso27001/2022/8.9
+      - iso27001/2022/8.32

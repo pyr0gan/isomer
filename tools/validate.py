@@ -3,7 +3,7 @@
 
 Checks, in order:
   1. Schema conformance for every framework.yaml, requirement, mapping set,
-     and ruleset (JSON Schema 2020-12).
+     ruleset, question set, and template frontmatter (JSON Schema 2020-12).
   2. Requirement id uniqueness across the corpus.
   3. id <-> path coherence: id must be <framework>/<version>/<ref> and the
      file must live under frameworks/<framework>/<version>/requirements/.
@@ -12,6 +12,8 @@ Checks, in order:
   6. Mapping relations partially_satisfied_by / conflicts must carry a note.
   7. Ruleset 'activates' refs resolve within the ruleset's target framework.
   8. Obligations (type: obligation) must carry applicable_from.
+  9. Question ids unique; question.requirements and template.covers resolve.
+ 10. Template merge_fields appear in the markdown body (else warning).
 
 Exit code 0 = clean, 1 = failures (prints a report either way).
 """
@@ -163,8 +165,67 @@ def main():
         for missing in sorted(domain_ids - rubric_domains):
             warnings.append(f"rubrics: no rubric authored for domain '{missing}'")
 
+    # ---- questions ----
+    q_schema = load_schema("question.schema.json")
+    seen_q: dict[str, str] = {}
+    question_count = 0
+    for path in sorted(glob.glob(os.path.join(ROOT, "questions", "*.yaml"))):
+        relpath = os.path.relpath(path, ROOT)
+        doc = load_yaml(path)
+        schema_check(q_schema, doc, relpath)
+        dom = doc.get("domain", "")
+        if domain_ids and dom not in domain_ids:
+            errors.append(f"{relpath}: unknown domain '{dom}'")
+        if os.path.basename(path) != f"{dom}.yaml":
+            errors.append(f"{relpath}: filename does not match domain '{dom}'")
+        for q in doc.get("questions", []):
+            question_count += 1
+            qid = q.get("id", "")
+            if qid in seen_q:
+                errors.append(
+                    f"{relpath}: duplicate question id {qid} (also in {seen_q[qid]})"
+                )
+            seen_q[qid] = relpath
+            for rid in q.get("requirements", []):
+                if req_ids and rid not in req_ids:
+                    errors.append(
+                        f"{relpath}: question {qid} references unresolved requirement {rid}"
+                    )
+
+    # ---- templates ----
+    t_schema = load_schema("template.schema.json")
+    template_count = 0
+    for path in sorted(glob.glob(os.path.join(ROOT, "templates", "*.md"))):
+        relpath = os.path.relpath(path, ROOT)
+        template_count += 1
+        text = open(path, encoding="utf-8").read()
+        if not text.startswith("---\n"):
+            errors.append(f"{relpath}: missing YAML frontmatter")
+            continue
+        try:
+            fm_text, body = text[4:].split("\n---\n", 1)
+            fm = _normalize(yaml.safe_load(fm_text))
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{relpath}: frontmatter parse error: {e}")
+            continue
+        schema_check(t_schema, fm, relpath)
+        if fm.get("id") and os.path.basename(path) != f"{fm['id']}.md":
+            errors.append(
+                f"{relpath}: filename does not match template id '{fm.get('id')}'"
+            )
+        for rid in fm.get("covers", []):
+            if req_ids and rid not in req_ids:
+                errors.append(f"{relpath}: covers unresolved requirement {rid}")
+        for field in fm.get("merge_fields", []):
+            if "{{" + field + "}}" not in body:
+                warnings.append(
+                    f"{relpath}: merge field '{field}' declared but not used in body"
+                )
+
     # ---- report ----
     print(f"requirements: {len(req_ids)}")
+    print(f"questions: {question_count}")
+    print(f"templates: {template_count}")
     for w in warnings:
         print(f"WARN  {w}")
     for e in errors:

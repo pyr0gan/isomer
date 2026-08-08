@@ -1,11 +1,25 @@
 import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { basename, join, relative, sep } from "node:path";
 import { parse as parseYaml } from "yaml";
 
 const ROOT = process.cwd();
 
 function readYaml(absPath) {
   return parseYaml(readFileSync(absPath, "utf8"));
+}
+
+/** Parse markdown with YAML frontmatter (`---` … `---`). */
+export function parseTemplateMarkdown(text, sourcePath) {
+  if (!text.startsWith("---\n")) {
+    throw new Error(`${sourcePath}: missing YAML frontmatter`);
+  }
+  const end = text.indexOf("\n---\n", 4);
+  if (end === -1) {
+    throw new Error(`${sourcePath}: unterminated YAML frontmatter`);
+  }
+  const fm = parseYaml(text.slice(4, end));
+  const body = text.slice(end + 5);
+  return { ...fm, body, source_path: sourcePath };
 }
 
 function listFiles(dir, predicate) {
@@ -77,6 +91,26 @@ export function loadCorpus(root = ROOT) {
     source_path: relative(root, abs),
   }));
 
+  const questionFiles = listFiles(join(root, "questions"), (_abs, name) =>
+    name.endsWith(".yaml"),
+  );
+  const questionSets = questionFiles.map((abs) => ({
+    ...readYaml(abs),
+    source_path: relative(root, abs),
+  }));
+
+  const templateFiles = listFiles(join(root, "templates"), (_abs, name) =>
+    name.endsWith(".md"),
+  );
+  const templates = templateFiles.map((abs) =>
+    parseTemplateMarkdown(readFileSync(abs, "utf8"), relative(root, abs)),
+  );
+
+  const questionCount = questionSets.reduce(
+    (n, set) => n + (set.questions?.length || 0),
+    0,
+  );
+
   return {
     root,
     domains,
@@ -85,6 +119,8 @@ export function loadCorpus(root = ROOT) {
     mappingSets,
     rulesets,
     rubrics,
+    questionSets,
+    templates,
     counts: {
       domains: domains.length,
       frameworks: frameworks.length,
@@ -92,6 +128,9 @@ export function loadCorpus(root = ROOT) {
       mappingSets: mappingSets.length,
       rulesets: rulesets.length,
       rubrics: rubrics.length,
+      questionSets: questionSets.length,
+      questions: questionCount,
+      templates: templates.length,
     },
   };
 }
@@ -124,6 +163,16 @@ export function requirementKey(doc) {
 /** Rubric Surreal record key = domain id. */
 export function rubricKey(doc) {
   return doc.domain;
+}
+
+/** Question-set Surreal record key = domain id. */
+export function questionSetKey(doc) {
+  return doc.domain;
+}
+
+/** Template Surreal record key = frontmatter id (or filename stem). */
+export function templateKey(doc) {
+  return doc.id || basename(doc.source_path || "", ".md");
 }
 
 /**

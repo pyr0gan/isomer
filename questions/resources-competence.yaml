@@ -1,0 +1,27 @@
+domain: resources-competence
+version: "1.0"
+questions:
+  - id: rc-01
+    level: L1
+    ask: "Are competency needs identified for AI lifecycle and governance roles?"
+    kind: boolean
+    evidence_prompt: "Attach the competency mapping with identified gaps."
+    requirements:
+      - iso42001/2023/A.4.6
+      - annex-sl-core/1.0/7.2
+  - id: rc-02
+    level: L2
+    ask: "Is role-appropriate training delivered with effectiveness evaluation, alongside a running awareness program?"
+    kind: boolean
+    evidence_prompt: "Attach training records showing effectiveness checks and awareness completion."
+    requirements:
+      - annex-sl-core/1.0/7.2
+      - annex-sl-core/1.0/7.3
+      - eu-ai-act/2024+2026-1744/art-4
+  - id: rc-03
+    level: L2
+    ask: "Is resource documentation (data, tooling, compute, people) complete for in-scope AI systems?"
+    kind: boolean
+    evidence_prompt: "Attach the resource documentation for one system end to end."
+    requirements:
+      - iso42001/2023/A.4.2

@@ -7,6 +7,8 @@ import {
   mappingSetKey,
   rulesetKey,
   rubricKey,
+  questionSetKey,
+  templateKey,
   flattenMappingEdges,
 } from "../corpus/load.js";
 import { connectSurreal } from "./connect.js";
@@ -98,6 +100,8 @@ export async function syncCorpus(options = {}) {
       mapping_set: corpus.mappingSets.map(mappingSetKey),
       ruleset: corpus.rulesets.map(rulesetKey),
       rubric: corpus.rubrics.map(rubricKey),
+      question_set: corpus.questionSets.map(questionSetKey),
+      template: corpus.templates.map(templateKey),
       maps_to: mappingEdges.map((e) => e.key),
     },
     deleted: {
@@ -107,6 +111,8 @@ export async function syncCorpus(options = {}) {
       mapping_set: [],
       ruleset: [],
       rubric: [],
+      question_set: [],
+      template: [],
       maps_to: [],
     },
   };
@@ -230,6 +236,27 @@ export async function syncCorpus(options = {}) {
       });
     }
 
+    for (const doc of corpus.questionSets) {
+      const key = questionSetKey(doc);
+      const { source_path, ...fields } = doc;
+      await upsertRecord(db, "question_set", key, {
+        ...fields,
+        corpus_id: key,
+        question_count: (doc.questions || []).length,
+        ...syncMeta({ sourcePath: source_path, syncSha, syncedAt }),
+      });
+    }
+
+    for (const doc of corpus.templates) {
+      const key = templateKey(doc);
+      const { source_path, id: _id, ...fields } = doc;
+      await upsertRecord(db, "template", key, {
+        ...fields,
+        corpus_id: key,
+        ...syncMeta({ sourcePath: source_path, syncSha, syncedAt }),
+      });
+    }
+
     if (prune) {
       plan.deleted.domain = await deleteMissing(db, "domain", plan.upserts.domain);
       plan.deleted.framework = await deleteMissing(
@@ -256,6 +283,16 @@ export async function syncCorpus(options = {}) {
         db,
         "rubric",
         plan.upserts.rubric,
+      );
+      plan.deleted.question_set = await deleteMissing(
+        db,
+        "question_set",
+        plan.upserts.question_set,
+      );
+      plan.deleted.template = await deleteMissing(
+        db,
+        "template",
+        plan.upserts.template,
       );
       plan.deleted.maps_to = await deleteMissing(
         db,

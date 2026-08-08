@@ -1,0 +1,34 @@
+domain: transparency-communication
+version: "1.0"
+questions:
+  - id: tc-01
+    level: L1
+    ask: "Are users told when they are interacting with an AI system, where the context requires it?"
+    kind: boolean
+    evidence_prompt: "Attach a screenshot or copy of the disclosure at point of interaction."
+    requirements:
+      - iso42001/2023/A.8.2
+      - eu-ai-act/2024+2026-1744/art-50
+  - id: tc-02
+    level: L2
+    ask: "Does user documentation cover each system's purpose, capabilities, limitations and proper use?"
+    kind: boolean
+    evidence_prompt: "Attach the user documentation pack for one system."
+    requirements:
+      - iso42001/2023/A.8.2
+      - eu-ai-act/2024+2026-1744/art-13
+  - id: tc-03
+    level: L2
+    ask: "Is there an externally accessible channel for reporting AI concerns or adverse impacts, with a handling process?"
+    kind: boolean
+    evidence_prompt: "Attach the channel location and the handling procedure."
+    requirements:
+      - iso42001/2023/A.8.3
+  - id: tc-04
+    level: L2
+    ask: "Does an incident communication plan define thresholds, audiences and responsibilities, aligned with notification obligations?"
+    kind: boolean
+    evidence_prompt: "Attach the plan showing the regulatory alignment mapping."
+    requirements:
+      - iso42001/2023/A.8.4
+      - eu-ai-act/2024+2026-1744/art-73

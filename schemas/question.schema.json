@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/question.schema.json",
+  "title": "QuestionSet",
+  "description": "Assessment questions for one maturity domain, keyed to rubric levels and requirements.",
+  "type": "object",
+  "required": ["domain", "version", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "domain": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "version": { "type": "string" },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "level", "ask", "kind", "requirements"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z]{2}-[0-9]{2}$" },
+          "level": { "enum": ["L1", "L2", "L3", "L4"] },
+          "ask": { "type": "string", "minLength": 15 },
+          "kind": { "enum": ["boolean", "single", "multi", "evidence"] },
+          "options": { "type": "array", "items": { "type": "string" } },
+          "evidence_prompt": { "type": "string", "description": "What artifact to attach when answering yes" },
+          "requirements": {
+            "type": "array", "minItems": 1,
+            "items": { "type": "string" },
+            "description": "Requirement ids this question probes"
+          }
+        }
+      }
+    }
+  }
+}

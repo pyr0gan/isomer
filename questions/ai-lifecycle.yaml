@@ -1,0 +1,41 @@
+domain: ai-lifecycle
+version: "1.0"
+questions:
+  - id: al-01
+    level: L1
+    ask: "Does an AI system register exist listing every system with purpose and a named owner?"
+    kind: boolean
+    evidence_prompt: "Attach the register (or an export) showing systems and owners."
+    requirements:
+      - iso42001/2023/A.4.2
+      - iso42001/2023/A.3.2
+  - id: al-02
+    level: L1
+    ask: "Do new AI systems and uses enter through a defined intake/registration step?"
+    kind: boolean
+    evidence_prompt: "Attach the intake procedure and a completed intake record."
+    requirements:
+      - iso42001/2023/A.9.2
+  - id: al-03
+    level: L2
+    ask: "Is a documented AI lifecycle with stage gates applied to systems you build or materially change?"
+    kind: boolean
+    evidence_prompt: "Attach the lifecycle definition and a gate review record."
+    requirements:
+      - iso42001/2023/A.6.1.3
+  - id: al-04
+    level: L2
+    ask: "Do verification and validation results with acceptance criteria gate releases?"
+    kind: boolean
+    evidence_prompt: "Attach a V&V plan and a release decision referencing its results."
+    requirements:
+      - iso42001/2023/A.6.2.4
+      - iso42001/2023/A.6.2.5
+  - id: al-05
+    level: L2
+    ask: "Are production AI systems monitored (performance, drift) with event logging retained per a defined spec?"
+    kind: boolean
+    evidence_prompt: "Attach the monitoring/logging spec and a sample alert or log excerpt."
+    requirements:
+      - iso42001/2023/A.6.2.6
+      - iso42001/2023/A.6.2.8

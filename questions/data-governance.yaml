@@ -1,0 +1,31 @@
+domain: data-governance
+version: "1.0"
+questions:
+  - id: dg-01
+    level: L1
+    ask: "Are data sources documented per AI system, with personal or sensitive data flagged?"
+    kind: boolean
+    evidence_prompt: "Attach per-system data source records showing sensitivity flags."
+    requirements:
+      - iso42001/2023/A.4.3
+  - id: dg-02
+    level: L2
+    ask: "Are rights and legal basis to use training data documented per acquisition?"
+    kind: boolean
+    evidence_prompt: "Attach acquisition records showing source, rights and selection rationale."
+    requirements:
+      - iso42001/2023/A.7.3
+  - id: dg-03
+    level: L2
+    ask: "Are data quality criteria defined and verified per dataset, with issues recorded and dispositioned?"
+    kind: boolean
+    evidence_prompt: "Attach quality criteria and a verification result with recorded issues."
+    requirements:
+      - iso42001/2023/A.7.4
+  - id: dg-04
+    level: L2
+    ask: "Can you demonstrate lineage from data source through transformation to training set?"
+    kind: boolean
+    evidence_prompt: "Attach a lineage record or tool output for one system."
+    requirements:
+      - iso42001/2023/A.7.5
