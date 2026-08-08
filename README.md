@@ -48,18 +48,3 @@ python3 tools/validate.py
 Checks schema conformance, ID uniqueness, ID/path coherence, domain
 vocabulary resolution, mapping endpoint resolution, mandatory gap notes,
 and effective dates on legal obligations.
-
-## SurrealDB sync
-
-The YAML corpus is the source of truth. Sync it into SurrealDB (password
-via HashiCorp Vault — see `.env.example`):
-
-```
-npm install
-npm run db:sync:dry-run   # load + report only
-npm run db:sync           # upsert domains/frameworks/requirements (+ mappings/rulesets when present)
-```
-
-CI validates on every PR and runs a live sync on pushes to `main`
-(`.github/workflows/`). Configure the Vault/Surreal secrets listed in
-`AGENTS.md` on the GitHub repository.
