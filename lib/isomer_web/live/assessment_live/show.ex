@@ -228,7 +228,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
           <%= if not @finalized and @addable_domains != [] do %>
             <form phx-submit="add_domains" class="space-y-4 border-t border-slate-200 pt-4">
               <fieldset>
-                <legend class="mb-2 text-sm font-medium text-slate-700">Add domains</legend>
+                <legend class="mb-2 text-base font-medium text-slate-700">Add domains</legend>
                 <div class="domain-grid">
                   <label :for={domain <- @addable_domains} class="domain-option">
                     <input
@@ -239,7 +239,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
                     />
                     <div>
                       <span class="font-semibold text-slate-900">{domain["label"]}</span>
-                      <.p no_margin class="text-sm text-slate-600">{domain["description"]}</.p>
+                      <.p no_margin class="text-base text-slate-600">{domain["description"]}</.p>
                     </div>
                   </label>
                 </div>

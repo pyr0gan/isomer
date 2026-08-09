@@ -108,8 +108,8 @@ defmodule IsomerWeb.CoreComponents do
         <svg
           class="github-gusset__icon"
           viewBox="0 0 16 16"
-          width="22"
-          height="22"
+          width="26"
+          height="26"
           fill="currentColor"
           aria-hidden="true"
         >

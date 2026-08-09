@@ -119,7 +119,7 @@ defmodule IsomerWeb.OrgLive.Show do
           />
           <.card_content>
             <%= if @maturity == [] do %>
-              <.p no_margin class="text-sm text-slate-500 dark:text-slate-400">
+              <.p no_margin class="text-base text-slate-500 dark:text-slate-400">
                 No domain maturity yet — complete assessment questions to estimate levels.
               </.p>
             <% else %>
@@ -138,7 +138,7 @@ defmodule IsomerWeb.OrgLive.Show do
                   </div>
                   <.tooltip
                     label={"#{bar["level_label"]} — #{bar["level_tip"]}"}
-                    placement="left"
+                    placement="top"
                   >
                     <.badge
                       color={bar["level_color"] || "primary"}
@@ -203,7 +203,7 @@ defmodule IsomerWeb.OrgLive.Show do
                 </ul>
               </div>
             <% else %>
-              <.p no_margin class="text-sm text-slate-500 dark:text-slate-400">
+              <.p no_margin class="text-base text-slate-500 dark:text-slate-400">
                 Mark domains for metric collection in an assessment wizard to populate this panel.
               </.p>
             <% end %>

@@ -57,6 +57,9 @@
     color-scheme: light;
     /* Reserve scrollbar space so opening tall pages doesn't shift layout. */
     scrollbar-gutter: stable;
+    /* Comfortable default (18px). Rem-based Tailwind/Petal type scales with this;
+       users can still enlarge further via browser zoom. */
+    font-size: 112.5%;
   }
 
   html.dark {
@@ -64,7 +67,7 @@
   }
 
   body {
-    @apply min-h-screen bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply min-h-screen bg-slate-50 font-sans text-base leading-relaxed text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
     font-family: var(--font-sans);
     background-image:
       radial-gradient(ellipse 80% 50% at 10% -10%, oklch(92% 0.04 210 / 0.9), transparent 55%),
@@ -105,7 +108,7 @@
   /* Petal sets border-color but not border-width on .pc-text-input, so light
      mode fields can look invisible until focus. Force a real border + fill. */
   .pc-text-input {
-    @apply border border-slate-400 bg-white text-slate-900 shadow-sm;
+    @apply border border-slate-400 bg-white text-base text-slate-900 shadow-sm;
     @apply hover:border-slate-500;
     @apply dark:border-slate-500 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-400;
     border-radius: 0.25rem;
@@ -128,7 +131,7 @@
   }
 
   .isomer-lede {
-    @apply mt-1 max-w-2xl text-slate-600 dark:text-slate-400;
+    @apply mt-1 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-400;
   }
 
   .isomer-form-actions {
@@ -152,11 +155,11 @@
   }
 
   .answer-select__label {
-    @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300;
+    @apply mb-1.5 block text-base font-medium text-slate-700 dark:text-slate-300;
   }
 
   .answer-select__control {
-    @apply block w-full appearance-none rounded-md border border-slate-300 bg-white py-2.5 pl-3.5 pr-10 text-sm font-medium text-slate-900 shadow-sm transition;
+    @apply block w-full appearance-none rounded-md border border-slate-300 bg-white py-2.5 pl-3.5 pr-10 text-base font-medium text-slate-900 shadow-sm transition;
     @apply hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
     @apply dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500 dark:focus:border-primary-400 dark:focus:ring-primary-400/30;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364758b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -230,7 +233,7 @@
   }
 
   .wizard-accordion__heading {
-    @apply text-sm font-semibold;
+    @apply text-base font-semibold;
   }
 
   .wizard-accordion__chevron {
@@ -246,7 +249,7 @@
   }
 
   .wizard-domain-collect {
-    @apply inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/80;
+    @apply inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/80;
   }
 
   .wizard-domain-collect__input {
@@ -270,11 +273,11 @@
   }
 
   .wizard-domain-time__label {
-    @apply text-xs font-medium text-slate-500 dark:text-slate-400;
+    @apply text-sm font-medium text-slate-500 dark:text-slate-400;
   }
 
   .wizard-domain-time__control {
-    @apply rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100;
+    @apply rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-base text-slate-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100;
   }
 
   .wizard-domain-time__hours {
@@ -282,7 +285,7 @@
   }
 
   .wizard-domain-time__readonly {
-    @apply text-sm text-slate-600 dark:text-slate-300;
+    @apply text-base text-slate-600 dark:text-slate-300;
   }
 
   /* Petal cards default to overflow-hidden, which clips CSS tooltips. */
@@ -290,7 +293,9 @@
   .wizard-question-card .pc-card__inner,
   .wizard-accordion,
   .wizard-accordion__item,
-  .wizard-accordion__panel {
+  .wizard-accordion__panel,
+  .maturity-card.pc-card,
+  .maturity-card .pc-card__inner {
     overflow: visible;
   }
 
@@ -301,11 +306,11 @@
   }
 
   .wizard-progress {
-    @apply text-sm font-normal text-slate-500 dark:text-slate-400;
+    @apply text-base font-normal text-slate-500 dark:text-slate-400;
   }
 
   .wizard-progress__detail {
-    @apply ml-1 text-xs font-normal text-slate-400 dark:text-slate-500;
+    @apply ml-1 text-sm font-normal text-slate-400 dark:text-slate-500;
   }
 
   .maturity-panels {
@@ -322,7 +327,7 @@
   }
 
   .maturity-row__label {
-    @apply truncate text-sm font-medium text-slate-700 dark:text-slate-300;
+    @apply truncate text-base font-medium text-slate-700 dark:text-slate-300;
   }
 
   .maturity-row__track {
@@ -373,11 +378,11 @@
   }
 
   .metric-sparkline__label {
-    @apply text-xs font-medium text-slate-500 dark:text-slate-400;
+    @apply text-sm font-medium text-slate-500 dark:text-slate-400;
   }
 
   .metric-sparkline__value {
-    @apply text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100;
+    @apply text-base font-semibold tabular-nums text-slate-800 dark:text-slate-100;
   }
 
   .metric-sparkline__chart {
@@ -385,7 +390,7 @@
   }
 
   .metric-sparkline__placeholder {
-    @apply flex h-7 items-center text-xs italic text-slate-400 dark:text-slate-500;
+    @apply flex h-7 items-center text-sm italic text-slate-400 dark:text-slate-500;
   }
 
   .metrics-domains {
@@ -393,7 +398,7 @@
   }
 
   .metrics-domains__title {
-    @apply mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    @apply mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
   }
 
   .metrics-domains__list {
@@ -401,7 +406,7 @@
   }
 
   .metrics-domains__row {
-    @apply grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm;
+    @apply grid grid-cols-[1fr_auto_auto] items-center gap-3 text-base;
   }
 
   .metrics-domains__label {
@@ -417,7 +422,7 @@
   }
 
   .isomer-sticky-title {
-    @apply pointer-events-none absolute left-1/2 top-1/2 max-w-[min(40vw,20rem)] -translate-x-1/2 -translate-y-1/2 truncate text-center font-mono text-sm font-semibold text-slate-800 opacity-0 transition-opacity duration-300 dark:text-slate-100;
+    @apply pointer-events-none absolute left-1/2 top-1/2 max-w-[min(40vw,20rem)] -translate-x-1/2 -translate-y-1/2 truncate text-center font-mono text-base font-semibold text-slate-800 opacity-0 transition-opacity duration-300 dark:text-slate-100;
   }
 
   .isomer-sticky-title--visible {
@@ -427,8 +432,8 @@
   /* Sticky bottom-left GitHub corner gusset (~28% larger than h-24/w-24) */
   .github-gusset {
     @apply pointer-events-none fixed bottom-0 left-0 z-40 block no-underline outline-none;
-    height: 7.75rem;
-    width: 7.75rem;
+    height: 8.75rem;
+    width: 8.75rem;
   }
 
   .github-gusset:focus-visible .github-gusset__face {
@@ -449,32 +454,32 @@
   /* Octocat sits in the right-angle corner space */
   .github-gusset__icon {
     @apply absolute shrink-0;
-    left: 0.85rem;
-    bottom: 0.85rem;
-    width: 1.375rem;
-    height: 1.375rem;
+    left: 1rem;
+    bottom: 1rem;
+    width: 1.625rem;
+    height: 1.625rem;
   }
 
-  /* Label runs along the hypotenuse edge */
+  /* Label runs along the hypotenuse edge — sized for comfortable reading */
   .github-gusset__label {
     @apply absolute uppercase;
-    left: -18%;
-    bottom: 32%;
-    width: 11rem;
+    left: -14%;
+    bottom: 34%;
+    width: 12rem;
     transform: rotate(45deg);
     transform-origin: center;
     font-family: var(--font-sans);
-    font-size: 0.8125rem;
+    font-size: 1rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-align: center;
-    line-height: 1;
+    line-height: 1.1;
   }
 
   .github-gusset__bubble {
-    @apply pointer-events-none absolute z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition duration-200 dark:bg-slate-100 dark:text-slate-900;
+    @apply pointer-events-none absolute z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-medium text-white opacity-0 shadow-lg transition duration-200 dark:bg-slate-100 dark:text-slate-900;
     left: calc(100% - 0.15rem);
-    bottom: 1.35rem;
+    bottom: 1.5rem;
     transform: translateY(0.25rem);
   }
 
