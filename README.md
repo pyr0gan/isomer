@@ -9,22 +9,20 @@ checks it, and SurrealDB stores it so apps (and a future questionnaire UI) can
 query it.
 
 <p align="center">
-  <a href="https://surrealdb.com" title="SurrealDB">
+  <a href="https://surrealdb.com" title="Built with SurrealDB">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
-      <img src="docs/assets/logos/surrealdb-dark.svg" alt="SurrealDB" width="200" height="48" />
+      <img src="docs/assets/logos/surrealdb-dark.svg" alt="Built with SurrealDB" width="200" height="48" />
     </picture>
   </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://elixir-lang.org" title="Elixir">
+  &nbsp;&nbsp;<strong>+</strong>&nbsp;&nbsp;
+  <a href="https://elixir-lang.org" title="Built with Elixir">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-light.svg" />
-      <img src="docs/assets/logos/elixir-dark.svg" alt="Elixir" width="140" height="48" />
+      <img src="docs/assets/logos/elixir-dark.svg" alt="Built with Elixir" width="140" height="48" />
     </picture>
   </a>
 </p>
-
-<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
 
 Tooling version lives in [`mix.exs`](mix.exs). Content is versioned in the YAML
 itself — see [`docs/versioning.md`](docs/versioning.md).
