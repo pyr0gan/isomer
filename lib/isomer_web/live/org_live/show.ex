@@ -16,12 +16,16 @@ defmodule IsomerWeb.OrgLive.Show do
           {:error, _} -> []
         end
 
+      {ongoing, finalized} = Enum.split_with(assessments, &ongoing?/1)
+
       {:ok,
        assign(socket,
          page_title: org["name"],
          org: org,
          org_id: org_id,
          assessments: assessments,
+         ongoing_assessments: ongoing,
+         finalized_assessments: finalized,
          maturity: maturity,
          error: nil
        )}
@@ -47,6 +51,9 @@ defmodule IsomerWeb.OrgLive.Show do
         {:noreply, assign(socket, error: format_error(reason))}
     end
   end
+
+  defp ongoing?(%{"status" => status}) when status in ["complete", "archived"], do: false
+  defp ongoing?(_), do: true
 
   defp format_error(reason) when is_binary(reason), do: reason
   defp format_error(%{message: msg}) when is_binary(msg), do: msg
@@ -131,22 +138,60 @@ defmodule IsomerWeb.OrgLive.Show do
           </.card_content>
         </.card>
       <% else %>
-        <ul class="space-y-3">
-          <li :for={a <- @assessments}>
-            <.card class="transition hover:border-primary-300 hover:shadow-md">
-              <.card_content class="flex flex-wrap items-center justify-between gap-3">
-                <.link navigate={~p"/assessments/#{a["id"]}"} class="min-w-0 flex-1 no-underline">
-                  <span class="block font-mono text-base font-semibold text-slate-900 dark:text-slate-100">
-                    {a["title"]}
-                  </span>
-                </.link>
-                <.badge color="info" variant="soft" label={a["status"] || "draft"} />
-              </.card_content>
-            </.card>
-          </li>
-        </ul>
+        <div class="space-y-8">
+          <div>
+            <.h3 class="mb-3">Ongoing</.h3>
+            <%= if @ongoing_assessments == [] do %>
+              <.p class="text-slate-500">No ongoing assessments.</.p>
+            <% else %>
+              <.assessment_list assessments={@ongoing_assessments} />
+            <% end %>
+          </div>
+
+          <div>
+            <.h3 class="mb-3">Finalized</.h3>
+            <%= if @finalized_assessments == [] do %>
+              <.p class="text-slate-500">No finalized assessments yet.</.p>
+            <% else %>
+              <.assessment_list assessments={@finalized_assessments} />
+            <% end %>
+          </div>
+        </div>
       <% end %>
     </section>
     """
   end
+
+  attr(:assessments, :list, required: true)
+
+  defp assessment_list(assigns) do
+    ~H"""
+    <ul class="space-y-3">
+      <li :for={a <- @assessments}>
+        <.card class="transition hover:border-primary-300 hover:shadow-md">
+          <.card_content class="flex flex-wrap items-center justify-between gap-3">
+            <.link navigate={~p"/assessments/#{a["id"]}"} class="min-w-0 flex-1 no-underline">
+              <span class="block font-mono text-base font-semibold text-slate-900 dark:text-slate-100">
+                {a["title"]}
+              </span>
+            </.link>
+            <.badge
+              color={status_badge_color(a["status"])}
+              variant="soft"
+              label={status_label(a["status"])}
+            />
+          </.card_content>
+        </.card>
+      </li>
+    </ul>
+    """
+  end
+
+  defp status_label(status) when status in ["complete", "archived"], do: "finalized"
+  defp status_label(status) when is_binary(status) and status != "", do: status
+  defp status_label(_), do: "draft"
+
+  defp status_badge_color(status) when status in ["complete", "archived"], do: "success"
+  defp status_badge_color("in_progress"), do: "primary"
+  defp status_badge_color(_), do: "info"
 end

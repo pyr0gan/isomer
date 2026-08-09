@@ -47,83 +47,144 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   def handle_event("add_domains", params, socket) do
-    selected =
-      params
-      |> Map.get("domains", %{})
-      |> Map.keys()
+    if socket.assigns.finalized do
+      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    else
+      selected =
+        params
+        |> Map.get("domains", %{})
+        |> Map.keys()
 
-    case Tenant.add_assessment_domains(
-           socket.assigns.surreal,
-           socket.assigns.assessment_id,
-           selected
-         ) do
-      {:ok, _assessment} ->
-        case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
-          {:ok, state} ->
-            answers = socket.assigns.answers
-            notes = Map.get(socket.assigns, :evidence_notes, %{})
-            open = Map.get(socket.assigns, :open_domain_ids, MapSet.new())
+      case Tenant.add_assessment_domains(
+             socket.assigns.surreal,
+             socket.assigns.assessment_id,
+             selected
+           ) do
+        {:ok, _assessment} ->
+          case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
+            {:ok, state} ->
+              open = Map.get(socket.assigns, :open_domain_ids, MapSet.new())
 
-            {:noreply,
-             socket
-             |> assign(state)
-             |> assign(:answers, answers)
-             |> assign(:evidence_notes, notes)
-             |> assign(:open_domain_ids, open)
-             |> assign(:error, nil)}
+              {:noreply,
+               socket
+               |> assign(state)
+               |> assign(:open_domain_ids, open)
+               |> assign(:error, nil)}
 
-          {:error, reason} ->
-            {:noreply, assign(socket, error: format_error(reason))}
+            {:error, reason} ->
+              {:noreply, assign(socket, error: format_error(reason))}
+          end
+
+        {:error, reason} ->
+          {:noreply, assign(socket, error: format_error(reason))}
+      end
+    end
+  end
+
+  def handle_event("answer", %{"question_id" => qid} = params, socket) do
+    cond do
+      socket.assigns.finalized ->
+        {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+
+      true ->
+        question = Enum.find(socket.assigns.questions, &(&1.id == qid))
+
+        if is_nil(question) do
+          {:noreply, assign(socket, error: "Unknown question")}
+        else
+          # Radio groups (and some browsers) may send `value` as a list when a
+          # hidden empty field is present; normalize before coerce.
+          raw = Map.get(params, "value")
+          coerced = coerce_value(question.kind, raw, params)
+          evidence_note = evidence_note_from_params(params)
+
+          if blank_answer?(question.kind, coerced) do
+            clear_answer(socket, question, qid)
+          else
+            save_answer(socket, question, qid, coerced, evidence_note)
+          end
         end
+    end
+  end
+
+  defp blank_answer?("boolean", value), do: is_nil(value)
+  defp blank_answer?("multi", value) when is_list(value), do: value == []
+  defp blank_answer?(_kind, value), do: value in [nil, ""]
+
+  defp clear_answer(socket, question, qid) do
+    attrs = %{
+      "assessment_id" => socket.assigns.assessment_id,
+      "question_id" => qid,
+      "pack" => "question_set",
+      "pack_ref" => question.domain
+    }
+
+    case Tenant.delete_answer(socket.assigns.surreal, attrs) do
+      :ok ->
+        answers = Map.delete(socket.assigns.answers, qid)
+        notes = Map.delete(socket.assigns.evidence_notes, qid)
+
+        {:noreply,
+         socket
+         |> assign(:answers, answers)
+         |> assign(:evidence_notes, notes)
+         |> assign(
+           :domain_sections,
+           refresh_section_progress(socket.assigns.domain_sections, answers)
+         )
+         |> assign(:error, nil)}
 
       {:error, reason} ->
         {:noreply, assign(socket, error: format_error(reason))}
     end
   end
 
-  def handle_event("answer", %{"question_id" => qid} = params, socket) do
-    question = Enum.find(socket.assigns.questions, &(&1.id == qid))
+  defp save_answer(socket, question, qid, coerced, evidence_note) do
+    attrs = %{
+      "org_id" => socket.assigns.org_id,
+      "assessment_id" => socket.assigns.assessment_id,
+      "question_id" => qid,
+      "pack" => "question_set",
+      "pack_ref" => question.domain,
+      "value" => pack_stored_value(coerced, evidence_note)
+    }
 
-    if is_nil(question) do
-      {:noreply, assign(socket, error: "Unknown question")}
-    else
-      # Radio groups (and some browsers) may send `value` as a list when a
-      # hidden empty field is present; normalize before coerce.
-      raw = Map.get(params, "value")
-      coerced = coerce_value(question.kind, raw, params)
-      evidence_note = evidence_note_from_params(params)
+    case Tenant.upsert_answer(socket.assigns.surreal, attrs) do
+      :ok ->
+        answers = Map.put(socket.assigns.answers, qid, coerced)
+        notes = Map.put(socket.assigns.evidence_notes, qid, evidence_note)
 
-      if question.kind == "boolean" and is_nil(coerced) do
-        {:noreply, assign(socket, error: "Choose Yes or No before saving")}
-      else
-        attrs = %{
-          "org_id" => socket.assigns.org_id,
-          "assessment_id" => socket.assigns.assessment_id,
-          "question_id" => qid,
-          "pack" => "question_set",
-          "pack_ref" => question.domain,
-          "value" => pack_stored_value(coerced, evidence_note)
-        }
+        socket =
+          socket
+          |> assign(:answers, answers)
+          |> assign(:evidence_notes, notes)
+          |> assign(
+            :domain_sections,
+            refresh_section_progress(socket.assigns.domain_sections, answers)
+          )
+          |> assign(:error, nil)
 
-        case Tenant.upsert_answer(socket.assigns.surreal, attrs) do
-          :ok ->
-            answers = Map.put(socket.assigns.answers, qid, coerced)
-            notes = Map.put(socket.assigns.evidence_notes, qid, evidence_note)
+        {:noreply, maybe_mark_in_progress(socket)}
 
-            {:noreply,
-             socket
-             |> assign(:answers, answers)
-             |> assign(:evidence_notes, notes)
-             |> assign(
-               :domain_sections,
-               refresh_section_progress(socket.assigns.domain_sections, answers)
-             )
-             |> assign(:error, nil)}
+      {:error, reason} ->
+        {:noreply, assign(socket, error: format_error(reason))}
+    end
+  end
 
-          {:error, reason} ->
-            {:noreply, assign(socket, error: format_error(reason))}
-        end
+  defp maybe_mark_in_progress(socket) do
+    status = socket.assigns.assessment["status"]
+
+    if status in [nil, "", "draft"] do
+      case Tenant.update_assessment_status(
+             socket.assigns.surreal,
+             socket.assigns.assessment_id,
+             "in_progress"
+           ) do
+        {:ok, assessment} -> assign(socket, :assessment, assessment)
+        {:error, _} -> socket
       end
+    else
+      socket
     end
   end
 
@@ -163,10 +224,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          domain_sections: domain_sections,
          answers: answer_map,
          evidence_notes: evidence_notes,
-         addable_domains: addable
+         addable_domains: addable,
+         finalized: finalized?(assessment)
        }}
     end
   end
+
+  defp finalized?(%{"status" => status}) when status in ["complete", "archived"], do: true
+  defp finalized?(_), do: false
 
   defp format_error(reason) when is_binary(reason), do: reason
   defp format_error(%{message: msg}) when is_binary(msg), do: msg
@@ -182,7 +247,11 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
             {@assessment["title"]}
           </.h1>
           <.p class="isomer-lede">
-            Work domain by domain. Each answer is saved with your Surreal user JWT.
+            <%= if @finalized do %>
+              Finalized — answers are read-only.
+            <% else %>
+              Work domain by domain. Each answer is saved with your Surreal user JWT.
+            <% end %>
           </.p>
         </div>
         <.button
@@ -197,7 +266,16 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
-      <.card :if={@addable_domains != []} variant="muted">
+      <.alert
+        :if={@finalized}
+        color="warning"
+        variant="soft"
+        with_icon
+        label="This assessment is finalized. Reopen it from Details to edit answers."
+        class="mb-4"
+      />
+
+      <.card :if={not @finalized and @addable_domains != []} variant="muted">
         <.card_content>
           <details>
             <summary class="cursor-pointer font-medium text-slate-800 dark:text-slate-200">
@@ -252,8 +330,15 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
             >
               <span class="wizard-accordion__heading">
                 {section.label}
-                <span class="wizard-progress">
+                <span
+                  id={"domain-#{section.id}-progress"}
+                  class="wizard-progress"
+                  title={"Yes #{section.yes} · No #{section.no} · Unanswered #{section.unanswered}"}
+                >
                   · {section.answered}/{section.total}
+                  <span class="wizard-progress__detail">
+                    ({section.yes} yes · {section.no} no · {section.unanswered} open)
+                  </span>
                 </span>
               </span>
               <.icon
@@ -312,66 +397,82 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     {q.ask}
                   </.p>
 
-                  <form id={"answer-form-#{q.id}"} phx-submit="answer" class="answer-form">
-                    <input type="hidden" name="question_id" value={q.id} />
-                    <div class="answer-controls">
-                      <%= case q.kind do %>
-                        <% "boolean" -> %>
-                          <div class="answer-select">
-                            <label class="answer-select__label" for={"answer-select-#{q.id}"}>
-                              Answer
-                            </label>
-                            <select
-                              id={"answer-select-#{q.id}-#{boolean_select_value(@answers[q.id])}"}
-                              name="value"
-                              class="answer-select__control"
-                            >
-                              {Phoenix.HTML.Form.options_for_select(
-                                [{"—", ""}, {"Yes", "yes"}, {"No", "no"}],
-                                boolean_select_value(@answers[q.id])
-                              )}
-                            </select>
-                          </div>
-                        <% "multi" -> %>
-                          <.field
-                            type="text"
-                            name="value"
-                            label="Answer"
-                            placeholder="comma-separated"
-                            value={format_multi(@answers[q.id])}
-                            no_margin
-                            wrapper_class="min-w-[14rem] flex-1"
-                          />
-                        <% _ -> %>
-                          <.field
-                            type="text"
-                            name="value"
-                            label="Answer"
-                            value={to_string(@answers[q.id] || "")}
-                            no_margin
-                            wrapper_class="min-w-[14rem] flex-1"
-                          />
-                      <% end %>
-                      <.button
-                        type="submit"
-                        size="sm"
-                        label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
-                        color={if answered?(@answers, q.id), do: "gray", else: "primary"}
-                        variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
-                      />
+                  <%= if @finalized do %>
+                    <div class="answer-readonly text-sm text-slate-700 dark:text-slate-300">
+                      <span class="font-medium">Answer:</span>
+                      {format_answer_display(q.kind, @answers[q.id])}
+                      <span
+                        :if={Map.get(@evidence_notes, q.id, "") != ""}
+                        class="mt-1 block text-slate-500"
+                      >
+                        Evidence: {Map.get(@evidence_notes, q.id, "")}
+                      </span>
                     </div>
+                  <% else %>
+                    <form id={"answer-form-#{q.id}"} phx-submit="answer" class="answer-form">
+                      <input type="hidden" name="question_id" value={q.id} />
+                      <div class="answer-controls">
+                        <%= case q.kind do %>
+                          <% "boolean" -> %>
+                            <div class="answer-select">
+                              <label class="answer-select__label" for={"answer-select-#{q.id}"}>
+                                Answer
+                              </label>
+                              <select
+                                id={"answer-select-#{q.id}-#{boolean_select_value(@answers[q.id])}"}
+                                name="value"
+                                class="answer-select__control"
+                              >
+                                {Phoenix.HTML.Form.options_for_select(
+                                  [{"—", ""}, {"Yes", "yes"}, {"No", "no"}],
+                                  boolean_select_value(@answers[q.id])
+                                )}
+                              </select>
+                            </div>
+                          <% "multi" -> %>
+                            <.field
+                              type="text"
+                              name="value"
+                              label="Answer"
+                              placeholder="comma-separated"
+                              value={format_multi(@answers[q.id])}
+                              no_margin
+                              wrapper_class="min-w-[14rem] flex-1"
+                            />
+                          <% _ -> %>
+                            <.field
+                              type="text"
+                              name="value"
+                              label="Answer"
+                              value={to_string(@answers[q.id] || "")}
+                              no_margin
+                              wrapper_class="min-w-[14rem] flex-1"
+                            />
+                        <% end %>
+                        <.button
+                          type="submit"
+                          size="sm"
+                          label={if answered?(@answers, q.id), do: "Update", else: "Save"}
+                          color={if answered?(@answers, q.id), do: "gray", else: "primary"}
+                          variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
+                        />
+                      </div>
 
-                    <.field
-                      :if={q.evidence_prompt}
-                      type="text"
-                      name="evidence"
-                      label="Evidence"
-                      help_text={q.evidence_prompt}
-                      value={Map.get(@evidence_notes, q.id, "")}
-                      placeholder="Short note or reference for now"
-                      class="answer-evidence"
-                    />
-                  </form>
+                      <.field
+                        :if={q.evidence_prompt}
+                        type="text"
+                        name="evidence"
+                        label="Evidence"
+                        help_text={q.evidence_prompt}
+                        value={Map.get(@evidence_notes, q.id, "")}
+                        placeholder="Short note or reference for now"
+                        class="answer-evidence"
+                      />
+                      <.p no_margin class="text-xs text-slate-500">
+                        Choose — and Update to clear an answer (progress will drop).
+                      </.p>
+                    </form>
+                  <% end %>
                 </.card_content>
               </.card>
             </div>
@@ -424,16 +525,18 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     |> Enum.group_by(& &1.domain)
     |> Enum.map(fn {domain_id, qs} ->
       meta = Map.get(catalog, domain_id, %{})
-      total = length(qs)
-      answered = Enum.count(qs, &answered?(answers, &1.id))
+      counts = progress_counts(qs, answers)
 
       %{
         id: domain_id,
         label: meta["label"] || Domains.sentence_case(domain_id),
         description: meta["description"] || "",
         questions: qs,
-        total: total,
-        answered: answered
+        total: counts.total,
+        answered: counts.answered,
+        yes: counts.yes,
+        no: counts.no,
+        unanswered: counts.unanswered
       }
     end)
     |> Enum.sort_by(fn section ->
@@ -443,10 +546,58 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   defp refresh_section_progress(sections, answers) do
     Enum.map(sections, fn section ->
-      answered = Enum.count(section.questions, &answered?(answers, &1.id))
-      %{section | answered: answered}
+      counts = progress_counts(section.questions, answers)
+
+      %{
+        section
+        | total: counts.total,
+          answered: counts.answered,
+          yes: counts.yes,
+          no: counts.no,
+          unanswered: counts.unanswered
+      }
     end)
   end
+
+  defp progress_counts(questions, answers) do
+    total = length(questions)
+
+    {yes, no, other} =
+      Enum.reduce(questions, {0, 0, 0}, fn q, {y, n, o} ->
+        case answer_bucket(q.kind, Map.get(answers, q.id, :missing)) do
+          :yes -> {y + 1, n, o}
+          :no -> {y, n + 1, o}
+          :answered -> {y, n, o + 1}
+          :unanswered -> {y, n, o}
+        end
+      end)
+
+    answered = yes + no + other
+    unanswered = total - answered
+
+    %{
+      total: total,
+      answered: answered,
+      yes: yes,
+      no: no,
+      unanswered: unanswered
+    }
+  end
+
+  # Boolean No must count as answered (bucket :no), not unanswered.
+  defp answer_bucket("boolean", value) do
+    case normalize_loaded_value("boolean", value) do
+      true -> :yes
+      false -> :no
+      _ -> :unanswered
+    end
+  end
+
+  defp answer_bucket(_kind, :missing), do: :unanswered
+  defp answer_bucket(_kind, nil), do: :unanswered
+  defp answer_bucket(_kind, ""), do: :unanswered
+  defp answer_bucket("multi", list) when is_list(list) and list == [], do: :unanswered
+  defp answer_bucket(_kind, _), do: :answered
 
   defp question_ask(q) when is_map(q) do
     q["ask"] || q["prompt"] || q["text"] || q["id"] || "Untitled question"
@@ -454,12 +605,24 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   defp answered?(answers, id) do
     case Map.fetch(answers, id) do
-      {:ok, nil} -> false
-      {:ok, ""} -> false
-      {:ok, _} -> true
       :error -> false
+      {:ok, value} -> answer_bucket("text", value) != :unanswered
     end
   end
+
+  defp format_answer_display("boolean", value) do
+    case normalize_loaded_value("boolean", value) do
+      true -> "Yes"
+      false -> "No"
+      _ -> "—"
+    end
+  end
+
+  defp format_answer_display("multi", value), do: format_multi(value) |> blank_as_dash()
+  defp format_answer_display(_kind, value), do: value |> to_string() |> blank_as_dash()
+
+  defp blank_as_dash(""), do: "—"
+  defp blank_as_dash(value), do: value
 
   defp truthy_answer?(value), do: normalize_loaded_value("boolean", value) == true
   defp falsey_answer?(value), do: normalize_loaded_value("boolean", value) == false
