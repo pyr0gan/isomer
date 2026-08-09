@@ -5,6 +5,8 @@ defmodule IsomerWeb.AssessmentLive.New do
 
   @impl true
   def mount(%{"org_id" => org_id}, _session, socket) do
+    org_id = Tenant.canonicalize_record_id(org_id)
+
     sets =
       case Tenant.list_question_sets(socket.assigns.surreal) do
         {:ok, rows} -> rows

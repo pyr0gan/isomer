@@ -5,6 +5,8 @@ defmodule IsomerWeb.OrgLive.Show do
 
   @impl true
   def mount(%{"org_id" => org_id}, _session, socket) do
+    org_id = Tenant.canonicalize_record_id(org_id)
+
     with {:ok, org} <- Tenant.get_org(socket.assigns.surreal, org_id),
          {:ok, assessments} <- Tenant.list_assessments(socket.assigns.surreal, org_id) do
       {:ok,

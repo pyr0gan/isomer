@@ -11,9 +11,8 @@ defmodule Isomer.Db.Tenant do
   end
 
   def create_org(conn, name) when is_binary(name) do
-    # Pre-generate the org id so RELATE does not depend on CREATE's return value.
-    # Under older org PERMISSIONS (select only via member_org_ids), CREATE returns
-    # NONE until the member edge exists — which broke `RELATE … -> $org`.
+    # Pre-generate an alphanumeric org key (leading letter) so URLs/ids never need
+    # Surreal backtick escaping — digit-leading ids break type::record($id) round-trips.
     sql = """
     LET $key = string::concat("o", rand::string(16));
     LET $oid = type::record("org", $key);
@@ -29,20 +28,27 @@ defmodule Isomer.Db.Tenant do
   end
 
   def get_org(conn, org_id) when is_binary(org_id) do
-    case UserClient.query(conn, "SELECT * FROM type::record($id);", %{"id" => org_id}) do
+    {table, key} = split_record_id!(org_id)
+
+    case UserClient.query(conn, "SELECT * FROM type::record($table, $key);", %{
+           "table" => table,
+           "key" => key
+         }) do
       {:ok, results} -> unwrap_one(results)
       {:error, reason} -> {:error, reason}
     end
   end
 
   def list_assessments(conn, org_id) when is_binary(org_id) do
+    {table, key} = split_record_id!(org_id)
+
     sql = """
     SELECT * FROM assessment
-    WHERE org = type::record($org_id)
+    WHERE org = type::record($table, $key)
     ORDER BY created_at DESC;
     """
 
-    case UserClient.query(conn, sql, %{"org_id" => org_id}) do
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
       {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
       {:error, reason} -> {:error, reason}
     end
@@ -53,14 +59,14 @@ defmodule Isomer.Db.Tenant do
     kind = Map.get(attrs, "kind", "domains")
     domains = Map.get(attrs, "domains") || []
     ruleset_id = Map.get(attrs, "ruleset_id")
+    {org_table, org_key} = split_record_id!(org_id)
 
-    # Pre-generate id + SELECT back. CREATE ONLY often returns NONE when the
-    # statement result is filtered by PERMISSIONS even though the write succeeds.
     {ruleset_sql, vars} =
       if is_binary(ruleset_id) and ruleset_id != "" do
         {"ruleset_id = $ruleset_id,",
          %{
-           "org_id" => org_id,
+           "org_table" => org_table,
+           "org_key" => org_key,
            "title" => title,
            "kind" => kind,
            "domains" => domains,
@@ -69,7 +75,8 @@ defmodule Isomer.Db.Tenant do
       else
         {"",
          %{
-           "org_id" => org_id,
+           "org_table" => org_table,
+           "org_key" => org_key,
            "title" => title,
            "kind" => kind,
            "domains" => domains
@@ -79,8 +86,9 @@ defmodule Isomer.Db.Tenant do
     sql = """
     LET $key = string::concat("a", rand::string(16));
     LET $aid = type::record("assessment", $key);
-    CREATE $aid SET
-      org = type::record($org_id),
+    LET $org = type::record($org_table, $org_key);
+    LET $created = CREATE $aid SET
+      org = $org,
       title = $title,
       kind = $kind,
       domains = $domains,
@@ -88,17 +96,35 @@ defmodule Isomer.Db.Tenant do
       status = 'draft',
       created_by = $auth.id,
       updated_at = time::now();
+    RETURN $created;
     RETURN SELECT * FROM ONLY $aid;
     """
 
     case UserClient.query(conn, sql, vars) do
-      {:ok, results} -> unwrap_created(results, :unexpected_create_assessment)
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        case take_created_assessment(results) do
+          {:ok, _} = ok ->
+            ok
+
+          {:error, _} ->
+            {:error,
+             "Could not create assessment for #{canonicalize_record_id(org_id)}. " <>
+               "Confirm you still belong to that org (owner/admin/assessor), then retry. " <>
+               "If this org link has backticks in the URL, open the org from /orgs again."}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
   def get_assessment(conn, assessment_id) when is_binary(assessment_id) do
-    case UserClient.query(conn, "SELECT * FROM type::record($id);", %{"id" => assessment_id}) do
+    {table, key} = split_record_id!(assessment_id)
+
+    case UserClient.query(conn, "SELECT * FROM type::record($table, $key);", %{
+           "table" => table,
+           "key" => key
+         }) do
       {:ok, results} -> unwrap_one(results)
       {:error, reason} -> {:error, reason}
     end
@@ -115,26 +141,31 @@ defmodule Isomer.Db.Tenant do
   end
 
   def list_answers(conn, assessment_id) when is_binary(assessment_id) do
+    {table, key} = split_record_id!(assessment_id)
+
     sql = """
-    SELECT * FROM answer WHERE assessment = type::record($id);
+    SELECT * FROM answer WHERE assessment = type::record($table, $key);
     """
 
-    case UserClient.query(conn, sql, %{"id" => assessment_id}) do
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
       {:ok, results} -> {:ok, rows_of(results)}
       {:error, reason} -> {:error, reason}
     end
   end
 
   def upsert_answer(conn, attrs) when is_map(attrs) do
+    {org_table, org_key} = split_record_id!(attrs["org_id"])
+    {assessment_table, assessment_key} = split_record_id!(attrs["assessment_id"])
+
     sql = """
     DELETE answer WHERE
-      assessment = type::record($assessment_id)
+      assessment = type::record($assessment_table, $assessment_key)
       AND pack = $pack
       AND pack_ref = $pack_ref
       AND question_id = $question_id;
     CREATE answer SET
-      org = type::record($org_id),
-      assessment = type::record($assessment_id),
+      org = type::record($org_table, $org_key),
+      assessment = type::record($assessment_table, $assessment_key),
       question_id = $question_id,
       pack = $pack,
       pack_ref = $pack_ref,
@@ -143,29 +174,97 @@ defmodule Isomer.Db.Tenant do
       answered_at = time::now();
     """
 
-    case UserClient.query(conn, sql, attrs) do
+    vars =
+      attrs
+      |> Map.drop(["org_id", "assessment_id"])
+      |> Map.merge(%{
+        "org_table" => org_table,
+        "org_key" => org_key,
+        "assessment_table" => assessment_table,
+        "assessment_key" => assessment_key
+      })
+
+    case UserClient.query(conn, sql, vars) do
       {:ok, _} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end
 
+  @doc "Canonical `table:key` without Surreal backtick escapes (safe for routes + binds)."
+  def canonicalize_record_id(value) do
+    case split_record_id(value) do
+      {:ok, table, key} -> "#{table}:#{key}"
+      :error -> value |> to_string() |> strip_backticks()
+    end
+  end
+
   def record_id(value) do
+    canonicalize_record_id(value)
+  end
+
+  def split_record_id!(value) do
+    case split_record_id(value) do
+      {:ok, table, key} ->
+        {table, key}
+
+      :error ->
+        raise ArgumentError, "invalid Surreal record id: #{inspect(value)}"
+    end
+  end
+
+  defp split_record_id(%SurrealDB.RecordId{table: table, id: key}) do
+    {:ok, strip_backticks(to_string(table)), normalize_key(key)}
+  end
+
+  defp split_record_id(value) when is_binary(value) do
+    value = value |> URI.decode() |> String.trim() |> strip_backticks()
+
+    case String.split(value, ":", parts: 2) do
+      [table, key] when table != "" and key != "" ->
+        {:ok, table, strip_backticks(key)}
+
+      _ ->
+        :error
+    end
+  end
+
+  defp split_record_id(value) when is_map(value) and not is_struct(value) do
     cond do
-      is_binary(value) ->
-        value
+      Map.has_key?(value, "tb") and Map.has_key?(value, "id") ->
+        {:ok, strip_backticks(to_string(value["tb"])), normalize_key(value["id"])}
 
-      none?(value) ->
-        ""
-
-      is_struct(value) ->
-        to_string(value)
-
-      is_map(value) and not is_struct(value) and Map.has_key?(value, "tb") and
-          Map.has_key?(value, "id") ->
-        "#{value["tb"]}:#{value["id"]}"
+      Map.has_key?(value, "id") ->
+        split_record_id(value["id"])
 
       true ->
-        inspect(value)
+        :error
+    end
+  end
+
+  defp split_record_id(value) when is_struct(value) do
+    if none?(value), do: :error, else: split_record_id(to_string(value))
+  end
+
+  defp split_record_id(_), do: :error
+
+  defp normalize_key(key) when is_binary(key), do: strip_backticks(key)
+  defp normalize_key(key) when is_integer(key), do: Integer.to_string(key)
+  defp normalize_key(key), do: strip_backticks(to_string(key))
+
+  defp strip_backticks(value) when is_binary(value), do: String.replace(value, "`", "")
+
+  defp take_created_assessment(results) do
+    # Prefer a concrete row from CREATE/SELECT. Do not treat a bare RecordId as
+    # success — CREATE can fail (empty []) while RETURN $aid still yields an id.
+    case useful_result(results) do
+      row when is_map(row) and not is_struct(row) ->
+        {:ok, normalize_record(row)}
+
+      [row | _] when is_map(row) and not is_struct(row) ->
+        {:ok, normalize_record(row)}
+
+      _ ->
+        {:error, :not_created}
     end
   end
 
@@ -176,6 +275,9 @@ defmodule Isomer.Db.Tenant do
 
       [row | _] when is_map(row) and not is_struct(row) ->
         {:ok, normalize_record(row)}
+
+      %SurrealDB.RecordId{} = rid ->
+        {:ok, %{"id" => canonicalize_record_id(rid)}}
 
       other ->
         {:error, {error_tag, other}}
@@ -227,7 +329,7 @@ defmodule Isomer.Db.Tenant do
   defp useful_result(other), do: other
 
   defp normalize_record(row) when is_map(row) and not is_struct(row) do
-    id = record_id(Map.get(row, "id") || Map.get(row, :id))
+    id = canonicalize_record_id(Map.get(row, "id") || Map.get(row, :id))
     Map.put(row, "id", id)
   end
 
