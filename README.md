@@ -29,7 +29,7 @@ Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
 
 ## Setup
 
-Requires Elixir **1.19.4+** / OTP **27+** (see `mise.toml`). From the repo root:
+Requires Elixir **1.20.3+** / OTP **29+** (see `mise.toml`). From the repo root:
 
 ```
 mix deps.get

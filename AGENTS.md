@@ -7,7 +7,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 ### Core workflow
 
 - Lint: `mix lint` (alias for `mix isomer.validate` + `mix isomer.charset`). See root `README.md`.
-- Deps: `mix deps.get` (see `mix.exs` / `mix.lock`). Elixir **1.19.4** / OTP **27.3.4** pinned in `mise.toml` (needed for EEF `sbom` / CycloneDX).
+- Deps: `mix deps.get` (see `mix.exs` / `mix.lock`). Latest stable Elixir/OTP pinned in `mise.toml` (**1.20.3** / **29.0.5**); required for EEF `sbom` / CycloneDX.
 - SurrealDB smoke test: `mix isomer.db.ping` (password from Hashicorp Vault; never commit `.env`).
 - Content release **1.0.0** (`CHANGELOG.md`, `mix.exs` version). Full corpus→DB sync: `mix isomer.db.sync` (or `--dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`, `question_set`, `template`; writes `maps_to` graph edges; prunes stale `content_source="repo"` rows; writes a `sync_run` record.
 - Sample single-requirement write: `mix isomer.db.ingest_sample`.
