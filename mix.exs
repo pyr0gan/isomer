@@ -23,6 +23,7 @@ defmodule Isomer.MixProject do
         "isomer.db.ping": :dev,
         "isomer.db.sync": :dev,
         "isomer.db.ingest_sample": :dev,
+        "isomer.db.ensure_runtime": :dev,
         "isomer.sbom": :dev,
         "sbom.cyclonedx": :dev,
         sbom: :dev

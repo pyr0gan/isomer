@@ -8,6 +8,10 @@
 - SBoM — CycloneDX via EEF `sbom` (`mix isomer.sbom` → `bom.cdx.json`);
   CI uploads the artifact. Elixir/OTP pinned to latest stable
   (**1.20.3 / 29.0.5**) for the generator toolchain.
+- Assessment runtime — minimum Surreal schema for Fork B (LiveView + Surreal
+  record auth): `user` / `org` / `member` / `assessment` / `answer` /
+  `evidence`, plus LiveView map in `docs/assessment-runtime.md`. Apply with
+  `mix isomer.db.ensure_runtime`.
 
 ## 1.0.0 — 2026-08-08
 First complete content layer. Corpus: 176 requirements, 13 domains,
