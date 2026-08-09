@@ -42,7 +42,9 @@ defmodule Isomer.MixProject do
     [
       {:jason, "~> 1.4"},
       {:yaml_elixir, "~> 2.9"},
-      {:ex_json_schema, "~> 0.11"},
+      {:ex_json_schema, "~> 0.11.5"},
+      # Override transitive decimal 2.x (EEF-CVE-2026-32686) until dependents catch up.
+      {:decimal, "~> 3.1", override: true},
       {:req, "~> 0.5"},
       {:dotenvy, "~> 0.8"},
       {:surrealdb, github: "surrealdb/surrealdb.elixir"},
