@@ -1,31 +1,17 @@
 defmodule IsomerWeb.AssessmentLive.Wizard do
   use IsomerWeb.SurrealLive
 
+  alias Isomer.Domains
   alias Isomer.Db.Tenant
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    surreal = socket.assigns.surreal
     id = Tenant.canonicalize_record_id(id)
 
-    with {:ok, assessment} <- Tenant.get_assessment(surreal, id),
-         {:ok, sets} <- Tenant.list_question_sets(surreal),
-         {:ok, answers} <- Tenant.list_answers(surreal, id) do
-      domains = assessment["domains"] || []
-      questions = project_questions(sets, domains)
-      answer_map = Map.new(answers, fn a -> {a["question_id"], a["value"]} end)
+    case load_state(socket.assigns.surreal, id) do
+      {:ok, state} ->
+        {:ok, assign(socket, Map.put(state, :error, nil))}
 
-      {:ok,
-       assign(socket,
-         page_title: "Wizard · #{assessment["title"]}",
-         assessment: assessment,
-         assessment_id: id,
-         org_id: Tenant.canonicalize_record_id(assessment["org"]),
-         questions: questions,
-         answers: answer_map,
-         error: nil
-       )}
-    else
       {:error, _} ->
         {:ok,
          socket
@@ -35,6 +21,38 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   @impl true
+  def handle_event("add_domains", params, socket) do
+    selected =
+      params
+      |> Map.get("domains", %{})
+      |> Map.keys()
+
+    case Tenant.add_assessment_domains(
+           socket.assigns.surreal,
+           socket.assigns.assessment_id,
+           selected
+         ) do
+      {:ok, _assessment} ->
+        case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
+          {:ok, state} ->
+            # Keep existing answers map; reload may include new questions.
+            answers = socket.assigns.answers
+
+            {:noreply,
+             socket
+             |> assign(state)
+             |> assign(:answers, answers)
+             |> assign(:error, nil)}
+
+          {:error, reason} ->
+            {:noreply, assign(socket, error: format_error(reason))}
+        end
+
+      {:error, reason} ->
+        {:noreply, assign(socket, error: format_error(reason))}
+    end
+  end
+
   def handle_event("answer", %{"question_id" => qid, "value" => value} = params, socket) do
     question = Enum.find(socket.assigns.questions, &(&1.id == qid))
 
@@ -60,10 +78,43 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
            |> assign(:error, nil)}
 
         {:error, reason} ->
-          {:noreply, assign(socket, error: inspect(reason))}
+          {:noreply, assign(socket, error: format_error(reason))}
       end
     end
   end
+
+  defp load_state(surreal, id) do
+    with {:ok, assessment} <- Tenant.get_assessment(surreal, id),
+         {:ok, sets} <- Tenant.list_question_sets(surreal),
+         {:ok, answers} <- Tenant.list_answers(surreal, id) do
+      domains = assessment["domains"] || []
+      questions = project_questions(sets, domains)
+      answer_map = Map.new(answers, fn a -> {a["question_id"], a["value"]} end)
+
+      set_domains =
+        sets
+        |> Enum.map(& &1["domain"])
+        |> Enum.reject(&is_nil/1)
+
+      available = Domains.selectable(set_domains)
+      addable = Enum.reject(available, &(&1["id"] in domains))
+
+      {:ok,
+       %{
+         page_title: "Wizard · #{assessment["title"]}",
+         assessment: assessment,
+         assessment_id: id,
+         org_id: Tenant.canonicalize_record_id(assessment["org"]),
+         questions: questions,
+         answers: answer_map,
+         addable_domains: addable
+       }}
+    end
+  end
+
+  defp format_error(reason) when is_binary(reason), do: reason
+  defp format_error(%{message: msg}) when is_binary(msg), do: msg
+  defp format_error(reason), do: inspect(reason)
 
   @impl true
   def render(assigns) do
@@ -75,6 +126,27 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       </div>
       <p class="lede">Answer questions; each save writes an `answer` row with your Surreal JWT.</p>
       <p :if={@error} class="error" role="alert">{@error}</p>
+
+      <details :if={@addable_domains != []} class="add-domains">
+        <summary>Add domains</summary>
+        <form phx-submit="add_domains" class="stack">
+          <div class="domain-grid">
+            <label :for={domain <- @addable_domains} class="domain-option">
+              <input
+                type="checkbox"
+                name={"domains[#{domain["id"]}]"}
+                value="true"
+                class="domain-option-input"
+              />
+              <div class="domain-option-panel">
+                <span class="domain-option-title">{domain["label"]}</span>
+                <p class="domain-option-desc">{domain["description"]}</p>
+              </div>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-small">Add selected domains</button>
+        </form>
+      </details>
 
       <%= if @questions == [] do %>
         <p class="empty">No questions for the selected domains.</p>

@@ -143,7 +143,6 @@ defmodule Isomer.Db.Tenant do
     end
   end
 
-
   @doc "Short suffix of the record key for disambiguating duplicate names in the UI."
   def short_key(org_id) when is_binary(org_id) do
     {_table, key} = split_record_id!(org_id)
@@ -228,6 +227,49 @@ defmodule Isomer.Db.Tenant do
          }) do
       {:ok, results} -> unwrap_one(results)
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Unions `new_domains` into the assessment's `domains` array (does not remove
+  existing domains). Returns the updated assessment.
+  """
+  def add_assessment_domains(conn, assessment_id, new_domains)
+      when is_binary(assessment_id) and is_list(new_domains) do
+    assessment_id = canonicalize_record_id(assessment_id)
+    {table, key} = split_record_id!(assessment_id)
+
+    incoming =
+      new_domains
+      |> Enum.map(&to_string/1)
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.uniq()
+
+    with {:ok, assessment} <- get_assessment(conn, assessment_id) do
+      merged =
+        (assessment["domains"] || [])
+        |> Kernel.++(incoming)
+        |> Enum.uniq()
+
+      if merged == (assessment["domains"] || []) do
+        {:ok, assessment}
+      else
+        sql = """
+        LET $aid = type::record($table, $key);
+        UPDATE $aid SET domains = $domains, updated_at = time::now();
+        RETURN SELECT * FROM ONLY $aid;
+        """
+
+        case UserClient.query(conn, sql, %{
+               "table" => table,
+               "key" => key,
+               "domains" => merged
+             }) do
+          {:ok, results} -> unwrap_one(results)
+          {:error, reason} -> {:error, reason}
+        end
+      end
     end
   end
 
