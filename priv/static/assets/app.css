@@ -273,6 +273,43 @@ button,
   line-height: 1.35;
 }
 
+.answer-form {
+  margin: 0;
+}
+
+.answer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.answer-input {
+  min-width: 10rem;
+}
+
+.answer-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.answer-mark-yes {
+  color: #0f5c3a;
+  background: rgba(30, 140, 90, 0.16);
+}
+
+.answer-mark-no {
+  color: #9b2c2c;
+  background: rgba(155, 44, 44, 0.14);
+}
+
 .check {
   display: flex;
   align-items: center;

@@ -23,7 +23,6 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          org_id: Tenant.canonicalize_record_id(assessment["org"]),
          questions: questions,
          answers: answer_map,
-         notice: nil,
          error: nil
        )}
     else
@@ -34,7 +33,6 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          |> push_navigate(to: ~p"/orgs")}
     end
   end
-
 
   @impl true
   def handle_event("answer", %{"question_id" => qid, "value" => value} = params, socket) do
@@ -59,7 +57,6 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           {:noreply,
            socket
            |> assign(:answers, Map.put(socket.assigns.answers, qid, coerced))
-           |> assign(:notice, "Saved #{qid}")
            |> assign(:error, nil)}
 
         {:error, reason} ->
@@ -77,7 +74,6 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         <.link navigate={~p"/assessments/#{@assessment_id}"} class="btn btn-quiet">Details</.link>
       </div>
       <p class="lede">Answer questions; each save writes an `answer` row with your Surreal JWT.</p>
-      <p :if={@notice} class="flash flash-info">{@notice}</p>
       <p :if={@error} class="error" role="alert">{@error}</p>
 
       <%= if @questions == [] do %>
@@ -92,26 +88,66 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
             </div>
             <p class="q-ask">{q.ask}</p>
             <p :if={q.evidence_prompt} class="q-evidence">{q.evidence_prompt}</p>
-            <form phx-submit="answer" class="stack">
+            <form phx-submit="answer" class="answer-form">
               <input type="hidden" name="question_id" value={q.id} />
-              <%= case q.kind do %>
-                <% "boolean" -> %>
-                  <select name="value">
-                    <option value="">—</option>
-                    <option value="true" selected={@answers[q.id] == true}>Yes</option>
-                    <option value="false" selected={@answers[q.id] == false}>No</option>
-                  </select>
-                <% "multi" -> %>
-                  <input
-                    type="text"
-                    name="value"
-                    placeholder="comma-separated"
-                    value={format_multi(@answers[q.id])}
-                  />
-                <% _ -> %>
-                  <input type="text" name="value" value={to_string(@answers[q.id] || "")} />
-              <% end %>
-              <button type="submit" class="btn btn-small">Save</button>
+              <div class="answer-controls">
+                <%= case q.kind do %>
+                  <% "boolean" -> %>
+                    <select name="value" class="answer-input">
+                      <option value="">—</option>
+                      <option value="true" selected={@answers[q.id] == true}>Yes</option>
+                      <option value="false" selected={@answers[q.id] == false}>No</option>
+                    </select>
+                    <span
+                      :if={@answers[q.id] == true}
+                      class="answer-mark answer-mark-yes"
+                      aria-label="Yes"
+                      title="Yes"
+                    >
+                      ✓
+                    </span>
+                    <span
+                      :if={@answers[q.id] == false}
+                      class="answer-mark answer-mark-no"
+                      aria-label="No"
+                      title="No"
+                    >
+                      ✕
+                    </span>
+                  <% "multi" -> %>
+                    <input
+                      type="text"
+                      name="value"
+                      class="answer-input"
+                      placeholder="comma-separated"
+                      value={format_multi(@answers[q.id])}
+                    />
+                    <span
+                      :if={answered?(@answers, q.id)}
+                      class="answer-mark answer-mark-yes"
+                      aria-label="Saved"
+                    >
+                      ✓
+                    </span>
+                  <% _ -> %>
+                    <input
+                      type="text"
+                      name="value"
+                      class="answer-input"
+                      value={to_string(@answers[q.id] || "")}
+                    />
+                    <span
+                      :if={answered?(@answers, q.id)}
+                      class="answer-mark answer-mark-yes"
+                      aria-label="Saved"
+                    >
+                      ✓
+                    </span>
+                <% end %>
+                <button type="submit" class="btn btn-small">
+                  {if answered?(@answers, q.id), do: "Edit", else: "Save"}
+                </button>
+              </div>
             </form>
           </li>
         </ol>
@@ -147,6 +183,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     q["ask"] || q["prompt"] || q["text"] || q["id"] || "Untitled question"
   end
 
+  defp answered?(answers, id) do
+    case Map.fetch(answers, id) do
+      {:ok, nil} -> false
+      {:ok, ""} -> false
+      {:ok, _} -> true
+      :error -> false
+    end
+  end
 
   defp coerce_value("boolean", value, _params) do
     case value do
