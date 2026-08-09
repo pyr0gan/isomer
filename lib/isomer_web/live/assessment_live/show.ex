@@ -82,57 +82,72 @@ defmodule IsomerWeb.AssessmentLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <section>
-      <div class="row">
-        <h1>{@assessment["title"]}</h1>
-        <.link navigate={~p"/assessments/#{@assessment_id}/q"} class="btn">Open wizard</.link>
-      </div>
-      <p class="lede">
-        Status: <strong>{@assessment["status"]}</strong>
-        · Kind: {@assessment["kind"]}
-      </p>
-      <p :if={@error} class="error" role="alert">{@error}</p>
-
-      <div class="stack domain-manage">
-        <h2 class="section-heading">Domains in this assessment</h2>
-        <%= if @selected_domains == [] do %>
-          <p class="empty">No domains yet.</p>
-        <% else %>
-          <ul class="domain-chip-list">
-            <li :for={d <- @selected_domains} class="domain-chip">
-              <span class="domain-chip-title">{d["label"]}</span>
-              <span class="meta">{d["id"]}</span>
-            </li>
-          </ul>
-        <% end %>
-
-        <%= if @addable_domains != [] do %>
-          <form phx-submit="add_domains" class="stack">
-            <fieldset class="domain-fieldset">
-              <legend>Add domains</legend>
-              <div class="domain-grid">
-                <label :for={domain <- @addable_domains} class="domain-option">
-                  <input
-                    type="checkbox"
-                    name={"domains[#{domain["id"]}]"}
-                    value="true"
-                    class="domain-option-input"
-                  />
-                  <div class="domain-option-panel">
-                    <span class="domain-option-title">{domain["label"]}</span>
-                    <p class="domain-option-desc">{domain["description"]}</p>
-                  </div>
-                </label>
-              </div>
-            </fieldset>
-            <button type="submit" class="btn">Add selected domains</button>
-          </form>
-        <% else %>
-          <p class="empty">All available domains are already on this assessment.</p>
-        <% end %>
+    <section class="space-y-6">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <.h1>{@assessment["title"]}</.h1>
+          <.p class="text-slate-600">
+            Status: <.badge color="info" label={@assessment["status"]} />
+            · Kind: {@assessment["kind"]}
+          </.p>
+        </div>
+        <.button
+          link_type="live_redirect"
+          to={~p"/assessments/#{@assessment_id}/q"}
+          label="Open wizard"
+          icon="hero-play"
+        />
       </div>
 
-      <.link navigate={~p"/orgs/#{@org_id}"}>← Back to org</.link>
+      <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
+
+      <.card>
+        <.card_header title="Domains in this assessment" />
+        <.card_content class="space-y-4">
+          <%= if @selected_domains == [] do %>
+            <.p class="text-slate-600">No domains yet.</.p>
+          <% else %>
+            <ul class="flex flex-wrap gap-2">
+              <li :for={d <- @selected_domains}>
+                <.badge color="primary" variant="soft" label={d["label"]} />
+              </li>
+            </ul>
+          <% end %>
+
+          <%= if @addable_domains != [] do %>
+            <form phx-submit="add_domains" class="space-y-4 border-t border-slate-200 pt-4">
+              <fieldset>
+                <legend class="mb-2 text-sm font-medium text-slate-700">Add domains</legend>
+                <div class="domain-grid">
+                  <label :for={domain <- @addable_domains} class="domain-option">
+                    <input
+                      type="checkbox"
+                      name={"domains[#{domain["id"]}]"}
+                      value="true"
+                      class="domain-option-input"
+                    />
+                    <div>
+                      <span class="font-semibold text-slate-900">{domain["label"]}</span>
+                      <.p no_margin class="text-sm text-slate-600">{domain["description"]}</.p>
+                    </div>
+                  </label>
+                </div>
+              </fieldset>
+              <.button type="submit" label="Add selected domains" size="sm" />
+            </form>
+          <% else %>
+            <.p class="text-slate-500">All available domains are already on this assessment.</.p>
+          <% end %>
+        </.card_content>
+      </.card>
+
+      <.button
+        link_type="live_redirect"
+        to={~p"/orgs/#{@org_id}"}
+        color="gray"
+        variant="ghost"
+        label="← Back to org"
+      />
     </section>
     """
   end

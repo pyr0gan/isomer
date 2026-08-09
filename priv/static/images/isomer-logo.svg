@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 56" role="img" aria-label="Isomer">
+  <defs>
+    <linearGradient id="ig" x1="8" y1="6" x2="48" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f7a8c"/>
+      <stop offset="1" stop-color="#0f4c5c"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(2,4)">
+    <rect x="2" y="2" width="40" height="40" rx="10" fill="#f4fbfd"/>
+    <path fill="url(#ig)" d="M14 10.5 22 6l8 4.5v9L22 24l-8-4.5v-9z"/>
+    <path fill="none" stroke="#0f4c5c" stroke-width="2" d="M10 21.5 18 17l8 4.5v9L18 35l-8-4.5v-9z"/>
+    <path fill="#1f7a8c" d="M18 17 26 21.5v9L18 35l-8-4.5v-9L18 17z" opacity=".28"/>
+    <circle cx="18" cy="26" r="2.2" fill="#f4fbfd"/>
+  </g>
+  <text x="58" y="38" fill="#10233a" font-family="Fraunces, Georgia, serif" font-size="30" font-weight="650" letter-spacing="0.02em">Isomer</text>
+</svg>

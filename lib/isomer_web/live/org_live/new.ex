@@ -25,20 +25,28 @@ defmodule IsomerWeb.OrgLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <section>
-      <h1>New organization</h1>
-      <p class="lede">Creates an `org` and relates you as `owner`.</p>
-      <p :if={@error} class="error" role="alert">{@error}</p>
-      <form phx-submit="save" class="stack">
-        <label>
-          Name
-          <input type="text" name="name" value={@name} required autofocus />
-        </label>
-        <div class="row">
-          <button type="submit" class="btn">Create</button>
-          <.link navigate={~p"/orgs"} class="btn btn-quiet">Cancel</.link>
-        </div>
-      </form>
+    <section class="mx-auto max-w-lg space-y-6">
+      <.h1>New organization</.h1>
+      <.p class="text-slate-600">Creates an `org` and relates you as `owner`.</.p>
+      <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
+
+      <.card>
+        <.card_content>
+          <form phx-submit="save" class="space-y-4">
+            <.field type="text" name="name" label="Name" value={@name} required autofocus />
+            <div class="flex flex-wrap gap-2">
+              <.button type="submit" label="Create" />
+              <.button
+                link_type="live_redirect"
+                to={~p"/orgs"}
+                color="gray"
+                variant="ghost"
+                label="Cancel"
+              />
+            </div>
+          </form>
+        </.card_content>
+      </.card>
     </section>
     """
   end

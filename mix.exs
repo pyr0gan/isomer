@@ -66,6 +66,19 @@ defmodule Isomer.MixProject do
       {:phoenix_live_reload, "~> 1.5", only: :dev},
       {:bandit, "~> 1.6"},
       {:dns_cluster, "~> 0.2"},
+      # UI (Petal free components). phoenix_ecto/ecto are required by Petal helpers
+      # (Ecto.UUID); there is no Ecto Repo in this app.
+      {:petal_components, "~> 4.12"},
+      {:phoenix_ecto, "~> 4.4"},
+      {:ecto, "~> 3.10"},
+      {:heroicons,
+       github: "tailwindlabs/heroicons",
+       tag: "v2.2.0",
+       app: false,
+       compile: false,
+       sparse: "optimized"},
+      {:tailwind, "~> 0.5", runtime: Mix.env() == :dev},
+      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       # CycloneDX SBoM generator (EEF mix_sbom). Dev-only — do not use MIX_ENV=prod.
       {:sbom, "~> 0.10", only: :dev, runtime: false}
     ]
@@ -76,7 +89,14 @@ defmodule Isomer.MixProject do
       "lint.corpus": ["isomer.validate", "isomer.charset"],
       lint: ["lint.corpus"],
       sbom: ["isomer.sbom"],
-      setup: ["deps.get"],
+      setup: ["deps.get", "assets.setup", "assets.build"],
+      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
+      "assets.build": ["tailwind isomer", "esbuild isomer"],
+      "assets.deploy": [
+        "tailwind isomer --minify",
+        "esbuild isomer --minify",
+        "phx.digest"
+      ],
       "phx.server": ["app.config", "phx.server"]
     ]
   end

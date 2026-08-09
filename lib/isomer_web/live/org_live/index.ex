@@ -36,32 +36,53 @@ defmodule IsomerWeb.OrgLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <section>
-      <div class="row">
-        <h1>Organizations</h1>
-        <.link navigate={~p"/orgs/new"} class="btn">New org</.link>
+    <section class="space-y-6">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <.h1>Organizations</.h1>
+          <.p class="text-slate-600">Tenants you belong to via Surreal `member` edges.</.p>
+        </div>
+        <.button
+          link_type="live_redirect"
+          to={~p"/orgs/new"}
+          label="New org"
+          icon="hero-plus"
+        />
       </div>
-      <p class="lede">Tenants you belong to via Surreal `member` edges.</p>
-      <p :if={@error} class="error" role="alert">{@error}</p>
+
+      <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
       <%= if @orgs == [] do %>
-        <p class="empty">No organizations yet. Create one to start an assessment.</p>
+        <.card variant="muted">
+          <.card_content>
+            <.p no_margin class="text-slate-600">
+              No organizations yet. Create one to start an assessment.
+            </.p>
+          </.card_content>
+        </.card>
       <% else %>
-        <ul class="list org-list">
-          <li :for={org <- @orgs} class="org-row">
-            <.link navigate={~p"/orgs/#{org["id"]}"} class="org-link">
-              <span class="org-name">{org["name"]}</span>
-              <span class="meta">id …{Tenant.short_key(org["id"])}</span>
-            </.link>
-            <button
-              type="button"
-              class="btn btn-danger btn-small"
-              phx-click="delete"
-              phx-value-id={org["id"]}
-              data-confirm={"Delete “#{org["name"]}” (…#{Tenant.short_key(org["id"])}) and all its assessments?"}
-            >
-              Delete
-            </button>
+        <ul class="space-y-3">
+          <li :for={org <- @orgs}>
+            <.card>
+              <.card_content class="flex flex-wrap items-center justify-between gap-3">
+                <.link navigate={~p"/orgs/#{org["id"]}"} class="min-w-0 flex-1 no-underline">
+                  <span class="block font-semibold text-slate-900">{org["name"]}</span>
+                  <span class="text-sm text-slate-500">
+                    id …{Tenant.short_key(org["id"])}
+                  </span>
+                </.link>
+                <.button
+                  type="button"
+                  color="danger"
+                  variant="outline"
+                  size="sm"
+                  label="Delete"
+                  phx-click="delete"
+                  phx-value-id={org["id"]}
+                  data-confirm={"Delete “#{org["name"]}” (…#{Tenant.short_key(org["id"])}) and all its assessments?"}
+                />
+              </.card_content>
+            </.card>
           </li>
         </ul>
       <% end %>

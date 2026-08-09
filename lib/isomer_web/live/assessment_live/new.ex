@@ -42,7 +42,6 @@ defmodule IsomerWeb.AssessmentLive.New do
       if edit? do
         assign(socket, edit_title?: true)
       else
-        # Turning edit off restores / keeps a generated-style title.
         title =
           if Namegen.valid?(socket.assigns.title) do
             socket.assigns.title
@@ -107,83 +106,106 @@ defmodule IsomerWeb.AssessmentLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <section>
-      <h1>New assessment</h1>
-      <p class="lede">Pick one or more question-set domains from the published corpus.</p>
-      <p :if={@error} class="error" role="alert">{@error}</p>
+    <section class="space-y-6">
+      <.h1>New assessment</.h1>
+      <.p class="text-slate-600">
+        Pick one or more question-set domains from the published corpus.
+      </.p>
+      <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
-      <form phx-submit="save" class="stack">
-        <div class="title-block">
-          <div class="row title-row">
-            <span class="title-label">Title</span>
-            <label class="toggle">
-              <input
-                type="checkbox"
-                checked={@edit_title?}
-                phx-click="toggle_edit_title"
-              />
-              <span>Edit title</span>
-            </label>
-          </div>
-
-          <%= if @edit_title? do %>
-            <input
-              type="text"
-              name="title"
-              value={@title}
-              required
-              autofocus
-              phx-change="title_change"
-              phx-debounce="200"
-              pattern={"[a-z]+-[a-z]+-[a-z0-9]{6}"}
-              title="Format: shortword-shortword-xxxxxx"
-              class="title-input"
-            />
-            <p class="hint">Use <code>shortword-shortword-xxxxxx</code> (6 alphanumeric).</p>
-          <% else %>
-            <input type="hidden" name="title" value={@title} />
-            <div class="title-default row">
-              <code class="title-generated">{@title}</code>
-              <button type="button" class="btn btn-quiet btn-small" phx-click="regenerate_title">
-                Regenerate
-              </button>
-            </div>
-          <% end %>
-        </div>
-
-        <fieldset class="domain-fieldset">
-          <legend>Domains</legend>
-          <%= if @domains == [] do %>
-            <p class="empty">
-              No question sets visible. Run <code>mix isomer.db.sync</code> then
-              <code>mix isomer.db.ensure_runtime</code>.
-            </p>
-          <% else %>
-            <div class="domain-grid">
-              <label :for={domain <- @domains} class="domain-option">
-                <input
-                  type="checkbox"
-                  name={"domains[#{domain["id"]}]"}
-                  value="true"
-                  class="domain-option-input"
+      <.card>
+        <.card_content>
+          <form phx-submit="save" class="space-y-6">
+            <div class="space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-sm font-medium text-slate-700">Title</span>
+                <.button
+                  type="button"
+                  color="gray"
+                  variant={if @edit_title?, do: "soft", else: "ghost"}
+                  size="sm"
+                  label={if @edit_title?, do: "Use generated", else: "Edit title"}
+                  phx-click="toggle_edit_title"
                 />
-                <div class="domain-option-panel">
-                  <span class="domain-option-title">{domain["label"]}</span>
-                  <p class="domain-option-desc">{domain["description"]}</p>
-                  <p :if={domain["anchors"] not in [nil, []]} class="domain-option-anchors">
-                    Anchors: {Enum.join(domain["anchors"] || [], ", ")}
-                  </p>
-                </div>
-              </label>
-            </div>
-          <% end %>
-        </fieldset>
+              </div>
 
-        <div class="row">
-          <button type="submit" class="btn" disabled={@domains == []}>Create & open wizard</button>
-          <.link navigate={~p"/orgs/#{@org_id}"} class="btn btn-quiet">Cancel</.link>
-        </div>
-      </form>
+              <%= if @edit_title? do %>
+                <.field
+                  type="text"
+                  name="title"
+                  label="Custom title"
+                  value={@title}
+                  required
+                  autofocus
+                  phx-change="title_change"
+                  phx-debounce="200"
+                  pattern={"[a-z]+-[a-z]+-[a-z0-9]{6}"}
+                  help_text="Format: shortword-shortword-xxxxxx (6 alphanumeric)."
+                />
+              <% else %>
+                <input type="hidden" name="title" value={@title} />
+                <div class="flex flex-wrap items-center gap-2">
+                  <code class="title-generated">{@title}</code>
+                  <.button
+                    type="button"
+                    color="gray"
+                    variant="ghost"
+                    size="sm"
+                    label="Regenerate"
+                    icon="hero-arrow-path"
+                    phx-click="regenerate_title"
+                  />
+                </div>
+              <% end %>
+            </div>
+
+            <fieldset>
+              <legend class="mb-2 text-sm font-medium text-slate-700">Domains</legend>
+              <%= if @domains == [] do %>
+                <.alert
+                  color="warning"
+                  variant="soft"
+                  with_icon
+                  label="No question sets visible. Run mix isomer.db.sync then mix isomer.db.ensure_runtime."
+                />
+              <% else %>
+                <div class="domain-grid">
+                  <label :for={domain <- @domains} class="domain-option">
+                    <input
+                      type="checkbox"
+                      name={"domains[#{domain["id"]}]"}
+                      value="true"
+                      class="domain-option-input"
+                    />
+                    <div>
+                      <span class="font-semibold text-slate-900">{domain["label"]}</span>
+                      <.p no_margin class="text-sm text-slate-600">{domain["description"]}</.p>
+                      <.p
+                        :if={domain["anchors"] not in [nil, []]}
+                        no_margin
+                        class="mt-1 text-xs text-slate-500"
+                      >
+                        Anchors: {Enum.join(domain["anchors"] || [], ", ")}
+                      </.p>
+                    </div>
+                  </label>
+                </div>
+              <% end %>
+            </fieldset>
+
+            <div class="flex flex-wrap gap-2">
+              <.button type="submit" label="Create & open wizard" disabled={@domains == []} />
+              <.button
+                link_type="live_redirect"
+                to={~p"/orgs/#{@org_id}"}
+                color="gray"
+                variant="ghost"
+                label="Cancel"
+              />
+            </div>
+          </form>
+        </.card_content>
+      </.card>
     </section>
     """
   end

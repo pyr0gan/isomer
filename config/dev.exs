@@ -6,13 +6,17 @@ config :isomer, IsomerWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "dev_only_secret_key_base_isomer_replace_in_prod_0123456789abcdef",
-  watchers: []
+  watchers: [
+    esbuild: {Esbuild, :install_and_run, [:isomer, ~w(--sourcemap=inline --watch)]},
+    tailwind: {Tailwind, :install_and_run, [:isomer, ~w(--watch)]}
+  ]
 
 config :isomer, IsomerWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"lib/isomer_web/(controllers|live|components)/.*(ex|heex)$",
-      ~r"lib/isomer_web/templates/.*(eex)$",
+      ~r"lib/isomer_web/controllers/.*/.*(heex)$",
+      ~r"assets/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$"
     ]
   ]

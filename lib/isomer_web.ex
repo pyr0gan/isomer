@@ -68,6 +68,7 @@ defmodule IsomerWeb do
     quote do
       import Phoenix.HTML
       import IsomerWeb.CoreComponents
+      use PetalComponents
 
       alias Phoenix.LiveView.JS
 

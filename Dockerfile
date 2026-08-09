@@ -8,7 +8,7 @@ ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
 
 FROM ${BUILDER_IMAGE} AS builder
 
-RUN apt-get update -y && apt-get install -y build-essential git \
+RUN apt-get update -y && apt-get install -y build-essential git curl ca-certificates \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 WORKDIR /app
@@ -24,9 +24,12 @@ RUN mkdir -p lib
 RUN mix deps.compile
 
 COPY priv priv
+COPY assets assets
 COPY lib lib
 
 RUN mix compile
+RUN mix assets.setup
+RUN mix assets.deploy
 RUN mix release
 
 FROM ${RUNNER_IMAGE}

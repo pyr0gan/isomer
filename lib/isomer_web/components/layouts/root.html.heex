@@ -7,6 +7,7 @@
     <.live_title default="Isomer">
       {assigns[:page_title]}
     </.live_title>
+    <link rel="icon" href={~p"/images/isomer-mark.svg"} type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,11 +15,6 @@
       rel="stylesheet"
     />
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
-
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/phoenix.js"}>
-    </script>
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/phoenix_live_view.js"}>
-    </script>
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>

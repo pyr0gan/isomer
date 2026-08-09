@@ -56,7 +56,9 @@ fly deploy
 ## Local
 
 ```
-mix deps.get
+mix setup                      # deps + Tailwind/esbuild install + asset build
 mix isomer.db.ensure_runtime   # once per Surreal DB
 mix phx.server                 # http://localhost:4000
 ```
+
+UI assets live under `assets/` and compile to `priv/static/assets/` via Tailwind v4 and esbuild (Petal Components). Production images run `mix assets.deploy` in the Dockerfile.

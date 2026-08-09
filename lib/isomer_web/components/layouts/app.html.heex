@@ -1,14 +1,30 @@
-<header class="top">
-  <a href={~p"/"} class="brand">Isomer</a>
-  <nav>
-    <%= if assigns[:current_email] do %>
-      <span class="who">{@current_email}</span>
-      <.link navigate={~p"/orgs"}>Orgs</.link>
-      <a href={~p"/logout"}>Sign out</a>
-    <% end %>
-  </nav>
+<header class="border-b border-slate-200/80 bg-white/70 backdrop-blur">
+  <.container max_width="lg" class="flex items-center justify-between gap-4 py-3">
+    <.brand_logo to={~p"/"} />
+    <nav :if={assigns[:current_email]} class="flex items-center gap-3 text-sm">
+      <span class="hidden text-slate-600 sm:inline">{@current_email}</span>
+      <.button
+        link_type="live_redirect"
+        to={~p"/orgs"}
+        color="gray"
+        variant="ghost"
+        size="sm"
+        label="Orgs"
+      />
+      <.button
+        link_type="a"
+        to={~p"/logout"}
+        color="gray"
+        variant="outline"
+        size="sm"
+        label="Sign out"
+      />
+    </nav>
+  </.container>
 </header>
-<main class="shell">
-  <.flash_group flash={@flash} />
-  {@inner_content}
+<main>
+  <.container max_width="lg" class="py-8">
+    <.flash_group flash={@flash} />
+    {@inner_content}
+  </.container>
 </main>

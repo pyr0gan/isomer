@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@source "../../lib/isomer_web/**/*.*ex";
+@source "../../deps/petal_components/**/*.*ex";
+@import "../../deps/petal_components/assets/default.css";
+
+/* Heroicons CSS classes used by Petal `<.icon>` / button icons */
+@plugin "./tailwind_heroicons.js";
+
+@custom-variant phx-click-loading (.phx-click-loading&, .phx-click-loading &);
+@custom-variant phx-submit-loading (.phx-submit-loading&, .phx-submit-loading &);
+@custom-variant phx-change-loading (.phx-change-loading&, .phx-change-loading &);
+
+/* Isomer brand tokens (override Petal defaults). Cool teal primary, no purple. */
+@theme {
+  --font-sans: "Libre Franklin", "Avenir Next", "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+
+  --color-primary-50: oklch(97% 0.02 210);
+  --color-primary-100: oklch(93% 0.04 210);
+  --color-primary-200: oklch(87% 0.06 210);
+  --color-primary-300: oklch(78% 0.08 210);
+  --color-primary-400: oklch(65% 0.09 210);
+  --color-primary-500: oklch(52% 0.09 210);
+  --color-primary-600: oklch(44% 0.085 210);
+  --color-primary-700: oklch(37% 0.07 210);
+  --color-primary-800: oklch(30% 0.055 210);
+  --color-primary-900: oklch(24% 0.04 210);
+  --color-primary-950: oklch(18% 0.03 210);
+}
+
+@layer base {
+  body {
+    @apply min-h-screen bg-gradient-to-br from-slate-100 via-sky-50 to-teal-50 text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .isomer-shell {
+    @apply mx-auto w-full max-w-3xl px-4 py-8;
+  }
+
+  .answer-controls {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .answer-mark {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold;
+  }
+
+  .answer-mark-yes {
+    @apply bg-emerald-500/15 text-emerald-800;
+  }
+
+  .answer-mark-no {
+    @apply bg-red-500/15 text-red-800;
+  }
+
+  .domain-grid {
+    @apply mt-2 grid gap-3;
+  }
+
+  .domain-option {
+    @apply grid cursor-pointer grid-cols-[auto_1fr] items-start gap-3 rounded-lg border border-slate-200 bg-white/80 p-3;
+  }
+
+  .domain-option:has(.domain-option-input:checked) {
+    @apply border-primary-500 bg-primary-50;
+  }
+
+  .title-generated {
+    @apply inline-block rounded-md border border-dashed border-slate-300 bg-white px-3 py-2 font-mono text-base;
+  }
+}

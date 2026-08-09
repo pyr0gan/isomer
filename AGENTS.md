@@ -45,7 +45,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Start: `mix phx.server` → `http://localhost:4000` (Bandit). Prod/release needs `PHX_SERVER=true`, `SECRET_KEY_BASE`, `PHX_HOST`, plus `SURREAL_*` for user JWT signup/signin (Vault root password is **not** required on the web request path).
 - Session cookie stores Surreal user JWT; each LiveView opens its own user-scoped WSS connection via `Isomer.Db.UserClient` and closes it on terminate.
 - Org create needs `org` select permission `created_by = $auth.id` (in addition to membership) so `CREATE` can return the row before the `member` edge exists — already in `RuntimeSchema`.
-- Static LiveView JS is vendored under `priv/static/assets/` (no esbuild step). Deploy: `docs/deploy.md`.
+- UI uses Hex `petal_components` + Tailwind v4 / esbuild (`assets/`, aliases `mix assets.setup` / `mix assets.build` / `mix assets.deploy`). Dev watchers rebuild CSS/JS; Docker runs `mix assets.deploy` before release. Deploy: `docs/deploy.md`.
 
 ### Gotchas
 
