@@ -1,12 +1,14 @@
 <div class="mx-auto max-w-md">
-  <.h1 class="text-center">Welcome</.h1>
-  <.p class="mb-6 text-center text-slate-600">
-    Sign in to run assessments. Identity lives in SurrealDB.
-  </.p>
+  <div class="mb-8 text-center">
+    <.h1>Welcome</.h1>
+    <.p class="isomer-lede mx-auto text-center">
+      Sign in to run assessments. Identity lives in SurrealDB.
+    </.p>
+  </div>
 
   <.alert :if={@error} color="danger" variant="soft" with_icon class="mb-6" label={@error} />
 
-  <.card>
+  <.card class="shadow-md">
     <.card_content class="space-y-6">
       <.tabs variant="segmented" id="auth-tabs" class="w-full justify-center">
         <.tab

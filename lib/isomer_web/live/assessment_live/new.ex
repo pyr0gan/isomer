@@ -106,9 +106,9 @@ defmodule IsomerWeb.AssessmentLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <section class="space-y-6">
+    <section class="isomer-page">
       <.h1>New assessment</.h1>
-      <.p class="text-slate-600">
+      <.p class="isomer-lede">
         Pick one or more question-set domains from the published corpus.
       </.p>
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />

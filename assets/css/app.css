@@ -7,11 +7,15 @@
 /* Heroicons CSS classes used by Petal `<.icon>` / button icons */
 @plugin "./tailwind_heroicons.js";
 
+/* Only opt into Petal `dark:` styles via an explicit .dark ancestor.
+   Without this, OS dark mode mixes Petal dark tokens onto our light shell. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @custom-variant phx-click-loading (.phx-click-loading&, .phx-click-loading &);
 @custom-variant phx-submit-loading (.phx-submit-loading&, .phx-submit-loading &);
 @custom-variant phx-change-loading (.phx-change-loading&, .phx-change-loading &);
 
-/* Isomer brand tokens (override Petal defaults). Cool teal primary, no purple. */
+/* Isomer brand tokens — cool teal primary, slate neutrals, no purple. */
 @theme {
   --font-sans: "Libre Franklin", "Avenir Next", "Segoe UI", sans-serif;
   --font-display: "Fraunces", Georgia, serif;
@@ -27,48 +31,109 @@
   --color-primary-800: oklch(30% 0.055 210);
   --color-primary-900: oklch(24% 0.04 210);
   --color-primary-950: oklch(18% 0.03 210);
+
+  --color-secondary-50: oklch(97% 0.01 230);
+  --color-secondary-100: oklch(94% 0.02 230);
+  --color-secondary-200: oklch(88% 0.03 230);
+  --color-secondary-300: oklch(78% 0.04 230);
+  --color-secondary-400: oklch(65% 0.045 230);
+  --color-secondary-500: oklch(52% 0.04 230);
+  --color-secondary-600: oklch(44% 0.035 230);
+  --color-secondary-700: oklch(37% 0.03 230);
+  --color-secondary-800: oklch(30% 0.025 230);
+  --color-secondary-900: oklch(24% 0.02 230);
+  --color-secondary-950: oklch(18% 0.015 230);
 }
 
 @layer base {
+  html {
+    color-scheme: light;
+  }
+
   body {
-    @apply min-h-screen bg-gradient-to-br from-slate-100 via-sky-50 to-teal-50 text-slate-900 antialiased;
+    @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 10% -10%, oklch(92% 0.04 210 / 0.9), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(94% 0.03 180 / 0.7), transparent 50%),
+      linear-gradient(180deg, oklch(98% 0.01 210), oklch(97% 0.008 220));
+    background-attachment: fixed;
+  }
+
+  h1,
+  .pc-h1 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  h2,
+  .pc-h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
   }
 }
 
 @layer components {
-  .isomer-shell {
-    @apply mx-auto w-full max-w-3xl px-4 py-8;
+  .isomer-app-header {
+    @apply sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-md;
+  }
+
+  .isomer-page {
+    @apply space-y-6;
+  }
+
+  .isomer-page-header {
+    @apply flex flex-wrap items-start justify-between gap-4;
+  }
+
+  .isomer-lede {
+    @apply mt-1 max-w-2xl text-slate-600;
   }
 
   .answer-controls {
-    @apply flex flex-wrap items-center gap-2;
+    @apply flex flex-wrap items-end gap-3;
   }
 
   .answer-mark {
-    @apply inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold;
+    @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold;
   }
 
   .answer-mark-yes {
-    @apply bg-emerald-500/15 text-emerald-800;
+    @apply bg-emerald-500/15 text-emerald-800 ring-1 ring-emerald-500/25;
   }
 
   .answer-mark-no {
-    @apply bg-red-500/15 text-red-800;
+    @apply bg-red-500/15 text-red-800 ring-1 ring-red-500/25;
   }
 
   .domain-grid {
-    @apply mt-2 grid gap-3;
+    @apply mt-2 grid gap-3 sm:grid-cols-1;
   }
 
   .domain-option {
-    @apply grid cursor-pointer grid-cols-[auto_1fr] items-start gap-3 rounded-lg border border-slate-200 bg-white/80 p-3;
+    @apply grid cursor-pointer grid-cols-[auto_1fr] items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition;
+  }
+
+  .domain-option:hover {
+    @apply border-primary-300;
   }
 
   .domain-option:has(.domain-option-input:checked) {
-    @apply border-primary-500 bg-primary-50;
+    @apply border-primary-500 bg-primary-50/80 ring-1 ring-primary-500/30;
   }
 
   .title-generated {
-    @apply inline-block rounded-md border border-dashed border-slate-300 bg-white px-3 py-2 font-mono text-base;
+    @apply inline-block rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 font-mono text-base text-slate-800;
+  }
+
+  .question-meta {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .wizard-domain-panel {
+    @apply space-y-4 pt-1 pb-2;
+  }
+
+  .wizard-progress {
+    @apply text-sm font-normal text-slate-500;
   }
 }

@@ -25,9 +25,9 @@ defmodule IsomerWeb.OrgLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <section class="mx-auto max-w-lg space-y-6">
+    <section class="isomer-page mx-auto max-w-lg">
       <.h1>New organization</.h1>
-      <.p class="text-slate-600">Creates an `org` and relates you as `owner`.</.p>
+      <.p class="isomer-lede">Creates an `org` and relates you as `owner`.</.p>
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
       <.card>

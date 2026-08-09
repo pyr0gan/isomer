@@ -1,8 +1,10 @@
-<header class="border-b border-slate-200/80 bg-white/70 backdrop-blur">
-  <.container max_width="lg" class="flex items-center justify-between gap-4 py-3">
+<header class="isomer-app-header">
+  <.container max_width="lg" class="flex items-center justify-between gap-4 py-3.5">
     <.brand_logo to={~p"/"} />
-    <nav :if={assigns[:current_email]} class="flex items-center gap-3 text-sm">
-      <span class="hidden text-slate-600 sm:inline">{@current_email}</span>
+    <nav :if={assigns[:current_email]} class="flex items-center gap-2 sm:gap-3">
+      <span class="hidden max-w-[14rem] truncate text-sm text-slate-500 sm:inline">
+        {@current_email}
+      </span>
       <.button
         link_type="live_redirect"
         to={~p"/orgs"}
@@ -22,8 +24,8 @@
     </nav>
   </.container>
 </header>
-<main>
-  <.container max_width="lg" class="py-8">
+<main class="pb-16">
+  <.container max_width="lg" class="py-8 sm:py-10">
     <.flash_group flash={@flash} />
     {@inner_content}
   </.container>

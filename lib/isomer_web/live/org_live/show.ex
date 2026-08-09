@@ -47,11 +47,13 @@ defmodule IsomerWeb.OrgLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <section class="space-y-6">
-      <div class="flex flex-wrap items-start justify-between gap-3">
+    <section class="isomer-page">
+      <div class="isomer-page-header">
         <div>
           <.h1>{@org["name"]}</.h1>
-          <.p class="text-slate-500">id …{Tenant.short_key(@org_id)}</.p>
+          <.p class="isomer-lede">
+            Assessments for this tenant · id …{Tenant.short_key(@org_id)}
+          </.p>
         </div>
         <div class="flex flex-wrap gap-2">
           <.button
@@ -71,24 +73,31 @@ defmodule IsomerWeb.OrgLive.Show do
         </div>
       </div>
 
-      <.p class="text-slate-600">Assessments for this tenant.</.p>
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
       <%= if @assessments == [] do %>
         <.card variant="muted">
-          <.card_content>
-            <.p no_margin class="text-slate-600">No assessments yet.</.p>
+          <.card_content class="py-8 text-center">
+            <.p class="text-slate-600">No assessments yet.</.p>
+            <.button
+              link_type="live_redirect"
+              to={~p"/orgs/#{@org_id}/assessments/new"}
+              label="Start an assessment"
+              class="mt-2"
+            />
           </.card_content>
         </.card>
       <% else %>
         <ul class="space-y-3">
           <li :for={a <- @assessments}>
-            <.card>
-              <.card_content>
-                <.link navigate={~p"/assessments/#{a["id"]}"} class="no-underline">
-                  <span class="font-semibold text-slate-900">{a["title"]}</span>
-                  <.badge color="gray" label={a["status"]} class="ml-2" />
+            <.card class="transition hover:border-primary-300 hover:shadow-md">
+              <.card_content class="flex flex-wrap items-center justify-between gap-3">
+                <.link navigate={~p"/assessments/#{a["id"]}"} class="min-w-0 flex-1 no-underline">
+                  <span class="block font-mono text-base font-semibold text-slate-900">
+                    {a["title"]}
+                  </span>
                 </.link>
+                <.badge color="info" variant="soft" label={a["status"] || "draft"} />
               </.card_content>
             </.card>
           </li>

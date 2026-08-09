@@ -4,6 +4,34 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   alias Isomer.Domains
   alias Isomer.Db.Tenant
 
+  @maturity_levels %{
+    "L0" => %{
+      name: "Ad hoc / Unaware",
+      color: "gray",
+      tip: "No structured practice yet — work happens without governance awareness."
+    },
+    "L1" => %{
+      name: "Foundational",
+      color: "info",
+      tip: "Foundational — first policies or practices exist on paper and are communicated."
+    },
+    "L2" => %{
+      name: "Defined",
+      color: "primary",
+      tip: "Defined — working, reviewable system ready for certification-style scrutiny."
+    },
+    "L3" => %{
+      name: "Measured",
+      color: "success",
+      tip: "Measured / certified — steered by KPIs, audits, or certification evidence."
+    },
+    "L4" => %{
+      name: "Optimizing",
+      color: "warning",
+      tip: "Optimizing — anticipates change and treats governance as a strategic capability."
+    }
+  }
+
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     id = Tenant.canonicalize_record_id(id)
@@ -71,9 +99,15 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
       case Tenant.upsert_answer(socket.assigns.surreal, attrs) do
         :ok ->
+          answers = Map.put(socket.assigns.answers, qid, coerced)
+
           {:noreply,
            socket
-           |> assign(:answers, Map.put(socket.assigns.answers, qid, coerced))
+           |> assign(:answers, answers)
+           |> assign(
+             :domain_sections,
+             refresh_section_progress(socket.assigns.domain_sections, answers)
+           )
            |> assign(:error, nil)}
 
         {:error, reason} ->
@@ -89,6 +123,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       domains = assessment["domains"] || []
       questions = project_questions(sets, domains)
       answer_map = Map.new(answers, fn a -> {a["question_id"], a["value"]} end)
+      domain_sections = group_by_domain(questions, answer_map)
 
       set_domains =
         sets
@@ -105,6 +140,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          assessment_id: id,
          org_id: Tenant.canonicalize_record_id(assessment["org"]),
          questions: questions,
+         domain_sections: domain_sections,
          answers: answer_map,
          addable_domains: addable
        }}
@@ -118,12 +154,12 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   @impl true
   def render(assigns) do
     ~H"""
-    <section class="space-y-6">
-      <div class="flex flex-wrap items-start justify-between gap-3">
+    <section class="isomer-page">
+      <div class="isomer-page-header">
         <div>
           <.h1>{@assessment["title"]}</.h1>
-          <.p class="text-slate-600">
-            Answer questions; each save writes an `answer` row with your Surreal JWT.
+          <.p class="isomer-lede">
+            Work domain by domain. Each answer is saved with your Surreal user JWT.
           </.p>
         </div>
         <.button
@@ -132,6 +168,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           color="gray"
           variant="outline"
           label="Details"
+          icon="hero-information-circle"
         />
       </div>
 
@@ -162,103 +199,145 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         </.card_content>
       </.card>
 
-      <%= if @questions == [] do %>
+      <%= if @domain_sections == [] do %>
         <.card variant="muted">
           <.card_content>
             <.p no_margin class="text-slate-600">No questions for the selected domains.</.p>
           </.card_content>
         </.card>
       <% else %>
-        <ol class="space-y-4">
-          <li :for={q <- @questions}>
-            <.card>
-              <.card_content class="space-y-3">
-                <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                  <code>{q.id}</code>
-                  <.badge color="gray" variant="soft" label={q.domain} />
-                  <.badge :if={q.level} color="info" variant="soft" label={q.level} />
-                </div>
-                <.p no_margin class="text-base font-medium text-slate-900">{q.ask}</.p>
-                <.p :if={q.evidence_prompt} no_margin class="text-sm text-slate-600">
-                  {q.evidence_prompt}
-                </.p>
-                <form phx-submit="answer" class="space-y-2">
-                  <input type="hidden" name="question_id" value={q.id} />
-                  <div class="answer-controls">
-                    <%= case q.kind do %>
-                      <% "boolean" -> %>
-                        <.field
-                          type="select"
-                          name="value"
-                          label="Answer"
-                          options={[{"—", ""}, {"Yes", "true"}, {"No", "false"}]}
-                          value={boolean_select_value(@answers[q.id])}
-                          no_margin
-                          wrapper_class="min-w-[10rem]"
-                        />
-                        <span
-                          :if={@answers[q.id] == true}
-                          class="answer-mark answer-mark-yes"
-                          aria-label="Yes"
-                          title="Yes"
-                        >
-                          ✓
-                        </span>
-                        <span
-                          :if={@answers[q.id] == false}
-                          class="answer-mark answer-mark-no"
-                          aria-label="No"
-                          title="No"
-                        >
-                          ✕
-                        </span>
-                      <% "multi" -> %>
-                        <.field
-                          type="text"
-                          name="value"
-                          label="Answer"
-                          placeholder="comma-separated"
-                          value={format_multi(@answers[q.id])}
-                          no_margin
-                        />
-                        <span
-                          :if={answered?(@answers, q.id)}
-                          class="answer-mark answer-mark-yes"
-                          aria-label="Saved"
-                        >
-                          ✓
-                        </span>
-                      <% _ -> %>
-                        <.field
-                          type="text"
-                          name="value"
-                          label="Answer"
-                          value={to_string(@answers[q.id] || "")}
-                          no_margin
-                        />
-                        <span
-                          :if={answered?(@answers, q.id)}
-                          class="answer-mark answer-mark-yes"
-                          aria-label="Saved"
-                        >
-                          ✓
-                        </span>
-                    <% end %>
-                    <.button
-                      type="submit"
-                      size="sm"
-                      label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
-                      color={if answered?(@answers, q.id), do: "gray", else: "primary"}
-                      variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
-                    />
+        <.accordion
+          container_id="wizard-domains"
+          variant="bordered"
+          multiple={true}
+          open_index={0}
+          class="rounded-xl bg-white/70 shadow-sm"
+        >
+          <:item
+            :for={section <- @domain_sections}
+            heading={"#{section.label}  ·  #{section.answered}/#{section.total}"}
+          >
+            <div class="wizard-domain-panel">
+              <.p :if={section.description != ""} class="text-sm text-slate-600">
+                {section.description}
+              </.p>
+
+              <.card :for={q <- section.questions} class="shadow-none">
+                <.card_content class="space-y-3">
+                  <div class="question-meta">
+                    <.tooltip label={"Question id #{q.id}"} placement="top">
+                      <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                        {q.id}
+                      </code>
+                    </.tooltip>
+                    <.level_badge :if={q.level} level={q.level} />
                   </div>
-                </form>
-              </.card_content>
-            </.card>
-          </li>
-        </ol>
+
+                  <.p no_margin class="text-base font-medium leading-snug text-slate-900">
+                    {q.ask}
+                  </.p>
+                  <.p :if={q.evidence_prompt} no_margin class="text-sm text-slate-600">
+                    <span class="font-medium text-slate-700">Evidence:</span>
+                    {q.evidence_prompt}
+                  </.p>
+
+                  <form phx-submit="answer">
+                    <input type="hidden" name="question_id" value={q.id} />
+                    <div class="answer-controls">
+                      <%= case q.kind do %>
+                        <% "boolean" -> %>
+                          <.field
+                            type="radio-group"
+                            name="value"
+                            label="Answer"
+                            options={[{"Yes", "true"}, {"No", "false"}]}
+                            value={boolean_select_value(@answers[q.id])}
+                            group_layout="row"
+                            no_margin
+                          />
+                          <span
+                            :if={@answers[q.id] == true}
+                            class="answer-mark answer-mark-yes"
+                            aria-label="Yes"
+                          >
+                            ✓
+                          </span>
+                          <span
+                            :if={@answers[q.id] == false}
+                            class="answer-mark answer-mark-no"
+                            aria-label="No"
+                          >
+                            ✕
+                          </span>
+                        <% "multi" -> %>
+                          <.field
+                            type="text"
+                            name="value"
+                            label="Answer"
+                            placeholder="comma-separated"
+                            value={format_multi(@answers[q.id])}
+                            no_margin
+                            wrapper_class="min-w-[14rem] flex-1"
+                          />
+                          <span
+                            :if={answered?(@answers, q.id)}
+                            class="answer-mark answer-mark-yes"
+                            aria-label="Saved"
+                          >
+                            ✓
+                          </span>
+                        <% _ -> %>
+                          <.field
+                            type="text"
+                            name="value"
+                            label="Answer"
+                            value={to_string(@answers[q.id] || "")}
+                            no_margin
+                            wrapper_class="min-w-[14rem] flex-1"
+                          />
+                          <span
+                            :if={answered?(@answers, q.id)}
+                            class="answer-mark answer-mark-yes"
+                            aria-label="Saved"
+                          >
+                            ✓
+                          </span>
+                      <% end %>
+                      <.button
+                        type="submit"
+                        size="sm"
+                        label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
+                        color={if answered?(@answers, q.id), do: "gray", else: "primary"}
+                        variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
+                      />
+                    </div>
+                  </form>
+                </.card_content>
+              </.card>
+            </div>
+          </:item>
+        </.accordion>
       <% end %>
     </section>
+    """
+  end
+
+  attr(:level, :string, required: true)
+
+  def level_badge(assigns) do
+    meta =
+      Map.get(@maturity_levels, assigns.level, %{
+        name: assigns.level,
+        color: "gray",
+        tip: assigns.level
+      })
+
+    assigns = assign(assigns, :meta, meta)
+
+    ~H"""
+    <.tooltip label={"#{@level} — #{@meta.name}. #{@meta.tip}"} placement="top">
+      <.badge color={@meta.color} variant="soft" label={@level} class="cursor-help" />
+    </.tooltip>
     """
   end
 
@@ -281,6 +360,37 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           domain: domain
         }
       end)
+    end)
+  end
+
+  defp group_by_domain(questions, answers) do
+    catalog = Map.new(Domains.catalog(), &{&1["id"], &1})
+
+    questions
+    |> Enum.group_by(& &1.domain)
+    |> Enum.map(fn {domain_id, qs} ->
+      meta = Map.get(catalog, domain_id, %{})
+      total = length(qs)
+      answered = Enum.count(qs, &answered?(answers, &1.id))
+
+      %{
+        id: domain_id,
+        label: meta["label"] || Domains.sentence_case(domain_id),
+        description: meta["description"] || "",
+        questions: qs,
+        total: total,
+        answered: answered
+      }
+    end)
+    |> Enum.sort_by(fn section ->
+      Enum.find_index(Domains.catalog(), &(&1["id"] == section.id)) || 999
+    end)
+  end
+
+  defp refresh_section_progress(sections, answers) do
+    Enum.map(sections, fn section ->
+      answered = Enum.count(section.questions, &answered?(answers, &1.id))
+      %{section | answered: answered}
     end)
   end
 

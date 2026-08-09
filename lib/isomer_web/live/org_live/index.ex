@@ -36,11 +36,13 @@ defmodule IsomerWeb.OrgLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <section class="space-y-6">
-      <div class="flex flex-wrap items-start justify-between gap-3">
+    <section class="isomer-page">
+      <div class="isomer-page-header">
         <div>
           <.h1>Organizations</.h1>
-          <.p class="text-slate-600">Tenants you belong to via Surreal `member` edges.</.p>
+          <.p class="isomer-lede">
+            Tenants you belong to. Create one to start a maturity assessment.
+          </.p>
         </div>
         <.button
           link_type="live_redirect"
@@ -54,19 +56,23 @@ defmodule IsomerWeb.OrgLive.Index do
 
       <%= if @orgs == [] do %>
         <.card variant="muted">
-          <.card_content>
-            <.p no_margin class="text-slate-600">
-              No organizations yet. Create one to start an assessment.
-            </.p>
+          <.card_content class="py-8 text-center">
+            <.p class="text-slate-600">No organizations yet.</.p>
+            <.button
+              link_type="live_redirect"
+              to={~p"/orgs/new"}
+              label="Create your first org"
+              class="mt-2"
+            />
           </.card_content>
         </.card>
       <% else %>
         <ul class="space-y-3">
           <li :for={org <- @orgs}>
-            <.card>
+            <.card class="transition hover:border-primary-300 hover:shadow-md">
               <.card_content class="flex flex-wrap items-center justify-between gap-3">
                 <.link navigate={~p"/orgs/#{org["id"]}"} class="min-w-0 flex-1 no-underline">
-                  <span class="block font-semibold text-slate-900">{org["name"]}</span>
+                  <span class="block text-lg font-semibold text-slate-900">{org["name"]}</span>
                   <span class="text-sm text-slate-500">
                     id …{Tenant.short_key(org["id"])}
                   </span>
@@ -74,9 +80,10 @@ defmodule IsomerWeb.OrgLive.Index do
                 <.button
                   type="button"
                   color="danger"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   label="Delete"
+                  icon="hero-trash"
                   phx-click="delete"
                   phx-value-id={org["id"]}
                   data-confirm={"Delete “#{org["name"]}” (…#{Tenant.short_key(org["id"])}) and all its assessments?"}

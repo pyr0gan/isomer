@@ -82,13 +82,13 @@ defmodule IsomerWeb.AssessmentLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <section class="space-y-6">
-      <div class="flex flex-wrap items-start justify-between gap-3">
+    <section class="isomer-page">
+      <div class="isomer-page-header">
         <div>
           <.h1>{@assessment["title"]}</.h1>
-          <.p class="text-slate-600">
-            Status: <.badge color="info" label={@assessment["status"]} />
-            · Kind: {@assessment["kind"]}
+          <.p class="isomer-lede flex flex-wrap items-center gap-2">
+            <.badge color="info" variant="soft" label={@assessment["status"] || "draft"} />
+            <.badge color="gray" variant="soft" label={@assessment["kind"] || "domains"} />
           </.p>
         </div>
         <.button
