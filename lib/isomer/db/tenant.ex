@@ -403,7 +403,6 @@ defmodule Isomer.Db.Tenant do
 
   defp members_empty?(members) when is_list(members), do: members == []
   defp members_empty?(%SurrealDB.None{}), do: true
-  defp members_empty?(nil), do: true
   defp members_empty?(_), do: false
 
   defp none?(%SurrealDB.None{}), do: true

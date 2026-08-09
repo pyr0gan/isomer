@@ -1,24 +1,25 @@
 defmodule IsomerWeb.AssessmentLive.New do
   use IsomerWeb.SurrealLive
 
+  alias Isomer.Domains
   alias Isomer.Db.Tenant
 
   @impl true
   def mount(%{"org_id" => org_id}, _session, socket) do
     org_id = Tenant.canonicalize_record_id(org_id)
 
-    sets =
+    set_domains =
       case Tenant.list_question_sets(socket.assigns.surreal) do
-        {:ok, rows} -> rows
-        {:error, _} -> []
+        {:ok, rows} ->
+          rows
+          |> Enum.map(& &1["domain"])
+          |> Enum.reject(&is_nil/1)
+
+        {:error, _} ->
+          []
       end
 
-    domains =
-      sets
-      |> Enum.map(& &1["domain"])
-      |> Enum.reject(&is_nil/1)
-      |> Enum.uniq()
-      |> Enum.sort()
+    domains = Domains.selectable(set_domains)
 
     {:ok,
      assign(socket,
@@ -26,7 +27,6 @@ defmodule IsomerWeb.AssessmentLive.New do
        org_id: org_id,
        title: "",
        domains: domains,
-       selected_domains: [],
        error: nil
      )}
   end
@@ -75,7 +75,7 @@ defmodule IsomerWeb.AssessmentLive.New do
           <input type="text" name="title" value={@title} required autofocus />
         </label>
 
-        <fieldset>
+        <fieldset class="domain-fieldset">
           <legend>Domains</legend>
           <%= if @domains == [] do %>
             <p class="empty">
@@ -83,10 +83,23 @@ defmodule IsomerWeb.AssessmentLive.New do
               <code>mix isomer.db.ensure_runtime</code>.
             </p>
           <% else %>
-            <label :for={domain <- @domains} class="check">
-              <input type="checkbox" name={"domains[#{domain}]"} value="true" />
-              {domain}
-            </label>
+            <div class="domain-grid">
+              <label :for={domain <- @domains} class="domain-option">
+                <input
+                  type="checkbox"
+                  name={"domains[#{domain["id"]}]"}
+                  value="true"
+                  class="domain-option-input"
+                />
+                <div class="domain-option-panel">
+                  <span class="domain-option-title">{domain["label"]}</span>
+                  <p class="domain-option-desc">{domain["description"]}</p>
+                  <p :if={domain["anchors"] not in [nil, []]} class="domain-option-anchors">
+                    Anchors: {Enum.join(domain["anchors"] || [], ", ")}
+                  </p>
+                </div>
+              </label>
+            </div>
           <% end %>
         </fieldset>
 

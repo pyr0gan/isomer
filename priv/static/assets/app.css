@@ -250,6 +250,66 @@ fieldset {
   padding: 0.85rem 1rem;
 }
 
+.domain-fieldset {
+  padding: 1rem;
+}
+
+.domain-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.domain-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  margin: 0;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f7fafc;
+  cursor: pointer;
+}
+
+.domain-option:has(.domain-option-input:checked) {
+  border-color: var(--accent);
+  background: rgba(21, 107, 132, 0.08);
+}
+
+.domain-option-input {
+  margin-top: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+
+.domain-option-panel {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.domain-option-title {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.domain-option-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.domain-option-anchors {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-family: "IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
+}
+
 code {
   font-family: "IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
   font-size: 0.9em;
