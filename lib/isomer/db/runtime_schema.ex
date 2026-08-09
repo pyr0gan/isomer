@@ -144,7 +144,7 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE FIELD OVERWRITE classification ON assessment TYPE option<object>;
       DEFINE FIELD OVERWRITE activates ON assessment TYPE option<array>
         COMMENT "Activated requirement corpus ids from ruleset eval";
-      DEFINE FIELD OVERWRITE domain_metrics ON assessment TYPE option<object>
+      DEFINE FIELD OVERWRITE domain_metrics ON assessment TYPE option<object> FLEXIBLE
         COMMENT "Per-domain metric opt-in: {domain_id: {collect, time_scale, time_hours}}";
       DEFINE FIELD OVERWRITE created_by ON assessment TYPE record<user>;
       DEFINE FIELD OVERWRITE created_at ON assessment TYPE datetime DEFAULT time::now();

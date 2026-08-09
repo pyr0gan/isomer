@@ -7,6 +7,7 @@ Tooling versions only (`mix.exs`). Content is versioned in YAML — see
 
 - Whole-app type ramp: root `font-size: 112.5%` (18px), body `text-base` + relaxed
   leading; lift cramped `text-xs`/`text-sm` UI copy in wizard, org, and metrics
+- `assessment.domain_metrics` is `FLEXIBLE` so SCHEMAFULL accepts dynamic domain-id keys
 - Org page: two-column maturity / objective-metrics panels (`lg+`); sparklines for
   Yes %, unanswered, evidence coverage, and logged hours (placeholder until ≥2
   assessments contribute)
