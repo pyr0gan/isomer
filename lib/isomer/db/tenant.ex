@@ -34,8 +34,58 @@ defmodule Isomer.Db.Tenant do
            "table" => table,
            "key" => key
          }) do
-      {:ok, results} -> unwrap_one(results)
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, org} = ok ->
+            _ = ensure_owner_membership(conn, org["id"])
+            ok
+
+          other ->
+            other
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Orgs created during the early CREATE/RELATE bug can exist without a `member`
+  edge. Assessment create requires membership, so heal owner membership when the
+  current user is `created_by` and no member row exists yet.
+  """
+  def ensure_owner_membership(conn, org_id) when is_binary(org_id) do
+    {table, key} = split_record_id!(org_id)
+
+    check_sql = """
+    LET $org = type::record($table, $key);
+    RETURN {
+      auth: $auth.id,
+      creator: (SELECT VALUE created_by FROM ONLY $org),
+      members: (SELECT * FROM member WHERE in = $auth.id AND out = $org)
+    };
+    """
+
+    case UserClient.query(conn, check_sql, %{"table" => table, "key" => key}) do
+      {:ok, results} ->
+        info = useful_result(results)
+
+        if heal_owner?(info) do
+          heal_sql = """
+          LET $org = type::record($table, $key);
+          RELATE $auth -> member -> $org SET role = 'owner';
+          """
+
+          case UserClient.query(conn, heal_sql, %{"table" => table, "key" => key}) do
+            {:ok, _} -> :ok
+            {:error, reason} -> {:error, reason}
+          end
+        else
+          :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -59,6 +109,8 @@ defmodule Isomer.Db.Tenant do
     kind = Map.get(attrs, "kind", "domains")
     domains = Map.get(attrs, "domains") || []
     ruleset_id = Map.get(attrs, "ruleset_id")
+    org_id = canonicalize_record_id(org_id)
+    _ = ensure_owner_membership(conn, org_id)
     {org_table, org_key} = split_record_id!(org_id)
 
     {ruleset_sql, vars} =
@@ -109,8 +161,9 @@ defmodule Isomer.Db.Tenant do
           {:error, _} ->
             {:error,
              "Could not create assessment for #{canonicalize_record_id(org_id)}. " <>
-               "Confirm you still belong to that org (owner/admin/assessor), then retry. " <>
-               "If this org link has backticks in the URL, open the org from /orgs again."}
+               "This usually means there is no owner membership on the org " <>
+               "(an early create bug left some orgs without a member edge). " <>
+               "Open the org from /orgs once to repair, or create a new org."}
         end
 
       {:error, reason} ->
@@ -332,6 +385,26 @@ defmodule Isomer.Db.Tenant do
     id = canonicalize_record_id(Map.get(row, "id") || Map.get(row, :id))
     Map.put(row, "id", id)
   end
+
+  defp heal_owner?(info) when is_map(info) do
+    auth = Map.get(info, "auth")
+    creator = Map.get(info, "creator")
+    members = Map.get(info, "members") || []
+
+    same_user?(auth, creator) and members_empty?(members)
+  end
+
+  defp heal_owner?(_), do: false
+
+  defp same_user?(a, b) do
+    canonicalize_record_id(a) != "" and
+      canonicalize_record_id(a) == canonicalize_record_id(b)
+  end
+
+  defp members_empty?(members) when is_list(members), do: members == []
+  defp members_empty?(%SurrealDB.None{}), do: true
+  defp members_empty?(nil), do: true
+  defp members_empty?(_), do: false
 
   defp none?(%SurrealDB.None{}), do: true
   defp none?(_), do: false

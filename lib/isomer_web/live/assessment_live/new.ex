@@ -53,9 +53,13 @@ defmodule IsomerWeb.AssessmentLive.New do
          |> push_navigate(to: ~p"/assessments/#{assessment["id"]}/q")}
 
       {:error, reason} ->
-        {:noreply, assign(socket, error: inspect(reason))}
+        {:noreply, assign(socket, error: format_error(reason))}
     end
   end
+
+  defp format_error(reason) when is_binary(reason), do: reason
+  defp format_error(%{message: msg}) when is_binary(msg), do: msg
+  defp format_error(reason), do: inspect(reason)
 
   @impl true
   def render(assigns) do
