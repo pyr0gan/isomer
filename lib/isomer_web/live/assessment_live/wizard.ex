@@ -3,6 +3,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   alias Isomer.Domains
   alias Isomer.Db.Tenant
+  alias Isomer.GuideCopy
   alias Isomer.Maturity
 
   @impl true
@@ -280,19 +281,24 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       available = Domains.selectable(set_domains)
       addable = Enum.reject(available, &(&1["id"] in domains))
 
+      org_id = Tenant.canonicalize_record_id(assessment["org"])
+
       {:ok,
        %{
          page_title: "Wizard · #{assessment["title"]}",
          assessment: assessment,
          assessment_id: id,
-         org_id: Tenant.canonicalize_record_id(assessment["org"]),
+         org_id: org_id,
          questions: questions,
          domain_sections: domain_sections,
          domain_metrics: domain_metrics,
          answers: answer_map,
          evidence_notes: evidence_notes,
          addable_domains: addable,
-         finalized: finalized?(assessment)
+         finalized: finalized?(assessment),
+         nav_org_id: org_id,
+         nav_assessment_id: id,
+         nav_assessment_title: assessment["title"]
        }}
     end
   end
@@ -324,6 +330,13 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   defp finalized?(%{"status" => status}) when status in ["complete", "archived"], do: true
   defp finalized?(_), do: false
 
+  defp prefs_unset?(prefs) do
+    prefs = GuideCopy.normalize(prefs)
+
+    is_nil(prefs["self_role"]) and is_nil(prefs["experience_level"]) and
+      is_nil(prefs["comfort_level"])
+  end
+
   defp format_error(reason) when is_binary(reason), do: reason
   defp format_error(%{message: msg}) when is_binary(msg), do: msg
   defp format_error(reason), do: inspect(reason)
@@ -338,21 +351,35 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
             {@assessment["title"]}
           </.h1>
           <.p class="isomer-lede">
-            <%= if @finalized do %>
-              Finalized — answers are read-only.
-            <% else %>
-              Work domain by domain. Each answer is saved with your Surreal user JWT.
-            <% end %>
+            {GuideCopy.wizard_lede(@guide_prefs, @finalized)}
           </.p>
         </div>
-        <.button
-          link_type="live_redirect"
-          to={~p"/assessments/#{@assessment_id}"}
-          color="gray"
-          variant="outline"
-          label="Details"
-          icon="hero-information-circle"
-        />
+        <div class="flex flex-wrap gap-2">
+          <.button
+            link_type="live_redirect"
+            to={~p"/orgs/#{@org_id}"}
+            color="gray"
+            variant="ghost"
+            label="← Org"
+            icon="hero-arrow-left"
+          />
+          <.button
+            link_type="live_redirect"
+            to={~p"/assessments/#{@assessment_id}"}
+            color="gray"
+            variant="outline"
+            label="Details"
+            icon="hero-information-circle"
+          />
+          <.button
+            link_type="live_redirect"
+            to={~p"/assessments/#{@assessment_id}/artifacts"}
+            color="gray"
+            variant="outline"
+            label="Artifacts"
+            icon="hero-document-text"
+          />
+        </div>
       </div>
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
@@ -365,6 +392,20 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         label="This assessment is finalized. Reopen it from Details to edit answers."
         class="mb-4"
       />
+
+      <.alert
+        :if={not @finalized and prefs_unset?(@guide_prefs)}
+        color="info"
+        variant="soft"
+        with_icon
+        class="mb-4"
+      >
+        New here? Set your role and comfort in
+        <.link navigate={~p"/settings"} class="font-medium underline underline-offset-2">
+          Settings
+        </.link>
+        so tips stay plain-language (or concise) without changing the questionnaire.
+      </.alert>
 
       <.card :if={not @finalized and @addable_domains != []} variant="muted">
         <.card_content>
@@ -552,6 +593,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     {q.ask}
                   </.p>
 
+                  <.p
+                    :if={GuideCopy.question_help(@guide_prefs, q)}
+                    no_margin
+                    class="text-base text-slate-500 dark:text-slate-400"
+                  >
+                    {GuideCopy.question_help(@guide_prefs, q)}
+                  </.p>
+
                   <%= if @finalized do %>
                     <div class="answer-readonly text-base text-slate-700 dark:text-slate-300">
                       <span class="font-medium">Answer:</span>
@@ -614,16 +663,22 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                       </div>
 
                       <.field
-                        :if={q.evidence_prompt}
+                        :if={
+                          q.evidence_prompt || GuideCopy.guided?(@guide_prefs)
+                        }
                         type="text"
                         name="evidence"
                         label="Evidence"
-                        help_text={q.evidence_prompt}
+                        help_text={GuideCopy.evidence_help_text(@guide_prefs, q.evidence_prompt)}
                         value={Map.get(@evidence_notes, q.id, "")}
                         placeholder="Short note or reference for now"
                         class="answer-evidence"
                       />
-                      <.p no_margin class="text-sm text-slate-500">
+                      <.p
+                        :if={not GuideCopy.concise?(@guide_prefs)}
+                        no_margin
+                        class="text-sm text-slate-500"
+                      >
                         Choose — and Update to clear an answer (progress will drop).
                       </.p>
                     </form>

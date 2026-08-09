@@ -48,12 +48,13 @@ user ──member──▶ org
 
 | Table | Purpose |
 |---|---|
-| `user` | Record-auth subject (`$auth`). email + argon2 password. |
+| `user` | Record-auth subject (`$auth`). email + argon2 password. Optional guidance prefs: `self_role`, `experience_level`, `comfort_level` (adaptive copy only — same UI). |
 | `org` | Tenant (the organization being assessed). |
 | `member` | `TYPE RELATION IN user OUT org` + `role`. |
 | `assessment` | One questionnaire run for an org. |
 | `answer` | One answer inside an assessment (audit row). |
-| `evidence` | Artifact metadata attached to an answer. |
+| `evidence` | File/note metadata attached to an answer (upload path; separate from generated docs). |
+| `artifact` | Rendered document from a corpus `template` for an assessment (Markdown body + merge values). |
 
 Corpus tables (`question_set`, `ruleset`, `requirement`, `maps_to`, …) stay
 owned by sync. Runtime ensure grants **select** to authenticated record users;
@@ -107,19 +108,46 @@ Unique index: `(assessment, pack, pack_ref, question_id)`.
 Implemented under `lib/isomer_web`. Each authenticated LiveView opens a Surreal
 session with the signed-in `user` JWT (never root/Vault).
 
-| LiveView | Route | Surreal touchpoints |
+Central chrome: header **Menu** dropdown (org context when on an assessment,
+Organizations, Library, Settings, Sign out). No separate nav system.
+
+| LiveView / controller | Route | Surreal touchpoints |
 |---|---|---|
-| `SessionLive.New` | `/login` | `signin` / `signup` via access `isomer_user`; store JWT in session |
-| `SessionLive.Delete` | `/logout` | Drop token; optional `invalidate` |
+| `SessionController` | `/login`, `/session`, `/logout` | `signin` / `signup` via access `isomer_user`; JWT in cookie session |
 | `OrgLive.Index` | `/orgs` | `SELECT` orgs via `member` where `in = $auth` |
 | `OrgLive.New` | `/orgs/new` | `CREATE org` + `RELATE $auth->member->$org` (role `owner`) |
 | `OrgLive.Show` | `/orgs/:org_id` | Org header; maturity + objective-metrics panels; list assessments for org |
-| `AssessmentLive.Index` | `/orgs/:org_id/assessments` | `SELECT assessment WHERE org = $org` |
-| `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `ruleset` and/or `domains[]` from corpus; `CREATE assessment` |
-| `AssessmentLive.Show` | `/assessments/:id` | Shell: status, progress, nav to wizard/results |
-| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load questions from `ruleset` / `question_set`; upsert `answer` rows; per-domain metric opt-in + time scale/hours; optional LIVE on answers |
-| `AssessmentLive.Results` | `/assessments/:id/results` | Show `classification` / `activates`; for each id call `fn::isomer::satisfiers` + linked domain answers for residual view |
-| `EvidenceLive.Upload` | modal / `/answers/:id/evidence` | Create `evidence` (+ object storage key later); link to `answer` |
+| `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `domains[]` from corpus; `CREATE assessment` |
+| `AssessmentLive.Show` | `/assessments/:id` | Status, domains, finalize/reopen/delete; links to wizard + artifacts |
+| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `question_set`; upsert `answer`; adaptive help from user prefs; domain metric opt-in |
+| `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE artifact`; download links |
+| `LibraryLive` | `/library` | All templates + artifacts visible to the user |
+| `SettingsLive` | `/settings` | `UPDATE user` prefs (`self_role`, `experience_level`, `comfort_level`, `name`) |
+| `ArtifactController` | `/artifacts/:id/download` | Fetch `artifact` with user JWT; Markdown or print-ready HTML (Save as PDF) |
+
+### Planned (not yet routed)
+
+| LiveView | Route | Notes |
+|---|---|---|
+| `AssessmentLive.Results` | `/assessments/:id/results` | `classification` / `activates` + `fn::isomer::satisfiers` |
+| `EvidenceLive.Upload` | modal / `/answers/:id/evidence` | Binary evidence on answers (schema exists) |
+
+### Guidance prefs (adaptive copy)
+
+Stored on `user`, edited in Settings. `Isomer.GuideCopy` adjusts wizard ledes,
+per-question tips, and evidence hints from `self_role` / `experience_level` /
+`comfort_level`. Same screens and controls for every level — only text density
+changes. Prefs can be updated any time as comfort grows.
+
+### Artifacts (template → document)
+
+1. Corpus `template` rows (from `templates/*.md` via sync) declare `merge_fields`.
+2. Assessment Artifacts page collects values (org name prefilled) and runs
+   `Isomer.Artifacts.Render`.
+3. Result stored on tenant `artifact` (`body` Markdown, `merge_values`, links to
+   `org` + `assessment`). Cascades on assessment/org delete.
+4. Downloads: `.md` attachment; `format=pdf` serves print-ready HTML for browser
+   Print → Save as PDF (no headless Chrome on the dyno).
 
 ### Wizard projector (the important LiveView)
 

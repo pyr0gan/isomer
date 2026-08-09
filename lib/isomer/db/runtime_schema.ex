@@ -62,7 +62,17 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE FIELD OVERWRITE email ON user TYPE string ASSERT string::is_email($value);
       DEFINE FIELD OVERWRITE name ON user TYPE option<string>;
       DEFINE FIELD OVERWRITE password ON user TYPE string;
+      DEFINE FIELD OVERWRITE self_role ON user TYPE option<string>
+        ASSERT $value = NONE OR $value IN ["executive", "product", "engineering", "compliance", "security", "operations", "other"]
+        COMMENT "Self-identified organizational role for adaptive guidance copy";
+      DEFINE FIELD OVERWRITE experience_level ON user TYPE option<string>
+        ASSERT $value = NONE OR $value IN ["beginner", "intermediate", "practitioner", "expert"]
+        COMMENT "Self-identified familiarity with governance material";
+      DEFINE FIELD OVERWRITE comfort_level ON user TYPE option<string>
+        ASSERT $value = NONE OR $value IN ["low", "moderate", "high"]
+        COMMENT "Preferred amount of plain-language help in the UI";
       DEFINE FIELD OVERWRITE created_at ON user TYPE datetime DEFAULT time::now();
+      DEFINE FIELD OVERWRITE updated_at ON user TYPE option<datetime>;
       DEFINE INDEX OVERWRITE user_email ON user FIELDS email UNIQUE;
 
       DEFINE ACCESS OVERWRITE #{@access_name} ON DATABASE TYPE RECORD
@@ -188,6 +198,33 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE FIELD OVERWRITE uploaded_at ON evidence TYPE datetime DEFAULT time::now();
       DEFINE INDEX OVERWRITE evidence_answer ON evidence FIELDS answer;
       DEFINE INDEX OVERWRITE evidence_org ON evidence FIELDS org;
+
+      -- Generated documents from corpus templates (tenant data; never pruned by sync)
+      DEFINE TABLE OVERWRITE artifact SCHEMAFULL
+        PERMISSIONS
+          FOR select WHERE org IN fn::isomer::member_org_ids()
+          FOR create, update WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin", "assessor"])
+          FOR delete WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin", "assessor"])
+        COMMENT "Rendered template instance for an assessment";
+
+      DEFINE FIELD OVERWRITE org ON artifact TYPE record<org>;
+      DEFINE FIELD OVERWRITE assessment ON artifact TYPE record<assessment>;
+      DEFINE FIELD OVERWRITE template_id ON artifact TYPE string
+        COMMENT "Corpus template corpus_id (e.g. tmpl-ai-policy)";
+      DEFINE FIELD OVERWRITE title ON artifact TYPE string;
+      DEFINE FIELD OVERWRITE body ON artifact TYPE string
+        COMMENT "Rendered Markdown body";
+      DEFINE FIELD OVERWRITE format ON artifact TYPE string
+        ASSERT $value IN ["markdown"]
+        DEFAULT "markdown"
+        COMMENT "Canonical stored format; downloads may derive HTML/PDF views";
+      DEFINE FIELD OVERWRITE merge_values ON artifact TYPE option<object> FLEXIBLE
+        COMMENT "Dotted-path merge field values used at generate time";
+      DEFINE FIELD OVERWRITE created_by ON artifact TYPE record<user>;
+      DEFINE FIELD OVERWRITE created_at ON artifact TYPE datetime DEFAULT time::now();
+      DEFINE INDEX OVERWRITE artifact_assessment ON artifact FIELDS assessment;
+      DEFINE INDEX OVERWRITE artifact_org ON artifact FIELDS org;
+      DEFINE INDEX OVERWRITE artifact_template ON artifact FIELDS template_id;
       """)
 
     :ok
