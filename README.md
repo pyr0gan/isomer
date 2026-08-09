@@ -57,7 +57,11 @@ op run --env-file=.env -- mix isomer.db.ping
 | `mix isomer.db.sync` | Upsert corpus; prune stale `content_source="repo"` rows |
 | `mix isomer.db.sync --dry-run` | Load + report counts only |
 | `mix isomer.db.ingest_sample` | Upsert one requirement (hello-world write) |
+| `mix isomer.db.ensure_runtime` | Assessment auth + tenant tables (Fork B) |
 | `mix isomer.sbom` / `mix sbom` | CycloneDX SBoM (`bom.cdx.json`, EEF `sbom`) |
+
+Assessment questionnaire design (Surreal record auth + LiveView map):
+`docs/assessment-runtime.md`.
 
 Cross-framework mappings (queryable residual work by tier):
 
