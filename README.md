@@ -28,7 +28,8 @@ The content lives in plain YAML and Markdown in this repo. Elixir tooling
 checks it, and SurrealDB stores it so apps (and a future questionnaire UI) can
 query it.
 
-Version **1.1.0** — see [`CHANGELOG.md`](CHANGELOG.md).
+Tooling version **0.1.0** (`mix.exs`). Content is versioned in the YAML
+itself — see [`docs/versioning.md`](docs/versioning.md).
 
 ---
 
@@ -212,8 +213,9 @@ Keep these in mind when editing YAML:
   still need their own licensed ISO copies. Legal paraphrases are tooling aids,
   not legal advice.
 - **IDs match folders.** A requirement id looks like
-  `framework/version/ref` (for example `iso42001/2023/A.5.2`) and must sit in
-  the matching directory.
+  `framework/edition/ref` (for example `iso42001/2023/A.5.2`) and must sit in
+  the matching directory. Framework `version` is the **standard edition**, not
+  the Mix app version.
 - **Every requirement lists evidence expectations** — what artifact would prove
   it.
 - **Legal obligations need an effective date** (`applicable_from`). Dates are
@@ -232,6 +234,7 @@ Keep these in mind when editing YAML:
 
 ## Learn more
 
-- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
+- Versioning (tooling vs content): [`docs/versioning.md`](docs/versioning.md)
+- Tooling changelog: [`CHANGELOG.md`](CHANGELOG.md)
 - Questionnaire + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Agent/contributor notes: [`AGENTS.md`](AGENTS.md)
