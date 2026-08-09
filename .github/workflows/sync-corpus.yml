@@ -16,25 +16,27 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Install Elixir / OTP
+        uses: erlef/setup-beam@v1
         with:
-          python-version: "3.12"
+          otp-version: "25"
+          elixir-version: "1.17.3"
 
-      - name: Set up Node
-        uses: actions/setup-node@v7
+      - name: Cache Mix deps
+        uses: actions/cache@v4
         with:
-          node-version: "24"
-          cache: npm
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-
 
-      - name: Install Node deps
-        run: npm ci
-
-      - name: Install Python deps
-        run: python -m pip install -r requirements.txt
+      - name: Install deps
+        run: mix deps.get
 
       - name: Lint corpus
-        run: npm run lint:corpus
+        run: mix lint
 
       - name: Check required secrets are non-empty
         env:
@@ -72,4 +74,4 @@ jobs:
           VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
           VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
           GITHUB_SHA: ${{ github.sha }}
-        run: npm run db:sync
+        run: mix isomer.db.sync

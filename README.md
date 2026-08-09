@@ -5,6 +5,8 @@ playbook. Requirements, mappings, rubrics, rulesets, questions, and
 templates are data; eventual product will render and provide a workflow
 engine for this repo. Content release **1.0.0** — see `CHANGELOG.md`.
 
+Tooling is **Elixir / Mix** (SurrealDB over WSS; password from Hashicorp Vault).
+
 ## Layout
 
 ```
@@ -17,15 +19,43 @@ questions/<domain>.yaml                              assessment questions (L1/L2
 templates/tmpl-*.md                                  document templates + covers frontmatter
 vocab/domains.yaml                                   maturity domains (9 AIMS + 4 ISMS)
 schemas/*.schema.json                                JSON Schema 2020-12 definitions
-tools/validate.py                                    CI validator
-tools/delta_report.py                                coverage delta (covered/partial/…)
-tools/check_content_charset.py                       reject non-Latin letters in content
+lib/                                                 Mix corpus + Surreal tooling
 CHANGELOG.md                                         content release notes
 ```
 
 Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
 `iso42001/2023` (Annex A, 38 controls), `iso27001/2022` (Annex A, 93 controls),
 `eu-ai-act/2024+2026-1744` (18 obligations; consolidated post-Omnibus).
+
+## Setup
+
+Requires Elixir **1.17+** / OTP **25+** (see `mise.toml`). From the repo root:
+
+```
+mix deps.get
+mix lint
+```
+
+Copy `.env.example` to `.env` for Surreal + Vault credentials (never commit `.env`).
+If `.env` uses 1Password `op://` references:
+
+```
+op run --env-file=.env -- mix isomer.db.ping
+```
+
+## Commands
+
+| Task | Purpose |
+|---|---|
+| `mix lint` / `mix lint.corpus` | Validate schemas + charset |
+| `mix isomer.validate` | Schema + semantic corpus checks |
+| `mix isomer.charset` | Reject non-Latin letters in content |
+| `mix isomer.delta PATH` | Integration coverage buckets |
+| `mix isomer.ruleset.eval --ruleset PATH --answers JSON` | First-match classification |
+| `mix isomer.db.ping` | Surreal WSS + Vault smoke test |
+| `mix isomer.db.sync` | Upsert corpus; prune stale `content_source="repo"` rows |
+| `mix isomer.db.sync --dry-run` | Load + report counts only |
+| `mix isomer.db.ingest_sample` | Upsert one requirement (hello-world write) |
 
 Cross-framework mappings (queryable residual work by tier):
 
@@ -35,8 +65,8 @@ Cross-framework mappings (queryable residual work by tier):
 | `mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml` | AIMS → AI Act residual |
 
 ```
-npm run report:delta -- mappings/iso42001-2023--iso27001-2022.yaml
-npm run report:delta -- mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml
+mix isomer.delta mappings/iso42001-2023--iso27001-2022.yaml
+mix isomer.delta mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml
 ```
 
 The AI Act → AIMS set may target **both** `iso42001/2023` controls and
@@ -47,7 +77,7 @@ Classification ruleset: `rulesets/eu-ai-act-classification.yaml`.
 Evaluate with first-match semantics (outcome order is semantic):
 
 ```
-npm run ruleset:evaluate -- \
+mix isomer.ruleset.eval \
   --ruleset rulesets/eu-ai-act-classification.yaml \
   --answers '{"role":"provider","annex-iii-area":"employment"}'
 ```
@@ -88,7 +118,7 @@ links; unused `merge_fields` warn in CI.
 - **Mappings** are directed and typed; `partially_satisfied_by` and
   `conflicts` require a gap note. Mappings reference framework
   *versions*, and go `status: stale` when either side revs. Content YAML
-  must not contain non-Latin letters (CJK etc.); `npm run lint:charset`
+  must not contain non-Latin letters (CJK etc.); `mix isomer.charset`
   enforces this (common typography like em dashes is allowed).
 - **Questions** key to rubric levels and requirement ids (`requirements` is
   an array — one answer can claim coverage across frameworks). Prefer

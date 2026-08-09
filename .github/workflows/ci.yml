@@ -12,25 +12,30 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Install Elixir / OTP
+        uses: erlef/setup-beam@v1
         with:
-          python-version: "3.12"
+          otp-version: "25"
+          elixir-version: "1.17.3"
 
-      - name: Set up Node
-        uses: actions/setup-node@v7
+      - name: Cache Mix deps
+        uses: actions/cache@v4
         with:
-          node-version: "24"
-          cache: npm
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-
 
-      - name: Install Node deps
-        run: npm ci
+      - name: Install deps
+        run: mix deps.get
 
-      - name: Install Python deps
-        run: python -m pip install -r requirements.txt
+      - name: Compile
+        run: mix compile --warnings-as-errors
 
-      - name: Lint corpus (YAML / JSON Schema)
-        run: npm run lint:corpus
+      - name: Format
+        run: mix format --check-formatted
 
-      - name: Lint JavaScript
-        run: npm run lint:js
+      - name: Lint corpus
+        run: mix lint
