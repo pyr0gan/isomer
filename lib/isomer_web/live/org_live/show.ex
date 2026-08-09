@@ -14,7 +14,8 @@ defmodule IsomerWeb.OrgLive.Show do
          page_title: org["name"],
          org: org,
          org_id: org_id,
-         assessments: assessments
+         assessments: assessments,
+         error: nil
        )}
     else
       {:error, _} ->
@@ -26,14 +27,46 @@ defmodule IsomerWeb.OrgLive.Show do
   end
 
   @impl true
+  def handle_event("delete", _params, socket) do
+    case Tenant.delete_org(socket.assigns.surreal, socket.assigns.org_id) do
+      :ok ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Organization deleted")
+         |> push_navigate(to: ~p"/orgs")}
+
+      {:error, reason} ->
+        {:noreply, assign(socket, error: format_error(reason))}
+    end
+  end
+
+  defp format_error(reason) when is_binary(reason), do: reason
+  defp format_error(%{message: msg}) when is_binary(msg), do: msg
+  defp format_error(reason), do: inspect(reason)
+
+  @impl true
   def render(assigns) do
     ~H"""
     <section>
       <div class="row">
-        <h1>{@org["name"]}</h1>
-        <.link navigate={~p"/orgs/#{@org_id}/assessments/new"} class="btn">New assessment</.link>
+        <div>
+          <h1>{@org["name"]}</h1>
+          <p class="meta">id …{Tenant.short_key(@org_id)}</p>
+        </div>
+        <div class="row">
+          <.link navigate={~p"/orgs/#{@org_id}/assessments/new"} class="btn">New assessment</.link>
+          <button
+            type="button"
+            class="btn btn-danger"
+            phx-click="delete"
+            data-confirm={"Delete “#{@org["name"]}” and all its assessments? This cannot be undone."}
+          >
+            Delete org
+          </button>
+        </div>
       </div>
       <p class="lede">Assessments for this tenant.</p>
+      <p :if={@error} class="error" role="alert">{@error}</p>
 
       <%= if @assessments == [] do %>
         <p class="empty">No assessments yet.</p>

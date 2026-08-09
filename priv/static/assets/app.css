@@ -147,6 +147,11 @@ button,
   font-size: 0.9rem;
 }
 
+.btn-danger {
+  background: var(--danger);
+  color: #fff7f7;
+}
+
 .list {
   list-style: none;
   padding: 0;
@@ -155,7 +160,8 @@ button,
   gap: 0.55rem;
 }
 
-.list a {
+.list a,
+.org-link {
   display: block;
   padding: 0.75rem 0.9rem;
   border-radius: 6px;
@@ -163,6 +169,22 @@ button,
   background: #f7fafc;
   text-decoration: none;
   color: var(--ink);
+}
+
+.org-list .org-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.org-link .org-name {
+  display: block;
+  font-weight: 600;
+}
+
+.org-link .meta {
+  margin-left: 0;
 }
 
 .meta {

@@ -104,6 +104,38 @@ defmodule Isomer.Db.Tenant do
     end
   end
 
+  @doc """
+  Deletes an org and its tenant data (evidence, answers, assessments, members).
+  Requires owner role on the org (Surreal PERMISSIONS).
+  """
+  def delete_org(conn, org_id) when is_binary(org_id) do
+    org_id = canonicalize_record_id(org_id)
+    {table, key} = split_record_id!(org_id)
+
+    sql = """
+    LET $org = type::record($table, $key);
+    DELETE evidence WHERE org = $org;
+    DELETE answer WHERE org = $org;
+    DELETE assessment WHERE org = $org;
+    DELETE member WHERE out = $org;
+    DELETE $org;
+    RETURN true;
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, _} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc "Short suffix of the record key for disambiguating duplicate names in the UI."
+  def short_key(org_id) when is_binary(org_id) do
+    {_table, key} = split_record_id!(org_id)
+    String.slice(key, -6, 6)
+  end
+
+  def short_key(_), do: ""
+
   def create_assessment(conn, org_id, attrs) when is_binary(org_id) and is_map(attrs) do
     title = Map.fetch!(attrs, "title") |> String.trim()
     kind = Map.get(attrs, "kind", "domains")
