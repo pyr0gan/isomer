@@ -19409,16 +19409,71 @@
     align-items: center;
     gap: calc(var(--spacing) * 2);
   }
+  .wizard-accordion {
+    overflow: hidden;
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    border-color: var(--color-slate-200);
+  }
+  .wizard-accordion__item + .wizard-accordion__item {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+    border-color: var(--color-slate-200);
+  }
+  .wizard-accordion__trigger {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 3);
+    background-color: var(--color-white);
+    padding-inline: calc(var(--spacing) * 4);
+    padding-block: calc(var(--spacing) * 3.5);
+    text-align: left;
+    color: var(--color-slate-900);
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, visibility, content-visibility, overlay, pointer-events;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-slate-50);
+      }
+    }
+  }
+  .wizard-accordion__heading {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .wizard-accordion__chevron {
+    height: calc(var(--spacing) * 5);
+    width: calc(var(--spacing) * 5);
+    flex-shrink: 0;
+    color: var(--color-slate-500);
+    transition-property: transform, translate, scale, rotate;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .wizard-accordion__panel {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+    border-color: var(--color-slate-100);
+    background-color: color-mix(in srgb, oklch(98.4% 0.003 247.858) 50%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-slate-50) 50%, transparent);
+    }
+    padding-inline: calc(var(--spacing) * 4);
+    padding-block: calc(var(--spacing) * 4);
+  }
   .wizard-domain-panel {
     :where(& > :not(:last-child)) {
       --tw-space-y-reverse: 0;
       margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
       margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
     }
-    padding-top: calc(var(--spacing) * 1);
-    padding-bottom: calc(var(--spacing) * 2);
   }
-  .wizard-question-card.pc-card, .wizard-question-card .pc-card__inner, #wizard-domains .accordion-content-container, #wizard-domains .pc-accordion-item__content-container {
+  .wizard-question-card.pc-card, .wizard-question-card .pc-card__inner {
     overflow: visible;
   }
   .wizard-domain-panel .pc-tooltip__content {

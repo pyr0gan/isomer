@@ -137,15 +137,37 @@
     @apply flex flex-wrap items-center gap-2;
   }
 
+  .wizard-accordion {
+    @apply overflow-hidden border border-slate-200;
+  }
+
+  .wizard-accordion__item + .wizard-accordion__item {
+    @apply border-t border-slate-200;
+  }
+
+  .wizard-accordion__trigger {
+    @apply flex w-full items-center justify-between gap-3 bg-white px-4 py-3.5 text-left text-slate-900 transition hover:bg-slate-50;
+  }
+
+  .wizard-accordion__heading {
+    @apply text-sm font-semibold;
+  }
+
+  .wizard-accordion__chevron {
+    @apply h-5 w-5 shrink-0 text-slate-500 transition-transform;
+  }
+
+  .wizard-accordion__panel {
+    @apply border-t border-slate-100 bg-slate-50/50 px-4 py-4;
+  }
+
   .wizard-domain-panel {
-    @apply space-y-4 pt-1 pb-2;
+    @apply space-y-4;
   }
 
   /* Petal cards default to overflow-hidden, which clips CSS tooltips. */
   .wizard-question-card.pc-card,
-  .wizard-question-card .pc-card__inner,
-  #wizard-domains .accordion-content-container,
-  #wizard-domains .pc-accordion-item__content-container {
+  .wizard-question-card .pc-card__inner {
     overflow: visible;
   }
 

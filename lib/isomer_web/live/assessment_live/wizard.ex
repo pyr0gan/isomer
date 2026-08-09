@@ -38,7 +38,18 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
     case load_state(socket.assigns.surreal, id) do
       {:ok, state} ->
-        {:ok, assign(socket, Map.put(state, :error, nil))}
+        open_ids =
+          state.domain_sections
+          |> List.first()
+          |> case do
+            %{id: id} -> MapSet.new([id])
+            _ -> MapSet.new()
+          end
+
+        {:ok,
+         socket
+         |> assign(state)
+         |> assign(error: nil, open_domain_ids: open_ids)}
 
       {:error, _} ->
         {:ok,
@@ -49,6 +60,19 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   @impl true
+  def handle_event("toggle_domain", %{"id" => domain_id}, socket) do
+    open = socket.assigns.open_domain_ids
+
+    open =
+      if MapSet.member?(open, domain_id) do
+        MapSet.delete(open, domain_id)
+      else
+        MapSet.put(open, domain_id)
+      end
+
+    {:noreply, assign(socket, open_domain_ids: open)}
+  end
+
   def handle_event("add_domains", params, socket) do
     selected =
       params
@@ -64,11 +88,13 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
           {:ok, state} ->
             answers = socket.assigns.answers
+            open = Map.get(socket.assigns, :open_domain_ids, MapSet.new())
 
             {:noreply,
              socket
              |> assign(state)
              |> assign(:answers, answers)
+             |> assign(:open_domain_ids, open)
              |> assign(:error, nil)}
 
           {:error, reason} ->
@@ -220,18 +246,41 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           </.card_content>
         </.card>
       <% else %>
-        <.accordion
-          container_id="wizard-domains"
-          variant="bordered"
-          multiple={true}
-          open_index={0}
-          class="rounded-xl bg-white/70 shadow-sm"
-        >
-          <:item
-            :for={section <- @domain_sections}
-            heading={"#{section.label}  ·  #{section.answered}/#{section.total}"}
-          >
-            <div class="wizard-domain-panel">
+        <%!-- LiveView-managed accordion (not Petal): Petal uses phx-update=ignore,
+             which blocks answer/select patches until a full refresh. --%>
+        <div id="wizard-domains" class="wizard-accordion rounded-xl bg-white/70 shadow-sm">
+          <div :for={section <- @domain_sections} class="wizard-accordion__item" id={"domain-#{section.id}"}>
+            <button
+              type="button"
+              id={"domain-#{section.id}-toggle"}
+              class="wizard-accordion__trigger"
+              phx-click="toggle_domain"
+              phx-value-id={section.id}
+              aria-expanded={"#{MapSet.member?(@open_domain_ids, section.id)}"}
+              aria-controls={"domain-#{section.id}-panel"}
+            >
+              <span class="wizard-accordion__heading">
+                {section.label}
+                <span class="wizard-progress">
+                  · {section.answered}/{section.total}
+                </span>
+              </span>
+              <.icon
+                name="hero-chevron-down-solid"
+                class={[
+                  "wizard-accordion__chevron",
+                  MapSet.member?(@open_domain_ids, section.id) && "rotate-180"
+                ]}
+              />
+            </button>
+
+            <div
+              :if={MapSet.member?(@open_domain_ids, section.id)}
+              id={"domain-#{section.id}-panel"}
+              class="wizard-domain-panel wizard-accordion__panel"
+              role="region"
+              aria-labelledby={"domain-#{section.id}-toggle"}
+            >
               <.p :if={section.description != ""} class="text-sm text-slate-600">
                 {section.description}
               </.p>
@@ -255,7 +304,11 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     {q.evidence_prompt}
                   </.p>
 
-                  <form phx-submit="answer" class="answer-controls">
+                  <form
+                    id={"answer-form-#{q.id}"}
+                    phx-submit="answer"
+                    class="answer-controls"
+                  >
                     <input type="hidden" name="question_id" value={q.id} />
                     <%= case q.kind do %>
                       <% "boolean" -> %>
@@ -264,24 +317,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                             Answer
                           </label>
                           <select
+                            id={"answer-select-#{q.id}-#{boolean_select_value(@answers[q.id])}"}
                             name="value"
                             class="pc-select answer-select__control"
                           >
-                            <option value="" selected={boolean_select_value(@answers[q.id]) == ""}>
-                              —
-                            </option>
-                            <option
-                              value="yes"
-                              selected={boolean_select_value(@answers[q.id]) == "yes"}
-                            >
-                              Yes
-                            </option>
-                            <option
-                              value="no"
-                              selected={boolean_select_value(@answers[q.id]) == "no"}
-                            >
-                              No
-                            </option>
+                            {Phoenix.HTML.Form.options_for_select(
+                              [{"—", ""}, {"Yes", "yes"}, {"No", "no"}],
+                              boolean_select_value(@answers[q.id])
+                            )}
                           </select>
                         </div>
                         <.icon
@@ -335,8 +378,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                 </.card_content>
               </.card>
             </div>
-          </:item>
-        </.accordion>
+          </div>
+        </div>
       <% end %>
     </section>
     """
