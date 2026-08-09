@@ -99,14 +99,27 @@ defmodule IsomerWeb.OrgLive.Show do
           <div class="maturity-chart" role="img" aria-label="Domain maturity levels">
             <div :for={bar <- @maturity} class="maturity-row">
               <span class="maturity-row__label">{bar["label"]}</span>
-              <div class="maturity-row__track" title={"#{bar["answered"]}/#{bar["total"]} met"}>
+              <div
+                class="maturity-row__track"
+                title={"#{bar["answered"]}/#{bar["total"]} met"}
+              >
                 <div
                   class={"maturity-row__fill maturity-row__fill--#{bar["level"]}"}
                   style={"width: #{bar["pct"]}%"}
                 >
                 </div>
               </div>
-              <.badge color="primary" variant="soft" label={bar["level"]} class="maturity-row__level" />
+              <.tooltip
+                label={"#{bar["level_label"]} — #{bar["level_tip"]}"}
+                placement="left"
+              >
+                <.badge
+                  color={bar["level_color"] || "primary"}
+                  variant="soft"
+                  label={bar["level_label"]}
+                  class="maturity-row__level cursor-help"
+                />
+              </.tooltip>
             </div>
           </div>
         </.card_content>
