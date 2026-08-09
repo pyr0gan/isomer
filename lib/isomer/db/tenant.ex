@@ -231,6 +231,69 @@ defmodule Isomer.Db.Tenant do
   end
 
   @doc """
+  Updates assessment `status` (`draft` | `in_progress` | `complete` | `archived`).
+  Returns the updated assessment.
+  """
+  def update_assessment_status(conn, assessment_id, status)
+      when is_binary(assessment_id) and is_binary(status) do
+    assessment_id = canonicalize_record_id(assessment_id)
+    {table, key} = split_record_id!(assessment_id)
+
+    if status not in ["draft", "in_progress", "complete", "archived"] do
+      {:error, "invalid assessment status: #{status}"}
+    else
+      sql = """
+      LET $aid = type::record($table, $key);
+      UPDATE $aid SET status = $status, updated_at = time::now();
+      RETURN SELECT * FROM ONLY $aid;
+      """
+
+      case UserClient.query(conn, sql, %{
+             "table" => table,
+             "key" => key,
+             "status" => status
+           }) do
+        {:ok, results} -> unwrap_one(results)
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Deletes an assessment and its answers/evidence. Requires owner/admin on the org.
+  """
+  def delete_assessment(conn, assessment_id) when is_binary(assessment_id) do
+    assessment_id = canonicalize_record_id(assessment_id)
+    {table, key} = split_record_id!(assessment_id)
+
+    sql = """
+    LET $aid = type::record($table, $key);
+    LET $answer_ids = (SELECT VALUE id FROM answer WHERE assessment = $aid);
+    DELETE evidence WHERE answer IN $answer_ids;
+    DELETE answer WHERE assessment = $aid;
+    DELETE $aid;
+    RETURN SELECT * FROM ONLY $aid;
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, results} ->
+        case useful_result(results) do
+          row when is_map(row) and not is_struct(row) ->
+            {:error, "Assessment could not be deleted (still present)."}
+
+          [row | _] when is_map(row) and not is_struct(row) ->
+            {:error, "Assessment could not be deleted (still present)."}
+
+          _ ->
+            :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Unions `new_domains` into the assessment's `domains` array (does not remove
   existing domains). Returns the updated assessment.
   """
@@ -326,6 +389,42 @@ defmodule Isomer.Db.Tenant do
         "assessment_table" => assessment_table,
         "assessment_key" => assessment_key
       })
+
+    case UserClient.query(conn, sql, vars) do
+      {:ok, _} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Removes a single answer row (and its evidence) so the question becomes unanswered.
+  """
+  def delete_answer(conn, attrs) when is_map(attrs) do
+    {assessment_table, assessment_key} = split_record_id!(attrs["assessment_id"])
+
+    sql = """
+    LET $rows = (
+      SELECT VALUE id FROM answer WHERE
+        assessment = type::record($assessment_table, $assessment_key)
+        AND pack = $pack
+        AND pack_ref = $pack_ref
+        AND question_id = $question_id
+    );
+    DELETE evidence WHERE answer IN $rows;
+    DELETE answer WHERE
+      assessment = type::record($assessment_table, $assessment_key)
+      AND pack = $pack
+      AND pack_ref = $pack_ref
+      AND question_id = $question_id;
+    """
+
+    vars = %{
+      "assessment_table" => assessment_table,
+      "assessment_key" => assessment_key,
+      "pack" => attrs["pack"],
+      "pack_ref" => attrs["pack_ref"],
+      "question_id" => attrs["question_id"]
+    }
 
     case UserClient.query(conn, sql, vars) do
       {:ok, _} -> :ok

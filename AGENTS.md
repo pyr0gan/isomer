@@ -48,6 +48,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Session cookie stores Surreal user JWT; each LiveView opens its own user-scoped WSS connection via `Isomer.Db.UserClient` and closes it on terminate.
 - Org create needs `org` select permission `created_by = $auth.id` (in addition to membership) so `CREATE` can return the row before the `member` edge exists — already in `RuntimeSchema`.
 - UI uses Hex `petal_components` + Tailwind v4 / esbuild (`assets/`, aliases `mix assets.setup` / `mix assets.build` / `mix assets.deploy`). Dev watchers rebuild CSS/JS; Docker runs `mix assets.deploy` before release. Deploy: `docs/deploy.md`.
+- Assessment lifecycle: org page splits **Ongoing** (`draft`/`in_progress`) vs **Finalized** (`complete`/`archived`). Finalize/Reopen/Delete live on assessment Details; finalized assessments lock wizard edits. Accordion progress counts Yes, No, and unanswered (clear via — + Update). `html` uses `scrollbar-gutter: stable` to avoid layout shift.
 
 ### Gotchas
 
