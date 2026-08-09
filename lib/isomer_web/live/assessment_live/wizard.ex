@@ -88,8 +88,10 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
             <div class="q-head">
               <code>{q.id}</code>
               <span class="meta">{q.domain}</span>
+              <span :if={q.level} class="meta">{q.level}</span>
             </div>
-            <p>{q.prompt}</p>
+            <p class="q-ask">{q.ask}</p>
+            <p :if={q.evidence_prompt} class="q-evidence">{q.evidence_prompt}</p>
             <form phx-submit="answer" class="stack">
               <input type="hidden" name="question_id" value={q.id} />
               <%= case q.kind do %>
@@ -130,13 +132,21 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       |> Enum.map(fn q ->
         %{
           id: q["id"],
-          prompt: q["prompt"] || q["text"] || q["id"],
+          ask: question_ask(q),
+          evidence_prompt: q["evidence_prompt"],
+          level: q["level"],
           kind: q["kind"] || "text",
           domain: domain
         }
       end)
     end)
   end
+
+  # Corpus YAML uses `ask`; tolerate older aliases if present in synced rows.
+  defp question_ask(q) when is_map(q) do
+    q["ask"] || q["prompt"] || q["text"] || q["id"] || "Untitled question"
+  end
+
 
   defp coerce_value("boolean", value, _params) do
     case value do

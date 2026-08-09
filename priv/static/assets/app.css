@@ -260,6 +260,19 @@ button,
   margin-bottom: 0.35rem;
 }
 
+.q-ask {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+
+.q-evidence {
+  margin: 0 0 0.65rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
 .check {
   display: flex;
   align-items: center;
