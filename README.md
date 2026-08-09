@@ -1,5 +1,7 @@
 # isomer
 
+<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
+
 <p align="center">
   <a href="https://surrealdb.com" title="SurrealDB">
     <picture>
@@ -17,8 +19,6 @@
     </picture>
   </a>
 </p>
-
-<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
 
 **isomer** is a shared library of AI governance content — the requirements,
 questions, and mappings that make up an integrated security + AI management
@@ -239,4 +239,5 @@ Keep these in mind when editing YAML:
 - Tooling changelog: [`CHANGELOG.md`](CHANGELOG.md)
 - Assessment runtime + LiveViews: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Deploy (Fly.io / Railway): [`docs/deploy.md`](docs/deploy.md)
+- Questionnaire + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Agent/contributor notes: [`AGENTS.md`](AGENTS.md)
