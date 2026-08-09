@@ -39,6 +39,59 @@ defmodule IsomerWeb.CoreComponents do
     """
   end
 
+  attr(:series, :list, required: true)
+  attr(:label, :string, required: true)
+  attr(:value, :any, default: nil)
+  attr(:suffix, :string, default: "")
+  attr(:class, :any, default: nil)
+
+  def metric_sparkline(assigns) do
+    points = Isomer.OrgMetrics.sparkline_points(assigns.series)
+    ready? = Isomer.OrgMetrics.sparkline_ready?(assigns.series)
+    assigns = assign(assigns, points: points, ready?: ready?)
+
+    ~H"""
+    <div class={["metric-sparkline", @class]}>
+      <div class="metric-sparkline__head">
+        <span class="metric-sparkline__label">{@label}</span>
+        <span class="metric-sparkline__value">
+          {format_metric_value(@value)}{@suffix}
+        </span>
+      </div>
+      <%= if @ready? and @points do %>
+        <svg
+          class="metric-sparkline__chart"
+          viewBox="0 0 120 28"
+          width="120"
+          height="28"
+          role="img"
+          aria-label={"#{@label} trend"}
+        >
+          <polyline
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            points={@points}
+          />
+        </svg>
+      <% else %>
+        <div class="metric-sparkline__placeholder" aria-label="data required">
+          data req'd
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp format_metric_value(nil), do: "—"
+
+  defp format_metric_value(value) when is_float(value),
+    do: :erlang.float_to_binary(value, decimals: 1)
+
+  defp format_metric_value(value), do: to_string(value)
+
   attr(:href, :string, default: "https://github.com/pyr0gan/isomer")
   attr(:class, :any, default: nil)
 

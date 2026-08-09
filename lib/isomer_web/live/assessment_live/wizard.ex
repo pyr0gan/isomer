@@ -81,6 +81,42 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     end
   end
 
+  def handle_event("toggle_domain_collect", %{"domain" => domain_id}, socket) do
+    if socket.assigns.finalized do
+      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    else
+      current = Map.get(socket.assigns.domain_metrics, domain_id, %{})
+      collecting? = Map.get(current, "collect") in [true, "true", "on", 1, "1"]
+
+      attrs =
+        if collecting? do
+          %{"collect" => false}
+        else
+          %{
+            "collect" => true,
+            "time_scale" => Map.get(current, "time_scale"),
+            "time_hours" => Map.get(current, "time_hours")
+          }
+        end
+
+      persist_domain_metric(socket, domain_id, attrs)
+    end
+  end
+
+  def handle_event("save_domain_time", %{"domain" => domain_id} = params, socket) do
+    if socket.assigns.finalized do
+      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    else
+      attrs = %{
+        "collect" => true,
+        "time_scale" => Map.get(params, "time_scale", ""),
+        "time_hours" => Map.get(params, "time_hours", "")
+      }
+
+      persist_domain_metric(socket, domain_id, attrs)
+    end
+  end
+
   def handle_event("answer", %{"question_id" => qid} = params, socket) do
     cond do
       socket.assigns.finalized ->
@@ -188,12 +224,39 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     end
   end
 
+  defp persist_domain_metric(socket, domain_id, attrs) do
+    case Tenant.update_domain_metric(
+           socket.assigns.surreal,
+           socket.assigns.assessment_id,
+           domain_id,
+           attrs
+         ) do
+      {:ok, assessment} ->
+        metrics = normalize_domain_metrics(assessment["domain_metrics"])
+
+        {:noreply,
+         socket
+         |> assign(:assessment, assessment)
+         |> assign(:domain_metrics, metrics)
+         |> assign(
+           :domain_sections,
+           attach_metric_flags(socket.assigns.domain_sections, metrics)
+         )
+         |> assign(:error, nil)
+         |> then(&maybe_mark_in_progress/1)}
+
+      {:error, reason} ->
+        {:noreply, assign(socket, error: format_error(reason))}
+    end
+  end
+
   defp load_state(surreal, id) do
     with {:ok, assessment} <- Tenant.get_assessment(surreal, id),
          {:ok, sets} <- Tenant.list_question_sets(surreal),
          {:ok, answers} <- Tenant.list_answers(surreal, id) do
       domains = assessment["domains"] || []
       questions = project_questions(sets, domains)
+      domain_metrics = normalize_domain_metrics(assessment["domain_metrics"])
 
       {answer_map, evidence_notes} =
         Enum.reduce(answers, {%{}, %{}}, fn a, {vals, notes} ->
@@ -204,7 +267,10 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           {Map.put(vals, qid, val), Map.put(notes, qid, note)}
         end)
 
-      domain_sections = group_by_domain(questions, answer_map)
+      domain_sections =
+        questions
+        |> group_by_domain(answer_map)
+        |> attach_metric_flags(domain_metrics)
 
       set_domains =
         sets
@@ -222,6 +288,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          org_id: Tenant.canonicalize_record_id(assessment["org"]),
          questions: questions,
          domain_sections: domain_sections,
+         domain_metrics: domain_metrics,
          answers: answer_map,
          evidence_notes: evidence_notes,
          addable_domains: addable,
@@ -229,6 +296,30 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
        }}
     end
   end
+
+  defp normalize_domain_metrics(metrics) when is_map(metrics) and not is_struct(metrics),
+    do: metrics
+
+  defp normalize_domain_metrics(_), do: %{}
+
+  defp attach_metric_flags(sections, metrics) do
+    Enum.map(sections, fn section ->
+      entry = Map.get(metrics, section.id, %{})
+      collect? = Map.get(entry, "collect") in [true, "true", "on", 1, "1"]
+
+      Map.merge(section, %{
+        collect_metrics: collect?,
+        time_scale: Map.get(entry, "time_scale") || "",
+        time_hours: format_time_hours_input(Map.get(entry, "time_hours"))
+      })
+    end)
+  end
+
+  defp format_time_hours_input(nil), do: ""
+  defp format_time_hours_input(n) when is_integer(n), do: Integer.to_string(n)
+  defp format_time_hours_input(n) when is_float(n), do: :erlang.float_to_binary(n, [:short])
+  defp format_time_hours_input(n) when is_binary(n), do: n
+  defp format_time_hours_input(_), do: ""
 
   defp finalized?(%{"status" => status}) when status in ["complete", "archived"], do: true
   defp finalized?(_), do: false
@@ -319,36 +410,50 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
              which blocks answer/select patches until a full refresh. --%>
         <div id="wizard-domains" class="wizard-accordion rounded-xl bg-white/70 shadow-sm">
           <div :for={section <- @domain_sections} class="wizard-accordion__item" id={"domain-#{section.id}"}>
-            <button
-              type="button"
-              id={"domain-#{section.id}-toggle"}
-              class="wizard-accordion__trigger"
-              phx-click="toggle_domain"
-              phx-value-id={section.id}
-              aria-expanded={"#{MapSet.member?(@open_domain_ids, section.id)}"}
-              aria-controls={"domain-#{section.id}-panel"}
-            >
-              <span class="wizard-accordion__heading">
-                {section.label}
-                <span
-                  id={"domain-#{section.id}-progress"}
-                  class="wizard-progress"
-                  title={"Yes #{section.yes} · No #{section.no} · Unanswered #{section.unanswered}"}
-                >
-                  · {section.answered}/{section.total}
-                  <span class="wizard-progress__detail">
-                    ({section.yes} yes · {section.no} no · {section.unanswered} open)
+            <div class="wizard-accordion__header">
+              <button
+                type="button"
+                id={"domain-#{section.id}-toggle"}
+                class="wizard-accordion__trigger"
+                phx-click="toggle_domain"
+                phx-value-id={section.id}
+                aria-expanded={"#{MapSet.member?(@open_domain_ids, section.id)}"}
+                aria-controls={"domain-#{section.id}-panel"}
+              >
+                <span class="wizard-accordion__heading">
+                  {section.label}
+                  <span
+                    id={"domain-#{section.id}-progress"}
+                    class="wizard-progress"
+                    title={"Yes #{section.yes} · No #{section.no} · Unanswered #{section.unanswered}"}
+                  >
+                    · {section.answered}/{section.total}
+                    <span class="wizard-progress__detail">
+                      ({section.yes} yes · {section.no} no · {section.unanswered} open)
+                    </span>
                   </span>
                 </span>
-              </span>
-              <.icon
-                name="hero-chevron-down-solid"
-                class={[
-                  "wizard-accordion__chevron",
-                  MapSet.member?(@open_domain_ids, section.id) && "rotate-180"
-                ]}
-              />
-            </button>
+                <.icon
+                  name="hero-chevron-down-solid"
+                  class={[
+                    "wizard-accordion__chevron",
+                    MapSet.member?(@open_domain_ids, section.id) && "rotate-180"
+                  ]}
+                />
+              </button>
+
+              <label class="wizard-domain-collect" title="Include this domain in org objective metrics">
+                <input
+                  type="checkbox"
+                  class="wizard-domain-collect__input"
+                  phx-click="toggle_domain_collect"
+                  phx-value-domain={section.id}
+                  checked={section.collect_metrics}
+                  disabled={@finalized}
+                />
+                <span class="wizard-domain-collect__label">Collect metrics</span>
+              </label>
+            </div>
 
             <div
               :if={MapSet.member?(@open_domain_ids, section.id)}
@@ -360,6 +465,56 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
               <.p :if={section.description != ""} class="text-sm text-slate-600 dark:text-slate-400">
                 {section.description}
               </.p>
+
+              <div :if={section.collect_metrics} class="wizard-domain-time">
+                <%= if @finalized do %>
+                  <p class="wizard-domain-time__readonly">
+                    Time spent: {time_scale_label(section.time_scale)}
+                    <%= if section.time_hours != "" do %>
+                      · {section.time_hours}h
+                    <% end %>
+                  </p>
+                <% else %>
+                  <form
+                    id={"domain-time-#{section.id}"}
+                    phx-submit="save_domain_time"
+                    class="wizard-domain-time__form"
+                  >
+                    <input type="hidden" name="domain" value={section.id} />
+                    <div class="wizard-domain-time__field">
+                      <label class="wizard-domain-time__label" for={"time-scale-#{section.id}"}>
+                        Time scale
+                      </label>
+                      <select
+                        id={"time-scale-#{section.id}"}
+                        name="time_scale"
+                        class="wizard-domain-time__control"
+                      >
+                        {Phoenix.HTML.Form.options_for_select(
+                          [{"—", ""}, {"Low", "low"}, {"Medium", "medium"}, {"High", "high"}],
+                          section.time_scale
+                        )}
+                      </select>
+                    </div>
+                    <div class="wizard-domain-time__field">
+                      <label class="wizard-domain-time__label" for={"time-hours-#{section.id}"}>
+                        Hours
+                      </label>
+                      <input
+                        id={"time-hours-#{section.id}"}
+                        type="number"
+                        name="time_hours"
+                        min="0"
+                        step="0.5"
+                        value={section.time_hours}
+                        placeholder="0"
+                        class="wizard-domain-time__control wizard-domain-time__hours"
+                      />
+                    </div>
+                    <.button type="submit" size="sm" label="Save time" color="gray" variant="outline" />
+                  </form>
+                <% end %>
+              </div>
 
               <.card :for={q <- section.questions} class="wizard-question-card shadow-none">
                 <.card_content class="wizard-question-card__body space-y-3">
@@ -696,4 +851,9 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   defp format_multi(list) when is_list(list), do: Enum.join(list, ", ")
   defp format_multi(other) when is_binary(other), do: other
   defp format_multi(_), do: ""
+
+  defp time_scale_label("low"), do: "Low"
+  defp time_scale_label("medium"), do: "Medium"
+  defp time_scale_label("high"), do: "High"
+  defp time_scale_label(_), do: "—"
 end

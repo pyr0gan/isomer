@@ -221,8 +221,12 @@
     @apply border-t border-slate-200 dark:border-slate-700;
   }
 
+  .wizard-accordion__header {
+    @apply flex flex-wrap items-center gap-2 bg-white pr-3 dark:bg-slate-900;
+  }
+
   .wizard-accordion__trigger {
-    @apply flex w-full items-center justify-between gap-3 bg-white px-4 py-3.5 text-left text-slate-900 transition hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800/80;
+    @apply flex min-w-0 flex-1 items-center justify-between gap-3 bg-transparent px-4 py-3.5 text-left text-slate-900 transition hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-800/80;
   }
 
   .wizard-accordion__heading {
@@ -239,6 +243,46 @@
 
   .wizard-domain-panel {
     @apply space-y-4 overflow-visible;
+  }
+
+  .wizard-domain-collect {
+    @apply inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/80;
+  }
+
+  .wizard-domain-collect__input {
+    @apply h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600;
+  }
+
+  .wizard-domain-collect__label {
+    @apply whitespace-nowrap;
+  }
+
+  .wizard-domain-time {
+    @apply rounded-lg border border-slate-200 bg-white/80 px-3 py-3 dark:border-slate-700 dark:bg-slate-900/60;
+  }
+
+  .wizard-domain-time__form {
+    @apply flex flex-wrap items-end gap-3;
+  }
+
+  .wizard-domain-time__field {
+    @apply flex min-w-[7rem] flex-col gap-1;
+  }
+
+  .wizard-domain-time__label {
+    @apply text-xs font-medium text-slate-500 dark:text-slate-400;
+  }
+
+  .wizard-domain-time__control {
+    @apply rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  .wizard-domain-time__hours {
+    @apply w-24;
+  }
+
+  .wizard-domain-time__readonly {
+    @apply text-sm text-slate-600 dark:text-slate-300;
   }
 
   /* Petal cards default to overflow-hidden, which clips CSS tooltips. */
@@ -264,13 +308,17 @@
     @apply ml-1 text-xs font-normal text-slate-400 dark:text-slate-500;
   }
 
+  .maturity-panels {
+    @apply mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2;
+  }
+
   .maturity-chart {
     @apply space-y-3;
   }
 
   .maturity-row {
-    /* Domain | compact bar | level + definition — bar no longer eats the row. */
-    @apply grid grid-cols-[minmax(6.5rem,9rem)_minmax(4.5rem,8rem)_minmax(9rem,1fr)] items-center gap-3;
+    /* Domain | compact bar | level badge — hug content in the half-width panel. */
+    @apply grid grid-cols-[minmax(5rem,1fr)_minmax(3.5rem,6rem)_auto] items-center gap-2;
   }
 
   .maturity-row__label {
@@ -278,7 +326,7 @@
   }
 
   .maturity-row__track {
-    @apply h-2.5 w-full max-w-[8rem] overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800;
+    @apply h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800;
   }
 
   .maturity-row__fill {
@@ -310,6 +358,62 @@
     z-index: 60;
     max-width: min(22rem, calc(100vw - 2rem));
     white-space: normal;
+  }
+
+  .metrics-sparklines {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2;
+  }
+
+  .metric-sparkline {
+    @apply flex flex-col gap-2 rounded-lg border border-slate-200/80 bg-slate-50/60 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/40;
+  }
+
+  .metric-sparkline__head {
+    @apply flex items-baseline justify-between gap-2;
+  }
+
+  .metric-sparkline__label {
+    @apply text-xs font-medium text-slate-500 dark:text-slate-400;
+  }
+
+  .metric-sparkline__value {
+    @apply text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100;
+  }
+
+  .metric-sparkline__chart {
+    @apply text-primary-600 dark:text-primary-400;
+  }
+
+  .metric-sparkline__placeholder {
+    @apply flex h-7 items-center text-xs italic text-slate-400 dark:text-slate-500;
+  }
+
+  .metrics-domains {
+    @apply mt-5 border-t border-slate-200 pt-4 dark:border-slate-700;
+  }
+
+  .metrics-domains__title {
+    @apply mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+  }
+
+  .metrics-domains__list {
+    @apply space-y-2;
+  }
+
+  .metrics-domains__row {
+    @apply grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm;
+  }
+
+  .metrics-domains__label {
+    @apply truncate font-medium text-slate-700 dark:text-slate-200;
+  }
+
+  .metrics-domains__scale {
+    @apply text-slate-500 dark:text-slate-400;
+  }
+
+  .metrics-domains__hours {
+    @apply min-w-[2.5rem] text-right tabular-nums text-slate-700 dark:text-slate-200;
   }
 
   .isomer-sticky-title {

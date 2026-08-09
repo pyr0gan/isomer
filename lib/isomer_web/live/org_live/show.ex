@@ -3,6 +3,7 @@ defmodule IsomerWeb.OrgLive.Show do
 
   alias Isomer.Db.Tenant
   alias Isomer.Maturity
+  alias Isomer.OrgMetrics
 
   @impl true
   def mount(%{"org_id" => org_id}, _session, socket) do
@@ -16,6 +17,12 @@ defmodule IsomerWeb.OrgLive.Show do
           {:error, _} -> []
         end
 
+      metrics =
+        case OrgMetrics.org_panel(socket.assigns.surreal, assessments) do
+          {:ok, panel} -> panel
+          {:error, _} -> empty_metrics()
+        end
+
       {ongoing, finalized} = Enum.split_with(assessments, &ongoing?/1)
 
       {:ok,
@@ -27,6 +34,7 @@ defmodule IsomerWeb.OrgLive.Show do
          ongoing_assessments: ongoing,
          finalized_assessments: finalized,
          maturity: maturity,
+         metrics: metrics,
          error: nil
        )}
     else
@@ -54,6 +62,19 @@ defmodule IsomerWeb.OrgLive.Show do
 
   defp ongoing?(%{"status" => status}) when status in ["complete", "archived"], do: false
   defp ongoing?(_), do: true
+
+  defp empty_metrics do
+    %{
+      "has_collection" => false,
+      "current" => nil,
+      "series" => %{
+        "yes_pct" => [],
+        "unanswered" => [],
+        "evidence_pct" => [],
+        "time_hours" => []
+      }
+    }
+  end
 
   defp format_error(reason) when is_binary(reason), do: reason
   defp format_error(%{message: msg}) when is_binary(msg), do: msg
@@ -90,40 +111,105 @@ defmodule IsomerWeb.OrgLive.Show do
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
-      <.card :if={@maturity != []} class="maturity-card">
-        <.card_header
-          title="Org maturity"
-          description="Estimated from Yes answers on L1/L2 questions (newest assessment wins)."
-        />
-        <.card_content>
-          <div class="maturity-chart" role="img" aria-label="Domain maturity levels">
-            <div :for={bar <- @maturity} class="maturity-row">
-              <span class="maturity-row__label">{bar["label"]}</span>
-              <div
-                class="maturity-row__track"
-                title={"#{bar["answered"]}/#{bar["total"]} met"}
-              >
-                <div
-                  class={"maturity-row__fill maturity-row__fill--#{bar["level"]}"}
-                  style={"width: #{bar["pct"]}%"}
-                >
+      <div class="maturity-panels">
+        <.card class="maturity-card">
+          <.card_header
+            title="Org maturity"
+            description="Estimated from Yes answers on L1/L2 questions (newest assessment wins)."
+          />
+          <.card_content>
+            <%= if @maturity == [] do %>
+              <.p no_margin class="text-sm text-slate-500 dark:text-slate-400">
+                No domain maturity yet — complete assessment questions to estimate levels.
+              </.p>
+            <% else %>
+              <div class="maturity-chart" role="img" aria-label="Domain maturity levels">
+                <div :for={bar <- @maturity} class="maturity-row">
+                  <span class="maturity-row__label">{bar["label"]}</span>
+                  <div
+                    class="maturity-row__track"
+                    title={"#{bar["answered"]}/#{bar["total"]} met"}
+                  >
+                    <div
+                      class={"maturity-row__fill maturity-row__fill--#{bar["level"]}"}
+                      style={"width: #{bar["pct"]}%"}
+                    >
+                    </div>
+                  </div>
+                  <.tooltip
+                    label={"#{bar["level_label"]} — #{bar["level_tip"]}"}
+                    placement="left"
+                  >
+                    <.badge
+                      color={bar["level_color"] || "primary"}
+                      variant="soft"
+                      label={bar["level_label"]}
+                      class="maturity-row__level cursor-help"
+                    />
+                  </.tooltip>
                 </div>
               </div>
-              <.tooltip
-                label={"#{bar["level_label"]} — #{bar["level_tip"]}"}
-                placement="left"
-              >
-                <.badge
-                  color={bar["level_color"] || "primary"}
-                  variant="soft"
-                  label={bar["level_label"]}
-                  class="maturity-row__level cursor-help"
+            <% end %>
+          </.card_content>
+        </.card>
+
+        <.card class="metrics-card">
+          <.card_header
+            title="Objective metrics"
+            description="Opted-in domains from assessment wizards (finalized and in progress)."
+          />
+          <.card_content>
+            <%= if @metrics["has_collection"] do %>
+              <div class="metrics-sparklines">
+                <.metric_sparkline
+                  label="Yes answers"
+                  suffix="%"
+                  value={get_in(@metrics, ["current", "yes_pct"])}
+                  series={@metrics["series"]["yes_pct"]}
                 />
-              </.tooltip>
-            </div>
-          </div>
-        </.card_content>
-      </.card>
+                <.metric_sparkline
+                  label="Unanswered"
+                  value={get_in(@metrics, ["current", "unanswered"])}
+                  series={@metrics["series"]["unanswered"]}
+                />
+                <.metric_sparkline
+                  label="Evidence coverage"
+                  suffix="%"
+                  value={get_in(@metrics, ["current", "evidence_pct"])}
+                  series={@metrics["series"]["evidence_pct"]}
+                />
+                <.metric_sparkline
+                  label="Time logged"
+                  suffix="h"
+                  value={get_in(@metrics, ["current", "time_hours_total"])}
+                  series={@metrics["series"]["time_hours"]}
+                />
+              </div>
+
+              <div
+                :if={get_in(@metrics, ["current", "domains"]) not in [nil, []]}
+                class="metrics-domains"
+              >
+                <p class="metrics-domains__title">Time by objective</p>
+                <ul class="metrics-domains__list">
+                  <li
+                    :for={row <- get_in(@metrics, ["current", "domains"]) || []}
+                    class="metrics-domains__row"
+                  >
+                    <span class="metrics-domains__label">{row["label"]}</span>
+                    <span class="metrics-domains__scale">{row["time_scale_label"]}</span>
+                    <span class="metrics-domains__hours">{format_hours(row["hours"])}</span>
+                  </li>
+                </ul>
+              </div>
+            <% else %>
+              <.p no_margin class="text-sm text-slate-500 dark:text-slate-400">
+                Mark domains for metric collection in an assessment wizard to populate this panel.
+              </.p>
+            <% end %>
+          </.card_content>
+        </.card>
+      </div>
 
       <%= if @assessments == [] do %>
         <.card variant="muted">
@@ -186,6 +272,10 @@ defmodule IsomerWeb.OrgLive.Show do
     </ul>
     """
   end
+
+  defp format_hours(nil), do: "—"
+  defp format_hours(hours) when is_number(hours), do: "#{Float.round(hours * 1.0, 1)}h"
+  defp format_hours(_), do: "—"
 
   defp status_label(status) when status in ["complete", "archived"], do: "finalized"
   defp status_label(status) when is_binary(status) and status != "", do: status
