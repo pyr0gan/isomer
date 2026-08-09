@@ -385,7 +385,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     <span class="font-semibold text-slate-900 dark:text-slate-100">
                       {domain["label"]}
                     </span>
-                    <.p no_margin class="text-sm text-slate-600 dark:text-slate-400">
+                    <.p no_margin class="text-base text-slate-600 dark:text-slate-400">
                       {domain["description"]}
                     </.p>
                   </div>
@@ -462,7 +462,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
               role="region"
               aria-labelledby={"domain-#{section.id}-toggle"}
             >
-              <.p :if={section.description != ""} class="text-sm text-slate-600 dark:text-slate-400">
+              <.p :if={section.description != ""} class="text-base text-slate-600 dark:text-slate-400">
                 {section.description}
               </.p>
 
@@ -538,7 +538,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
                   <div class="question-meta">
                     <.tooltip label={"Question id #{q.id}"} placement="right">
-                      <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      <code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         {q.id}
                       </code>
                     </.tooltip>
@@ -547,13 +547,13 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
                   <.p
                     no_margin
-                    class="text-base font-medium leading-snug text-slate-900 dark:text-slate-100"
+                    class="text-lg font-medium leading-snug text-slate-900 dark:text-slate-100"
                   >
                     {q.ask}
                   </.p>
 
                   <%= if @finalized do %>
-                    <div class="answer-readonly text-sm text-slate-700 dark:text-slate-300">
+                    <div class="answer-readonly text-base text-slate-700 dark:text-slate-300">
                       <span class="font-medium">Answer:</span>
                       {format_answer_display(q.kind, @answers[q.id])}
                       <span
@@ -623,7 +623,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                         placeholder="Short note or reference for now"
                         class="answer-evidence"
                       />
-                      <.p no_margin class="text-xs text-slate-500">
+                      <.p no_margin class="text-sm text-slate-500">
                         Choose — and Update to clear an answer (progress will drop).
                       </.p>
                     </form>

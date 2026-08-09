@@ -75,7 +75,7 @@ defmodule IsomerWeb.OrgLive.Index do
                   <span class="block text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {org["name"]}
                   </span>
-                  <span class="text-sm text-slate-500 dark:text-slate-400">
+                  <span class="text-base text-slate-500 dark:text-slate-400">
                     id …{Tenant.short_key(org["id"])}
                   </span>
                 </.link>

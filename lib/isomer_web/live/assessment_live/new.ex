@@ -117,7 +117,7 @@ defmodule IsomerWeb.AssessmentLive.New do
         <.card_content>
           <form phx-submit="save" class="space-y-6">
             <div class="space-y-3">
-              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Title</span>
+              <span class="text-base font-medium text-slate-700 dark:text-slate-300">Title</span>
 
               <%= if @edit_title? do %>
                 <.field
@@ -168,7 +168,7 @@ defmodule IsomerWeb.AssessmentLive.New do
             </div>
 
             <fieldset>
-              <legend class="mb-2 text-sm font-medium text-slate-700">Domains</legend>
+              <legend class="mb-2 text-base font-medium text-slate-700">Domains</legend>
               <%= if @domains == [] do %>
                 <.alert
                   color="warning"
@@ -187,11 +187,11 @@ defmodule IsomerWeb.AssessmentLive.New do
                     />
                     <div>
                       <span class="font-semibold text-slate-900">{domain["label"]}</span>
-                      <.p no_margin class="text-sm text-slate-600">{domain["description"]}</.p>
+                      <.p no_margin class="text-base text-slate-600">{domain["description"]}</.p>
                       <.p
                         :if={domain["anchors"] not in [nil, []]}
                         no_margin
-                        class="mt-1 text-xs text-slate-500"
+                        class="mt-1 text-sm text-slate-500"
                       >
                         Anchors: {Enum.join(domain["anchors"] || [], ", ")}
                       </.p>

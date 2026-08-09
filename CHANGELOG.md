@@ -5,12 +5,15 @@ Tooling versions only (`mix.exs`). Content is versioned in YAML — see
 
 ## Unreleased
 
+- Whole-app type ramp: root `font-size: 112.5%` (18px), body `text-base` + relaxed
+  leading; lift cramped `text-xs`/`text-sm` UI copy in wizard, org, and metrics
 - Org page: two-column maturity / objective-metrics panels (`lg+`); sparklines for
   Yes %, unanswered, evidence coverage, and logged hours (placeholder until ≥2
   assessments contribute)
 - Assessment wizard: per-domain **Collect metrics** opt-in with time scale +
   manual hours; persisted on `assessment.domain_metrics` in Surreal
 - GitHub corner gusset ~28% larger; octocat in the corner, label along the edge
+  (readable 1rem label)
 
 ## 0.1.0 — 2026-08-09
 
