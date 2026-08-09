@@ -167,8 +167,16 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   }
 
+  .wizard-question-card__body {
+    @apply relative pr-10;
+  }
+
+  .wizard-question-card__status {
+    @apply pointer-events-none absolute top-0 right-0;
+  }
+
   .answer-mark-icon {
-    @apply inline-block h-6 w-6 shrink-0;
+    @apply inline-block h-8 w-8 shrink-0;
   }
 
   .answer-mark-icon-yes {

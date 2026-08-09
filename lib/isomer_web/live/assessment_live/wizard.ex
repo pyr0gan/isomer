@@ -302,7 +302,25 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
               </.p>
 
               <.card :for={q <- section.questions} class="wizard-question-card shadow-none">
-                <.card_content class="space-y-3">
+                <.card_content class="wizard-question-card__body space-y-3">
+                  <div class="wizard-question-card__status" aria-hidden="true">
+                    <.icon
+                      :if={q.kind == "boolean" and truthy_answer?(@answers[q.id])}
+                      name="hero-check-circle-solid"
+                      class="answer-mark-icon answer-mark-icon-yes"
+                    />
+                    <.icon
+                      :if={q.kind == "boolean" and falsey_answer?(@answers[q.id])}
+                      name="hero-x-circle-solid"
+                      class="answer-mark-icon answer-mark-icon-no"
+                    />
+                    <.icon
+                      :if={q.kind != "boolean" and answered?(@answers, q.id)}
+                      name="hero-check-circle-solid"
+                      class="answer-mark-icon answer-mark-icon-yes"
+                    />
+                  </div>
+
                   <div class="question-meta">
                     <.tooltip label={"Question id #{q.id}"} placement="bottom">
                       <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -339,16 +357,6 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                               )}
                             </select>
                           </div>
-                          <.icon
-                            :if={truthy_answer?(@answers[q.id])}
-                            name="hero-check-circle-solid"
-                            class="answer-mark-icon answer-mark-icon-yes"
-                          />
-                          <.icon
-                            :if={falsey_answer?(@answers[q.id])}
-                            name="hero-x-circle-solid"
-                            class="answer-mark-icon answer-mark-icon-no"
-                          />
                         <% "multi" -> %>
                           <.field
                             type="text"
@@ -359,11 +367,6 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                             no_margin
                             wrapper_class="min-w-[14rem] flex-1"
                           />
-                          <.icon
-                            :if={answered?(@answers, q.id)}
-                            name="hero-check-circle-solid"
-                            class="answer-mark-icon answer-mark-icon-yes"
-                          />
                         <% _ -> %>
                           <.field
                             type="text"
@@ -372,11 +375,6 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                             value={to_string(@answers[q.id] || "")}
                             no_margin
                             wrapper_class="min-w-[14rem] flex-1"
-                          />
-                          <.icon
-                            :if={answered?(@answers, q.id)}
-                            name="hero-check-circle-solid"
-                            class="answer-mark-icon answer-mark-icon-yes"
                           />
                       <% end %>
                       <.button
