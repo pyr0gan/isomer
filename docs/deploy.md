@@ -57,6 +57,14 @@ Re-run `ensure_runtime` after sync so record users can `SELECT` corpus tables
 (including `question_set`). The Docker image ships `vocab/domains.yaml` for
 domain labels in the assessment UI; question text itself is loaded from Surreal.
 
+If signup says the email already exists but sign-in fails, the password does not
+match the stored argon2 hash (Surreal returns “No record was returned”). Reset
+with root credentials:
+
+```bash
+mix isomer.db.reset_password --email you@example.com --password 'new-secret'
+```
+
 ## Railway
 
 1. New project → deploy from this repo.
