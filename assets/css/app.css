@@ -55,6 +55,8 @@
 @layer base {
   html {
     color-scheme: light;
+    /* Reserve scrollbar space so opening tall pages doesn't shift layout. */
+    scrollbar-gutter: stable;
   }
 
   html.dark {
@@ -258,12 +260,17 @@
     @apply text-sm font-normal text-slate-500 dark:text-slate-400;
   }
 
+  .wizard-progress__detail {
+    @apply ml-1 text-xs font-normal text-slate-400 dark:text-slate-500;
+  }
+
   .maturity-chart {
     @apply space-y-3;
   }
 
   .maturity-row {
-    @apply grid grid-cols-[minmax(7rem,11rem)_1fr_auto] items-center gap-3;
+    /* Domain | compact bar | level + definition — bar no longer eats the row. */
+    @apply grid grid-cols-[minmax(6.5rem,9rem)_minmax(4.5rem,8rem)_minmax(9rem,1fr)] items-center gap-3;
   }
 
   .maturity-row__label {
@@ -271,7 +278,7 @@
   }
 
   .maturity-row__track {
-    @apply h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800;
+    @apply h-2.5 w-full max-w-[8rem] overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800;
   }
 
   .maturity-row__fill {
@@ -296,7 +303,13 @@
   }
 
   .maturity-row__level {
-    @apply justify-self-end;
+    @apply max-w-full justify-self-start truncate;
+  }
+
+  .maturity-card .pc-tooltip__content {
+    z-index: 60;
+    max-width: min(22rem, calc(100vw - 2rem));
+    white-space: normal;
   }
 
   .isomer-sticky-title {
