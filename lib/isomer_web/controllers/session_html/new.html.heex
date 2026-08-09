@@ -45,7 +45,9 @@
           viewable
           autocomplete="current-password"
         />
-        <.button type="submit" label="Sign in" class="w-full" />
+        <div class="isomer-form-actions">
+          <.button type="submit" label="Sign in" />
+        </div>
       </form>
 
       <form
@@ -67,7 +69,9 @@
           autocomplete="new-password"
           help_text="At least 8 characters."
         />
-        <.button type="submit" label="Create account" class="w-full" />
+        <div class="isomer-form-actions">
+          <.button type="submit" label="Create account" />
+        </div>
       </form>
     </.card_content>
   </.card>
@@ -80,7 +84,9 @@
       document.querySelectorAll(".auth-tab").forEach((b) => {
         const active = b === btn;
         b.setAttribute("aria-selected", active ? "true" : "false");
-        b.classList.toggle("pc-tab__link--active", active);
+        // Petal segmented tabs use segment active classes (not pc-tab__link--active).
+        b.classList.toggle("pc-tab__segment--is-active", active);
+        b.classList.toggle("pc-tab__segment--is-not-active", !active);
       });
       document.getElementById("login-form").classList.toggle("hidden", mode !== "login");
       document.getElementById("signup-form").classList.toggle("hidden", mode !== "signup");
