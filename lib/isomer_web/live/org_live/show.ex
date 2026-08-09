@@ -138,7 +138,7 @@ defmodule IsomerWeb.OrgLive.Show do
                   </div>
                   <.tooltip
                     label={"#{bar["level_label"]} — #{bar["level_tip"]}"}
-                    placement="left"
+                    placement="top"
                   >
                     <.badge
                       color={bar["level_color"] || "primary"}

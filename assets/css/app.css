@@ -290,7 +290,9 @@
   .wizard-question-card .pc-card__inner,
   .wizard-accordion,
   .wizard-accordion__item,
-  .wizard-accordion__panel {
+  .wizard-accordion__panel,
+  .maturity-card.pc-card,
+  .maturity-card .pc-card__inner {
     overflow: visible;
   }
 
