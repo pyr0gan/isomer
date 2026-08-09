@@ -112,21 +112,37 @@ defmodule Isomer.Db.Tenant do
     org_id = canonicalize_record_id(org_id)
     {table, key} = split_record_id!(org_id)
 
+    # Delete the org while membership still exists — org FOR delete checks
+    # member_org_ids_with_roles(["owner"]). Removing members first would deny
+    # the org delete. Clean up member edges afterward.
     sql = """
     LET $org = type::record($table, $key);
     DELETE evidence WHERE org = $org;
     DELETE answer WHERE org = $org;
     DELETE assessment WHERE org = $org;
-    DELETE member WHERE out = $org;
     DELETE $org;
-    RETURN true;
+    DELETE member WHERE out = $org;
+    RETURN SELECT * FROM ONLY $org;
     """
 
     case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
-      {:ok, _} -> :ok
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        case useful_result(results) do
+          row when is_map(row) and not is_struct(row) ->
+            {:error, "Organization could not be deleted (still present). Are you the owner?"}
+
+          [row | _] when is_map(row) and not is_struct(row) ->
+            {:error, "Organization could not be deleted (still present). Are you the owner?"}
+
+          _ ->
+            :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
+
 
   @doc "Short suffix of the record key for disambiguating duplicate names in the UI."
   def short_key(org_id) when is_binary(org_id) do
