@@ -10,26 +10,77 @@
     </div>
     <div class="flex items-center gap-2 sm:gap-3">
       <.color_scheme_switch id="isomer-scheme" variant="dropdown" />
-      <nav :if={assigns[:current_email]} class="flex items-center gap-2 sm:gap-3">
-        <span class="hidden max-w-[16rem] truncate text-base text-slate-500 dark:text-slate-400 sm:inline">
-          {@current_email}
-        </span>
-        <.button
-          link_type="live_redirect"
-          to={~p"/orgs"}
-          color="gray"
-          variant="ghost"
-          size="sm"
-          label="Orgs"
-        />
-        <.button
-          link_type="a"
-          to={~p"/logout"}
-          color="gray"
-          variant="outline"
-          size="sm"
-          label="Sign out"
-        />
+      <nav :if={assigns[:current_email]} class="isomer-nav" aria-label="Account">
+        <.dropdown
+          id="isomer-nav-menu"
+          label="Menu"
+          placement="right"
+          trigger_class="pc-button pc-button--gray pc-button--outline pc-button--sm"
+          menu_items_wrapper_class="isomer-nav__menu"
+        >
+          <.dropdown_menu_item
+            :if={assigns[:nav_org_id]}
+            link_type="live_redirect"
+            to={~p"/orgs/#{@nav_org_id}"}
+            label="Org dashboard"
+          >
+            <.icon name="hero-building-office-2" class="w-5 h-5 text-slate-500" />
+            Org dashboard
+          </.dropdown_menu_item>
+          <.dropdown_menu_item
+            :if={assigns[:nav_assessment_id]}
+            link_type="live_redirect"
+            to={~p"/assessments/#{@nav_assessment_id}"}
+            label="Assessment details"
+          >
+            <.icon name="hero-clipboard-document-list" class="w-5 h-5 text-slate-500" />
+            Assessment details
+          </.dropdown_menu_item>
+          <.dropdown_menu_item
+            :if={assigns[:nav_assessment_id]}
+            link_type="live_redirect"
+            to={~p"/assessments/#{@nav_assessment_id}/q"}
+            label="Questionnaire"
+          >
+            <.icon name="hero-queue-list" class="w-5 h-5 text-slate-500" />
+            Questionnaire
+          </.dropdown_menu_item>
+          <.dropdown_menu_item
+            :if={assigns[:nav_assessment_id]}
+            link_type="live_redirect"
+            to={~p"/assessments/#{@nav_assessment_id}/artifacts"}
+            label="Artifacts"
+          >
+            <.icon name="hero-document-text" class="w-5 h-5 text-slate-500" />
+            Artifacts
+          </.dropdown_menu_item>
+
+          <.dropdown_menu_separator :if={assigns[:nav_org_id] || assigns[:nav_assessment_id]} />
+
+          <.dropdown_menu_item link_type="live_redirect" to={~p"/orgs"} label="Organizations">
+            <.icon name="hero-rectangle-group" class="w-5 h-5 text-slate-500" />
+            Organizations
+          </.dropdown_menu_item>
+          <.dropdown_menu_item link_type="live_redirect" to={~p"/library"} label="Library">
+            <.icon name="hero-book-open" class="w-5 h-5 text-slate-500" />
+            Library
+          </.dropdown_menu_item>
+          <.dropdown_menu_item link_type="live_redirect" to={~p"/settings"} label="Settings">
+            <.icon name="hero-cog-6-tooth" class="w-5 h-5 text-slate-500" />
+            Settings
+          </.dropdown_menu_item>
+
+          <.dropdown_menu_separator />
+
+          <.dropdown_menu_label>
+            {@current_email}
+          </.dropdown_menu_label>
+
+          <.dropdown_menu_item link_type="a" to={~p"/logout"} label="Sign out">
+            <.icon name="hero-arrow-right-on-rectangle" class="w-5 h-5 text-slate-500" />
+            Sign out
+          </.dropdown_menu_item>
+        </.dropdown>
       </nav>
     </div>
   </.container>

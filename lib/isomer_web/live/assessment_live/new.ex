@@ -30,7 +30,8 @@ defmodule IsomerWeb.AssessmentLive.New do
        title: title,
        edit_title?: false,
        domains: domains,
-       error: nil
+       error: nil,
+       nav_org_id: org_id
      )}
   end
 

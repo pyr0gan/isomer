@@ -35,7 +35,8 @@ defmodule IsomerWeb.OrgLive.Show do
          finalized_assessments: finalized,
          maturity: maturity,
          metrics: metrics,
-         error: nil
+         error: nil,
+         nav_org_id: org_id
        )}
     else
       {:error, _} ->

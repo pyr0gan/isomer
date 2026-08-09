@@ -117,6 +117,7 @@ defmodule Isomer.Db.Tenant do
     # the org delete. Clean up member edges afterward.
     sql = """
     LET $org = type::record($table, $key);
+    DELETE artifact WHERE org = $org;
     DELETE evidence WHERE org = $org;
     DELETE answer WHERE org = $org;
     DELETE assessment WHERE org = $org;
@@ -269,6 +270,7 @@ defmodule Isomer.Db.Tenant do
     sql = """
     LET $aid = type::record($table, $key);
     LET $answer_ids = (SELECT VALUE id FROM answer WHERE assessment = $aid);
+    DELETE artifact WHERE assessment = $aid;
     DELETE evidence WHERE answer IN $answer_ids;
     DELETE answer WHERE assessment = $aid;
     DELETE $aid;
@@ -443,6 +445,209 @@ defmodule Isomer.Db.Tenant do
       {:error, reason} -> {:error, reason}
     end
   end
+
+  @doc "Current auth user profile (prefs + identity). Never returns password."
+  def get_current_user(conn) do
+    # Project fields from $auth — do not SELECT * (password hash).
+    sql = """
+    RETURN {
+      id: $auth.id,
+      email: $auth.email,
+      name: $auth.name,
+      self_role: $auth.self_role,
+      experience_level: $auth.experience_level,
+      comfort_level: $auth.comfort_level,
+      created_at: $auth.created_at,
+      updated_at: $auth.updated_at
+    };
+    """
+
+    case UserClient.query(conn, sql) do
+      {:ok, results} -> unwrap_one(results)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Updates self-identified guidance prefs on the auth user.
+
+  Empty strings clear optional fields (`NONE` in SurQL) without binding JSON null.
+  """
+  def update_user_prefs(conn, attrs) when is_map(attrs) do
+    fields = [
+      {"name", attrs |> Map.get("name", Map.get(attrs, :name))},
+      {"self_role", attrs |> Map.get("self_role", Map.get(attrs, :self_role))},
+      {"experience_level",
+       attrs |> Map.get("experience_level", Map.get(attrs, :experience_level))},
+      {"comfort_level", attrs |> Map.get("comfort_level", Map.get(attrs, :comfort_level))}
+    ]
+
+    {set_parts, vars} =
+      Enum.reduce(fields, {["updated_at = time::now()"], %{}}, fn {field, raw}, {sets, vars} ->
+        case blank_to_nil(raw) do
+          nil ->
+            {["#{field} = NONE" | sets], vars}
+
+          value ->
+            {["#{field} = $#{field}" | sets], Map.put(vars, field, value)}
+        end
+      end)
+
+    sql = """
+    UPDATE user SET #{Enum.join(Enum.reverse(set_parts), ", ")} WHERE id = $auth.id;
+    RETURN SELECT id, email, name, self_role, experience_level, comfort_level, created_at, updated_at
+      FROM ONLY $auth.id;
+    """
+
+    case UserClient.query(conn, sql, vars) do
+      {:ok, results} -> unwrap_one(results)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def list_templates(conn) do
+    case UserClient.query(
+           conn,
+           """
+           SELECT corpus_id, name, version, kind, covers, merge_fields, body
+           FROM template
+           ORDER BY name ASC;
+           """
+         ) do
+      {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def get_template(conn, corpus_id) when is_binary(corpus_id) do
+    sql = """
+    SELECT * FROM template WHERE corpus_id = $corpus_id LIMIT 1;
+    """
+
+    case UserClient.query(conn, sql, %{"corpus_id" => corpus_id}) do
+      {:ok, results} ->
+        case rows_of(results) do
+          [row | _] -> {:ok, normalize_record(row)}
+          [] -> {:error, :not_found}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def list_artifacts(conn) do
+    case UserClient.query(
+           conn,
+           """
+           SELECT * FROM artifact ORDER BY created_at DESC;
+           """
+         ) do
+      {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def list_artifacts_for_assessment(conn, assessment_id) when is_binary(assessment_id) do
+    {table, key} = split_record_id!(assessment_id)
+
+    sql = """
+    SELECT * FROM artifact
+    WHERE assessment = type::record($table, $key)
+    ORDER BY created_at DESC;
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def get_artifact(conn, artifact_id) when is_binary(artifact_id) do
+    {table, key} = split_record_id!(artifact_id)
+
+    case UserClient.query(conn, "SELECT * FROM type::record($table, $key);", %{
+           "table" => table,
+           "key" => key
+         }) do
+      {:ok, results} -> unwrap_one(results)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def create_artifact(conn, attrs) when is_map(attrs) do
+    org_id = canonicalize_record_id(attrs["org_id"])
+    assessment_id = canonicalize_record_id(attrs["assessment_id"])
+    {org_table, org_key} = split_record_id!(org_id)
+    {assessment_table, assessment_key} = split_record_id!(assessment_id)
+
+    merge_values = Map.get(attrs, "merge_values") || %{}
+
+    sql = """
+    LET $key = string::concat("d", rand::string(16));
+    LET $did = type::record("artifact", $key);
+    CREATE $did SET
+      org = type::record($org_table, $org_key),
+      assessment = type::record($assessment_table, $assessment_key),
+      template_id = $template_id,
+      title = $title,
+      body = $body,
+      format = 'markdown',
+      merge_values = $merge_values,
+      created_by = $auth.id,
+      created_at = time::now();
+    RETURN SELECT * FROM ONLY $did;
+    """
+
+    vars = %{
+      "org_table" => org_table,
+      "org_key" => org_key,
+      "assessment_table" => assessment_table,
+      "assessment_key" => assessment_key,
+      "template_id" => attrs["template_id"],
+      "title" => attrs["title"],
+      "body" => attrs["body"],
+      "merge_values" => merge_values
+    }
+
+    case UserClient.query(conn, sql, vars) do
+      {:ok, results} -> unwrap_one(results)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def delete_artifact(conn, artifact_id) when is_binary(artifact_id) do
+    artifact_id = canonicalize_record_id(artifact_id)
+    {table, key} = split_record_id!(artifact_id)
+
+    sql = """
+    LET $did = type::record($table, $key);
+    DELETE $did;
+    RETURN SELECT * FROM ONLY $did;
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, results} ->
+        case useful_result(results) do
+          row when is_map(row) and not is_struct(row) ->
+            {:error, "Artifact could not be deleted (still present)."}
+
+          [row | _] when is_map(row) and not is_struct(row) ->
+            {:error, "Artifact could not be deleted (still present)."}
+
+          _ ->
+            :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp blank_to_nil(nil), do: nil
+  defp blank_to_nil(""), do: nil
+  defp blank_to_nil(value) when is_binary(value), do: String.trim(value)
+  defp blank_to_nil(value), do: value
 
   def list_answers(conn, assessment_id) when is_binary(assessment_id) do
     {table, key} = split_record_id!(assessment_id)

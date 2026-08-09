@@ -27,6 +27,8 @@ defmodule IsomerWeb.Router do
     delete("/session", SessionController, :delete)
     get("/logout", SessionController, :delete)
 
+    get("/artifacts/:id/download", ArtifactController, :download)
+
     live_session :authenticated,
       on_mount: [{IsomerWeb.UserAuth, :ensure_authenticated}] do
       live("/orgs", OrgLive.Index, :index)
@@ -35,6 +37,9 @@ defmodule IsomerWeb.Router do
       live("/orgs/:org_id/assessments/new", AssessmentLive.New, :new)
       live("/assessments/:id", AssessmentLive.Show, :show)
       live("/assessments/:id/q", AssessmentLive.Wizard, :wizard)
+      live("/assessments/:id/artifacts", AssessmentLive.Artifacts, :index)
+      live("/library", LibraryLive, :index)
+      live("/settings", SettingsLive, :index)
     end
   end
 end

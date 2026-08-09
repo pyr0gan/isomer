@@ -8,7 +8,9 @@ defmodule IsomerWeb.UserAuth do
     router: IsomerWeb.Router,
     statics: IsomerWeb.static_paths()
 
+  alias Isomer.Db.Tenant
   alias Isomer.Db.UserClient
+  alias Isomer.GuideCopy
 
   def init(opts), do: opts
 
@@ -19,6 +21,8 @@ defmodule IsomerWeb.UserAuth do
     conn
     |> assign(:surreal_token, token)
     |> assign(:current_email, email)
+    |> assign(:current_user, nil)
+    |> assign(:guide_prefs, GuideCopy.default_prefs())
   end
 
   def log_in(conn, token, email) when is_binary(token) and is_binary(email) do
@@ -56,11 +60,21 @@ defmodule IsomerWeb.UserAuth do
       %{"surreal_token" => token} when is_binary(token) and token != "" ->
         case UserClient.connect_with_token(token) do
           {:ok, conn} ->
+            {user, prefs} = load_user_and_prefs(conn)
+
             socket =
               socket
               |> Phoenix.Component.assign(:surreal, conn)
               |> Phoenix.Component.assign(:surreal_token, token)
-              |> Phoenix.Component.assign(:current_email, session["surreal_email"])
+              |> Phoenix.Component.assign(
+                :current_email,
+                (user && user["email"]) || session["surreal_email"]
+              )
+              |> Phoenix.Component.assign(:current_user, user)
+              |> Phoenix.Component.assign(:guide_prefs, prefs)
+              |> Phoenix.Component.assign(:nav_org_id, nil)
+              |> Phoenix.Component.assign(:nav_assessment_id, nil)
+              |> Phoenix.Component.assign(:nav_assessment_title, nil)
 
             {:cont, socket}
 
@@ -73,6 +87,16 @@ defmodule IsomerWeb.UserAuth do
 
       _ ->
         {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/login")}
+    end
+  end
+
+  defp load_user_and_prefs(conn) do
+    case Tenant.get_current_user(conn) do
+      {:ok, user} ->
+        {user, GuideCopy.normalize(user)}
+
+      {:error, _} ->
+        {nil, GuideCopy.default_prefs()}
     end
   end
 

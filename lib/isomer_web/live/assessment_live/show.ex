@@ -128,15 +128,20 @@ defmodule IsomerWeb.AssessmentLive.Show do
       selected = Enum.filter(available, &(&1["id"] in selected_ids))
       addable = Enum.reject(available, &(&1["id"] in selected_ids))
 
+      org_id = Tenant.canonicalize_record_id(assessment["org"])
+
       {:ok,
        %{
          page_title: assessment["title"],
          assessment: assessment,
          assessment_id: id,
-         org_id: Tenant.canonicalize_record_id(assessment["org"]),
+         org_id: org_id,
          selected_domains: selected,
          addable_domains: addable,
-         finalized: finalized?(assessment)
+         finalized: finalized?(assessment),
+         nav_org_id: org_id,
+         nav_assessment_id: id,
+         nav_assessment_title: assessment["title"]
        }}
     end
   end
@@ -167,9 +172,25 @@ defmodule IsomerWeb.AssessmentLive.Show do
         <div class="flex flex-wrap gap-2">
           <.button
             link_type="live_redirect"
+            to={~p"/orgs/#{@org_id}"}
+            color="gray"
+            variant="ghost"
+            label="← Org"
+            icon="hero-arrow-left"
+          />
+          <.button
+            link_type="live_redirect"
             to={~p"/assessments/#{@assessment_id}/q"}
             label={if @finalized, do: "View wizard", else: "Open wizard"}
             icon="hero-play"
+          />
+          <.button
+            link_type="live_redirect"
+            to={~p"/assessments/#{@assessment_id}/artifacts"}
+            color="gray"
+            variant="outline"
+            label="Artifacts"
+            icon="hero-document-text"
           />
           <%= if @finalized do %>
             <.button

@@ -429,6 +429,75 @@
     @apply opacity-100;
   }
 
+  .isomer-nav__menu {
+    @apply min-w-[14rem];
+  }
+
+  .isomer-settings__group {
+    @apply space-y-3 border-t border-slate-200 pt-6 dark:border-slate-800;
+  }
+
+  .isomer-settings__heading,
+  .isomer-library__heading {
+    @apply text-lg font-semibold text-slate-900 dark:text-slate-100;
+  }
+
+  .isomer-settings__fields {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  .isomer-settings__field {
+    @apply space-y-1.5;
+  }
+
+  .isomer-settings__label {
+    @apply block text-base font-medium text-slate-700 dark:text-slate-300;
+  }
+
+  .isomer-library {
+    @apply space-y-10;
+  }
+
+  .isomer-library__section {
+    @apply space-y-3;
+  }
+
+  .isomer-library__list {
+    @apply divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-800 dark:border-slate-800;
+  }
+
+  .isomer-library__row {
+    @apply flex flex-wrap items-start justify-between gap-3 py-3;
+  }
+
+  .isomer-library__row--stack {
+    @apply flex-col;
+  }
+
+  .isomer-library__row-top {
+    @apply flex w-full flex-wrap items-start justify-between gap-3;
+  }
+
+  .isomer-library__title {
+    @apply font-medium text-slate-900 dark:text-slate-100;
+  }
+
+  .isomer-library__meta {
+    @apply mt-0.5 text-sm text-slate-500 dark:text-slate-400;
+  }
+
+  .isomer-library__actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .isomer-artifact-preview {
+    @apply w-full text-sm text-slate-600 dark:text-slate-400;
+  }
+
+  .isomer-artifact-preview__body {
+    @apply mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded border border-slate-200 bg-white/70 p-3 font-mono text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200;
+  }
+
   /* Sticky bottom-left GitHub corner gusset — logo + tooltip only */
   .github-gusset {
     @apply pointer-events-none fixed bottom-0 left-0 z-40 block no-underline outline-none;
