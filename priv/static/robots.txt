@@ -1,2 +1,26 @@
+# isomer — https://isomer-demo.fly.dev
+# LLM context: /llms.txt
+# Security: /.well-known/security.txt
+
 User-agent: *
-Disallow: /
+Allow: /
+Allow: /login
+Allow: /health
+Allow: /llms.txt
+Allow: /security.txt
+Allow: /.well-known/
+Disallow: /orgs
+Disallow: /assessments
+Disallow: /session
+Disallow: /logout
+
+User-agent: GPTBot
+Allow: /llms.txt
+Allow: /.well-known/
+Disallow: /orgs
+Disallow: /assessments
+
+User-agent: Google-Extended
+Allow: /llms.txt
+Disallow: /orgs
+Disallow: /assessments

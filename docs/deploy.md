@@ -42,7 +42,18 @@ fly deploy
 ```
 
 `fly.toml` sets `PHX_SERVER=true` and binds internal port `4000`. Health checks
-hit `/login`. Attach a custom domain with `fly certs add` when ready.
+hit `/health` (plain-text liveness; not `/login`). Attach a custom domain with
+`fly certs add` when ready.
+
+Public discovery files (static under `priv/static/`):
+
+| Path | Purpose |
+|---|---|
+| `/health` | Liveness probe |
+| `/robots.txt` | Crawler policy |
+| `/llms.txt` | LLM/context summary ([llmstxt.org](https://llmstxt.org/)) |
+| `/humans.txt` | Human-readable contact |
+| `/.well-known/security.txt` (also `/security.txt`) | Vulnerability disclosure ([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116.html)) |
 
 Before the first deploy (and after corpus changes), apply Surreal content +
 runtime DDL from a machine that has Vault access — the release image does not

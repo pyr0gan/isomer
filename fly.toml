@@ -18,7 +18,7 @@ primary_region = "iad"
     timeout = "2s"
     grace_period = "10s"
     method = "GET"
-    path = "/login"
+    path = "/health"
 
 [[vm]]
   memory = "512mb"

@@ -11,6 +11,11 @@ defmodule IsomerWeb.Router do
     plug(IsomerWeb.UserAuth)
   end
 
+  # Liveness only — no browser pipeline (no CSRF/session/auth).
+  scope "/", IsomerWeb do
+    get("/health", HealthController, :show)
+  end
+
   scope "/", IsomerWeb do
     pipe_through(:browser)
 

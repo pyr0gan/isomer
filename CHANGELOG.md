@@ -5,6 +5,9 @@ Tooling versions only (`mix.exs`). Content is versioned in YAML — see
 
 ## Unreleased
 
+- Fly health check uses `/health` (plain-text liveness) instead of `/login`
+- Public discovery: `/robots.txt`, `/llms.txt`, `/humans.txt`,
+  `/.well-known/security.txt` (+ `/security.txt`)
 - Whole-app type ramp: root `font-size: 112.5%` (18px), body `text-base` + relaxed
   leading; lift cramped `text-xs`/`text-sm` UI copy in wizard, org, and metrics
 - `assessment.domain_metrics` is `FLEXIBLE` so SCHEMAFULL accepts dynamic domain-id keys
