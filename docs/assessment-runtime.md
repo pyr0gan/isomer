@@ -11,7 +11,10 @@ mix isomer.db.ensure_runtime
 ```
 
 (`Isomer.Db.RuntimeSchema` — separate from corpus sync so prune/upsert never
-touches tenant data.)
+touches tenant data.) CI also runs this after `mix isomer.db.sync` in
+`.github/workflows/sync-corpus.yml`, so schema additions (e.g. `user.self_role` /
+`experience_level` / `comfort_level`, tenant `artifact`) reach the demo DB on
+merge to `main` without a manual Mix step.
 
 ## Design
 

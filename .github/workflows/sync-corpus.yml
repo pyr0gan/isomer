@@ -75,3 +75,17 @@ jobs:
           VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
           GITHUB_SHA: ${{ github.sha }}
         run: mix isomer.db.sync
+
+      # Tenant/auth DDL (user prefs, artifact table, corpus read grants). Safe to
+      # re-run; schema changes after a content PR are otherwise invisible to the demo.
+      - name: Ensure assessment runtime schema
+        env:
+          SURREAL_URL: ${{ secrets.SURREAL_URL }}
+          SURREAL_NAMESPACE: ${{ secrets.SURREAL_NAMESPACE }}
+          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
+          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
+          VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
+        run: mix isomer.db.ensure_runtime
