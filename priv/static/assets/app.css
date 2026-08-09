@@ -19401,6 +19401,12 @@
     padding-top: calc(var(--spacing) * 1);
     padding-bottom: calc(var(--spacing) * 2);
   }
+  .wizard-question-card.pc-card, .wizard-question-card .pc-card__inner, #wizard-domains .accordion-content-container, #wizard-domains .pc-accordion-item__content-container {
+    overflow: visible;
+  }
+  .wizard-domain-panel .pc-tooltip__content {
+    z-index: 60;
+  }
   .wizard-progress {
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));

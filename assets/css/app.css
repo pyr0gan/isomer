@@ -133,6 +133,18 @@
     @apply space-y-4 pt-1 pb-2;
   }
 
+  /* Petal cards default to overflow-hidden, which clips CSS tooltips. */
+  .wizard-question-card.pc-card,
+  .wizard-question-card .pc-card__inner,
+  #wizard-domains .accordion-content-container,
+  #wizard-domains .pc-accordion-item__content-container {
+    overflow: visible;
+  }
+
+  .wizard-domain-panel .pc-tooltip__content {
+    z-index: 60;
+  }
+
   .wizard-progress {
     @apply text-sm font-normal text-slate-500;
   }

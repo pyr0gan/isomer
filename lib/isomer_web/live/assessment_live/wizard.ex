@@ -222,10 +222,10 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                 {section.description}
               </.p>
 
-              <.card :for={q <- section.questions} class="shadow-none">
+              <.card :for={q <- section.questions} class="wizard-question-card shadow-none">
                 <.card_content class="space-y-3">
                   <div class="question-meta">
-                    <.tooltip label={"Question id #{q.id}"} placement="top">
+                    <.tooltip label={"Question id #{q.id}"} placement="bottom">
                       <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                         {q.id}
                       </code>
@@ -335,7 +335,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     assigns = assign(assigns, :meta, meta)
 
     ~H"""
-    <.tooltip label={"#{@level} — #{@meta.name}. #{@meta.tip}"} placement="top">
+    <.tooltip label={"#{@level} — #{@meta.name}. #{@meta.tip}"} placement="bottom">
       <.badge color={@meta.color} variant="soft" label={@level} class="cursor-help" />
     </.tooltip>
     """
