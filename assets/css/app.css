@@ -429,8 +429,8 @@
   /* Sticky bottom-left GitHub corner gusset (~28% larger than h-24/w-24) */
   .github-gusset {
     @apply pointer-events-none fixed bottom-0 left-0 z-40 block no-underline outline-none;
-    height: 7.75rem;
-    width: 7.75rem;
+    height: 8.75rem;
+    width: 8.75rem;
   }
 
   .github-gusset:focus-visible .github-gusset__face {
@@ -451,32 +451,32 @@
   /* Octocat sits in the right-angle corner space */
   .github-gusset__icon {
     @apply absolute shrink-0;
-    left: 0.85rem;
-    bottom: 0.85rem;
-    width: 1.375rem;
-    height: 1.375rem;
+    left: 1rem;
+    bottom: 1rem;
+    width: 1.625rem;
+    height: 1.625rem;
   }
 
-  /* Label runs along the hypotenuse edge */
+  /* Label runs along the hypotenuse edge — sized for comfortable reading */
   .github-gusset__label {
     @apply absolute uppercase;
-    left: -18%;
-    bottom: 32%;
-    width: 11rem;
+    left: -14%;
+    bottom: 34%;
+    width: 12rem;
     transform: rotate(45deg);
     transform-origin: center;
     font-family: var(--font-sans);
-    font-size: 0.8125rem;
+    font-size: 1rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-align: center;
-    line-height: 1;
+    line-height: 1.1;
   }
 
   .github-gusset__bubble {
-    @apply pointer-events-none absolute z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition duration-200 dark:bg-slate-100 dark:text-slate-900;
+    @apply pointer-events-none absolute z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-medium text-white opacity-0 shadow-lg transition duration-200 dark:bg-slate-100 dark:text-slate-900;
     left: calc(100% - 0.15rem);
-    bottom: 1.35rem;
+    bottom: 1.5rem;
     transform: translateY(0.25rem);
   }
 
