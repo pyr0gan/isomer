@@ -460,11 +460,6 @@
     height: 2.5rem;
   }
 
-  /* Mark SVG is white for the dark face; invert on the light (dark-mode) face */
-  html.dark .github-gusset__icon {
-    filter: invert(1);
-  }
-
   /* Label along the hypotenuse, inset so type clears the clipped edge */
   .github-gusset__label {
     @apply absolute uppercase;
