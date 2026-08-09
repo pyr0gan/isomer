@@ -330,6 +330,13 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   defp finalized?(%{"status" => status}) when status in ["complete", "archived"], do: true
   defp finalized?(_), do: false
 
+  defp prefs_unset?(prefs) do
+    prefs = GuideCopy.normalize(prefs)
+
+    is_nil(prefs["self_role"]) and is_nil(prefs["experience_level"]) and
+      is_nil(prefs["comfort_level"])
+  end
+
   defp format_error(reason) when is_binary(reason), do: reason
   defp format_error(%{message: msg}) when is_binary(msg), do: msg
   defp format_error(reason), do: inspect(reason)
@@ -385,6 +392,20 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         label="This assessment is finalized. Reopen it from Details to edit answers."
         class="mb-4"
       />
+
+      <.alert
+        :if={not @finalized and prefs_unset?(@guide_prefs)}
+        color="info"
+        variant="soft"
+        with_icon
+        class="mb-4"
+      >
+        New here? Set your role and comfort in
+        <.link navigate={~p"/settings"} class="font-medium underline underline-offset-2">
+          Settings
+        </.link>
+        so tips stay plain-language (or concise) without changing the questionnaire.
+      </.alert>
 
       <.card :if={not @finalized and @addable_domains != []} variant="muted">
         <.card_content>
