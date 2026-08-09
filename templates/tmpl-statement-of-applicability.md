@@ -29,7 +29,7 @@ merge_fields: [org.name, soa.approval_date, soa.approver, soa.content_release]
 | iso42001/2023/A.2.2 | AI policy | included | … | … | … |
 | … | … | … | … | … | … |
 
-> Generate one row per control from the content release; the tool enforces
+> Generate one row per control from the corpus; the tool enforces
 > completeness. Sort by framework, then reference.
 
 ## Exclusion register (extract)

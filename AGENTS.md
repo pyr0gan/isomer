@@ -9,7 +9,8 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Lint: `mix lint` (alias for `mix isomer.validate` + `mix isomer.charset`). See root `README.md`.
 - Deps: `mix deps.get` (see `mix.exs` / `mix.lock`). Latest stable Elixir/OTP pinned in `mise.toml` (**1.20.3** / **29.0.5**); required for EEF `sbom` / CycloneDX.
 - SurrealDB smoke test: `mix isomer.db.ping` (password from Hashicorp Vault; never commit `.env`).
-- Content release **1.0.0** (`CHANGELOG.md`, `mix.exs` version). Full corpus→DB sync: `mix isomer.db.sync` (or `--dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`, `question_set`, `template`; writes `maps_to` graph edges; prunes stale `content_source="repo"` rows; writes a `sync_run` record.
+- **Versioning:** tooling = `mix.exs` + `CHANGELOG.md` (currently **0.1.0**); content = per-file YAML `version` / framework edition directories — never Mix, and no GitHub Releases for content. Policy: `docs/versioning.md`. Cut the tooling changelog when tooling changes land; do not invent “content release” numbers.
+- Full corpus→DB sync: `mix isomer.db.sync` (or `--dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`, `question_set`, `template`; writes `maps_to` graph edges; prunes stale `content_source="repo"` rows; writes a `sync_run` record.
 - Sample single-requirement write: `mix isomer.db.ingest_sample`.
 - Assessment runtime (Fork B design): `docs/assessment-runtime.md`. Apply Surreal auth + tenant tables with `mix isomer.db.ensure_runtime` (does not prune; separate from corpus sync). Phoenix LiveViews are the projector; Surreal owns identity/session via `DEFINE ACCESS isomer_user`.
 - CycloneDX SBoM: `mix isomer.sbom` (alias `mix sbom`) → `bom.cdx.json` via Hex package `sbom` (`only: :dev`). Do not run under `MIX_ENV=prod`. CI uploads the JSON as an artifact.
