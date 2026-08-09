@@ -59,9 +59,20 @@ defmodule IsomerWeb.SettingsLive do
     end
   end
 
-  defp format_error(reason) when is_binary(reason), do: reason
-  defp format_error(%{message: msg}) when is_binary(msg), do: msg
+  defp format_error(%{message: msg}) when is_binary(msg), do: humanize_error(msg)
+  defp format_error(reason) when is_binary(reason), do: humanize_error(reason)
   defp format_error(reason), do: inspect(reason)
+
+  defp humanize_error(msg) when is_binary(msg) do
+    if String.contains?(msg, "no such field") and
+         (String.contains?(msg, "comfort_level") or String.contains?(msg, "self_role") or
+            String.contains?(msg, "experience_level")) do
+      "Guidance prefs are not on the database yet. An admin needs to run " <>
+        "`mix isomer.db.ensure_runtime` (also runs after corpus sync on main)."
+    else
+      msg
+    end
+  end
 
   @impl true
   def render(assigns) do

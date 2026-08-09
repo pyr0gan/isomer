@@ -29,7 +29,15 @@ defmodule Mix.Tasks.Isomer.Db.EnsureRuntime do
             %{
               ok: true,
               access: Isomer.Db.RuntimeSchema.access_name(),
-              tables: ["user", "org", "member", "assessment", "answer", "evidence"],
+              tables: [
+                "user",
+                "org",
+                "member",
+                "assessment",
+                "answer",
+                "evidence",
+                "artifact"
+              ],
               docs: "docs/assessment-runtime.md"
             },
             pretty: true
