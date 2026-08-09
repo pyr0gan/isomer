@@ -1,5 +1,11 @@
 # Content releases
 
+## Unreleased
+
+- Tooling — replace Python (`tools/`) and Node (`src/`, `scripts/`, npm)
+  with Elixir Mix tasks (`mix lint`, `mix isomer.db.*`, etc.). Surreal
+  connectivity uses the official Elixir SDK over WSS; password still from Vault.
+
 ## 1.0.0 — 2026-08-08
 First complete content layer. Corpus: 176 requirements, 13 domains,
 13 rubrics, 75 mapping edges, 1 regulatory ruleset, 48 questions,
@@ -18,9 +24,8 @@ First complete content layer. Corpus: 176 requirements, 13 domains,
 - questions — 48 assessment questions (L1/L2 focus) keyed to requirements
 - templates — AI policy, integrated SoA, impact assessment
   (42005-shaped + FRIA extension), AI system register
-- tools — validate.py (schemas + semantic checks incl. YAML-date
-  normalization, questions/templates), delta_report.py (integration
-  coverage), check_content_charset.py (reject non-Latin letter leakage)
+- tools — originally Python/JS validators and Surreal sync; replaced by
+  Elixir Mix tasks (`mix lint`, `mix isomer.db.sync`, etc.) after 1.0.0
 
 Review status: all mapping edges and legal-obligation paraphrases carry
 reviewer: claude-draft pending human review. Legal review of eu-ai-act

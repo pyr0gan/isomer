@@ -1,0 +1,4 @@
+[tools]
+elixir = "1.17.3"
+# OTP is provided by the environment / CI (erlef/setup-beam otp-version 25).
+# Locally: any OTP 25+ that matches the Elixir build is fine.

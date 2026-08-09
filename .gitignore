@@ -6,3 +6,8 @@ node_modules/
 __pycache__/
 *.py[cod]
 .venv/
+_build/
+deps/
+.elixir_ls/
+*.beam
+erl_crash.dump
