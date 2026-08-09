@@ -1,22 +1,22 @@
 # isomer
 
 <p align="center">
-  <a href="https://surrealdb.com">
+  <a href="https://surrealdb.com" title="SurrealDB">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-dark.svg" />
-      <img src="docs/assets/logos/surrealdb-light.svg" alt="SurrealDB" height="52" />
+      <img src="docs/assets/logos/surrealdb-light.svg" alt="SurrealDB" height="40" />
     </picture>
   </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://elixir-lang.org">
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://elixir-lang.org" title="Elixir">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-dark.svg" />
-      <img src="docs/assets/logos/elixir-light.svg" alt="Elixir" height="52" />
+      <img src="docs/assets/logos/elixir-light.svg" alt="Elixir" height="48" />
     </picture>
   </a>
 </p>
 
-<p align="center"><em>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></em></p>
+<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
 
 **isomer** is a shared library of AI governance content — the requirements,
 questions, and mappings that make up an integrated security + AI management
