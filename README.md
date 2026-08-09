@@ -1,25 +1,5 @@
 # isomer
 
-<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
-
-<p align="center">
-  <a href="https://surrealdb.com" title="SurrealDB">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
-      <img src="docs/assets/logos/surrealdb-dark.svg" alt="SurrealDB" width="240" style="max-width: 80%; height: auto;" />
-    </picture>
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://elixir-lang.org" title="Elixir">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-light.svg" />
-      <img src="docs/assets/logos/elixir-dark.svg" alt="Elixir" width="180" style="max-width: 60%; height: auto;" />
-    </picture>
-  </a>
-</p>
-
 **isomer** is a shared library of AI governance content — the requirements,
 questions, and mappings that make up an integrated security + AI management
 playbook.
@@ -28,7 +8,25 @@ The content lives in plain YAML and Markdown in this repo. Elixir tooling
 checks it, and SurrealDB stores it so apps (and a future questionnaire UI) can
 query it.
 
-Tooling version **0.1.0** (`mix.exs`). Content is versioned in the YAML
+<p align="center">
+  <a href="https://surrealdb.com" title="SurrealDB">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
+      <img src="docs/assets/logos/surrealdb-dark.svg" alt="SurrealDB" width="200" height="48" />
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://elixir-lang.org" title="Elixir">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-light.svg" />
+      <img src="docs/assets/logos/elixir-dark.svg" alt="Elixir" width="140" height="48" />
+    </picture>
+  </a>
+</p>
+
+<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
+
+Tooling version lives in [`mix.exs`](mix.exs). Content is versioned in the YAML
 itself — see [`docs/versioning.md`](docs/versioning.md).
 
 ---
