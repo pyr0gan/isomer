@@ -117,17 +117,7 @@ defmodule IsomerWeb.AssessmentLive.New do
         <.card_content>
           <form phx-submit="save" class="space-y-6">
             <div class="space-y-3">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <span class="text-sm font-medium text-slate-700">Title</span>
-                <.button
-                  type="button"
-                  color="gray"
-                  variant={if @edit_title?, do: "soft", else: "ghost"}
-                  size="sm"
-                  label={if @edit_title?, do: "Use generated", else: "Edit title"}
-                  phx-click="toggle_edit_title"
-                />
-              </div>
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Title</span>
 
               <%= if @edit_title? do %>
                 <.field
@@ -142,10 +132,28 @@ defmodule IsomerWeb.AssessmentLive.New do
                   pattern={"[a-z]+-[a-z]+-[a-z0-9]{6}"}
                   help_text="Format: shortword-shortword-xxxxxx (6 alphanumeric)."
                 />
+                <div class="flex flex-wrap items-center gap-2">
+                  <.button
+                    type="button"
+                    color="gray"
+                    variant="soft"
+                    size="sm"
+                    label="Use generated"
+                    phx-click="toggle_edit_title"
+                  />
+                </div>
               <% else %>
                 <input type="hidden" name="title" value={@title} />
                 <div class="flex flex-wrap items-center gap-2">
                   <code class="title-generated">{@title}</code>
+                  <.button
+                    type="button"
+                    color="gray"
+                    variant="ghost"
+                    size="sm"
+                    label="Edit title"
+                    phx-click="toggle_edit_title"
+                  />
                   <.button
                     type="button"
                     color="gray"
