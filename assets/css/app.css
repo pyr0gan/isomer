@@ -319,4 +319,80 @@
   .isomer-sticky-title--visible {
     @apply opacity-100;
   }
+
+  /* Sticky bottom-left GitHub corner gusset */
+  .github-gusset {
+    @apply pointer-events-none fixed bottom-0 left-0 z-40 block h-24 w-24 no-underline outline-none;
+  }
+
+  .github-gusset:focus-visible .github-gusset__face {
+    outline: 2px solid oklch(52% 0.09 210);
+    outline-offset: 2px;
+  }
+
+  .github-gusset__face {
+    @apply pointer-events-auto absolute inset-0 bg-slate-900 text-white transition-colors dark:bg-slate-100 dark:text-slate-900;
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+  }
+
+  .github-gusset:hover .github-gusset__face,
+  .github-gusset:focus-visible .github-gusset__face {
+    @apply bg-slate-800 dark:bg-white;
+  }
+
+  .github-gusset__band {
+    @apply absolute flex items-center justify-center gap-1.5;
+    left: -28%;
+    bottom: 18%;
+    width: 9.5rem;
+    padding: 0.4rem 0.5rem;
+    transform: rotate(45deg);
+    transform-origin: center;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .github-gusset__icon {
+    @apply h-4 w-4 shrink-0;
+  }
+
+  .github-gusset__label {
+    @apply uppercase;
+  }
+
+  .github-gusset__bubble {
+    @apply pointer-events-none absolute z-50 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition duration-200 dark:bg-slate-100 dark:text-slate-900;
+    left: calc(100% - 0.25rem);
+    bottom: 1.15rem;
+    transform: translateY(0.25rem);
+  }
+
+  .github-gusset__bubble::after {
+    content: "";
+    position: absolute;
+    left: -6px;
+    bottom: 0.65rem;
+    border-width: 6px 6px 6px 0;
+    border-style: solid;
+    border-color: transparent #0f172a transparent transparent;
+  }
+
+  html.dark .github-gusset__bubble::after {
+    border-color: transparent #f1f5f9 transparent transparent;
+  }
+
+  .github-gusset:hover .github-gusset__bubble,
+  .github-gusset:focus-visible .github-gusset__bubble {
+    @apply opacity-100;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .github-gusset__bubble,
+    .github-gusset__face {
+      transition: none;
+    }
+  }
 }
