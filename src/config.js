@@ -1,6 +1,8 @@
 import { config as loadEnv } from "dotenv";
 
-loadEnv();
+// Quiet: CI injects secrets via process.env (no .env file). Avoid noisy
+// "injected env (0) from .env" tips that look like a misconfiguration.
+loadEnv({ quiet: true });
 
 function required(name) {
   const value = process.env[name];

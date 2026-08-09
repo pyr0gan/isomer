@@ -11,35 +11,84 @@ export function normalizeVaultPath(path) {
     .replace(/^v1\//, "");
 }
 
+function formatFetchFailure(err, url) {
+  const cause = err?.cause;
+  const parts = [
+    `fetch failed talking to Vault at ${url}`,
+    cause?.code ? `code=${cause.code}` : null,
+    cause?.message ? `cause=${cause.message}` : err?.message,
+  ].filter(Boolean);
+  const wrapped = new Error(parts.join(" — "));
+  wrapped.cause = err;
+  return wrapped;
+}
+
+function isTransientNetworkError(err) {
+  const code = err?.cause?.code || err?.code;
+  const msg = String(err?.cause?.message || err?.message || "");
+  return (
+    err?.name === "TypeError" ||
+    code === "ECONNRESET" ||
+    code === "ETIMEDOUT" ||
+    code === "EAI_AGAIN" ||
+    code === "ENOTFOUND" ||
+    code === "UND_ERR_CONNECT_TIMEOUT" ||
+    /fetch failed|network|timed out|socket/i.test(msg)
+  );
+}
+
+async function sleep(ms) {
+  await new Promise((r) => setTimeout(r, ms));
+}
+
 async function vaultFetch(addr, path, { token, method = "GET", body } = {}) {
   const url = `${addr}/v1/${normalizeVaultPath(path)}`;
   const headers = { "Content-Type": "application/json" };
   if (token) headers["X-Vault-Token"] = token;
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const attempts = 3;
+  let lastErr;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
-  const text = await res.text();
-  let json;
-  try {
-    json = text ? JSON.parse(text) : {};
-  } catch {
-    json = { raw: text };
+      const text = await res.text();
+      let json;
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch {
+        json = { raw: text };
+      }
+
+      if (!res.ok) {
+        const msg =
+          json?.errors?.join?.("; ") ||
+          json?.error ||
+          text ||
+          res.statusText;
+        throw new Error(`Vault ${method} ${path} failed (${res.status}): ${msg}`);
+      }
+
+      return json;
+    } catch (err) {
+      lastErr = err;
+      // HTTP errors from Vault are already Error with status — don't retry those.
+      const httpStatus = /failed \((\d+)\)/.exec(err?.message || "");
+      if (httpStatus) throw err;
+      if (!isTransientNetworkError(err) || i === attempts) {
+        if (err?.name === "TypeError" || err?.message === "fetch failed") {
+          throw formatFetchFailure(err, url);
+        }
+        throw err;
+      }
+      await sleep(400 * i);
+    }
   }
-
-  if (!res.ok) {
-    const msg =
-      json?.errors?.join?.("; ") ||
-      json?.error ||
-      text ||
-      res.statusText;
-    throw new Error(`Vault ${method} ${path} failed (${res.status}): ${msg}`);
-  }
-
-  return json;
+  throw lastErr;
 }
 
 /** Login with AppRole and return a client token. */

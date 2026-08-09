@@ -36,6 +36,31 @@ jobs:
       - name: Lint corpus
         run: npm run lint:corpus
 
+      - name: Check required secrets are non-empty
+        env:
+          SURREAL_URL: ${{ secrets.SURREAL_URL }}
+          SURREAL_NAMESPACE: ${{ secrets.SURREAL_NAMESPACE }}
+          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
+          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
+          VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
+        run: |
+          missing=
+          for v in SURREAL_URL SURREAL_NAMESPACE SURREAL_DATABASE SURREAL_USERNAME \
+                   VAULT_ADDR VAULT_TOKEN VAULT_SECRET_PATH VAULT_SECRET_FIELD; do
+            if [ -z "${!v}" ]; then
+              missing="$missing $v"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "Missing or empty GitHub Actions secrets:$missing" >&2
+            echo "Set them under Settings → Secrets and variables → Actions." >&2
+            exit 1
+          fi
+          echo "All required secrets are present (values not printed)."
+
       - name: Sync corpus to SurrealDB
         env:
           SURREAL_URL: ${{ secrets.SURREAL_URL }}
