@@ -12,6 +12,7 @@
     --color-red-200: oklch(88.5% 0.062 18.334);
     --color-red-300: oklch(80.8% 0.114 19.571);
     --color-red-500: oklch(63.7% 0.237 25.331);
+    --color-red-600: oklch(57.7% 0.245 27.325);
     --color-red-700: oklch(50.5% 0.213 27.518);
     --color-red-800: oklch(44.4% 0.177 26.899);
     --color-red-900: oklch(39.6% 0.141 25.723);
@@ -21,8 +22,7 @@
     --color-lime-500: oklch(76.8% 0.233 130.85);
     --color-green-400: oklch(79.2% 0.209 151.711);
     --color-green-600: oklch(62.7% 0.194 149.214);
-    --color-emerald-500: oklch(69.6% 0.17 162.48);
-    --color-emerald-800: oklch(43.2% 0.095 166.913);
+    --color-emerald-600: oklch(59.6% 0.145 163.225);
     --color-sky-500: oklch(68.5% 0.169 237.323);
     --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-indigo-600: oklch(51.1% 0.262 276.966);
@@ -701,6 +701,17 @@
     --hero-check-circle: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M9%2012.75%2011.25%2015%2015%209.75M21%2012a9%209%200%201%201-18%200%209%209%200%200%201%2018%200Z%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-check-circle);
     mask: var(--hero-check-circle);
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    vertical-align: middle;
+    display: inline-block;
+    width: 1.5rem;
+    height: 1lh;
+  }
+  .hero-check-circle-solid {
+    --hero-check-circle-solid: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M2.25%2012c0-5.385%204.365-9.75%209.75-9.75s9.75%204.365%209.75%209.75-4.365%209.75-9.75%209.75S2.25%2017.385%202.25%2012Zm13.36-1.814a.75.75%200%201%200-1.22-.872l-3.236%204.53L9.53%2012.22a.75.75%200%200%200-1.06%201.06l2.25%202.25a.75.75%200%200%200%201.14-.094l3.75-5.25Z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E');
+    -webkit-mask: var(--hero-check-circle-solid);
+    mask: var(--hero-check-circle-solid);
     mask-repeat: no-repeat;
     background-color: currentColor;
     vertical-align: middle;
@@ -1449,6 +1460,17 @@
     --hero-x-circle: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m9.75%209.75%204.5%204.5m0-4.5-4.5%204.5M21%2012a9%209%200%201%201-18%200%209%209%200%200%201%2018%200Z%22%2F%3E%3C%2Fsvg%3E');
     -webkit-mask: var(--hero-x-circle);
     mask: var(--hero-x-circle);
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+    vertical-align: middle;
+    display: inline-block;
+    width: 1.5rem;
+    height: 1lh;
+  }
+  .hero-x-circle-solid {
+    --hero-x-circle-solid: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M12%202.25c-5.385%200-9.75%204.365-9.75%209.75s4.365%209.75%209.75%209.75%209.75-4.365%209.75-9.75S17.385%202.25%2012%202.25Zm-1.72%206.97a.75.75%200%201%200-1.06%201.06L10.94%2012l-1.72%201.72a.75.75%200%201%200%201.06%201.06L12%2013.06l1.72%201.72a.75.75%200%201%200%201.06-1.06L13.06%2012l1.72-1.72a.75.75%200%201%200-1.06-1.06L12%2010.94l-1.72-1.72Z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E');
+    -webkit-mask: var(--hero-x-circle-solid);
+    mask: var(--hero-x-circle-solid);
     mask-repeat: no-repeat;
     background-color: currentColor;
     vertical-align: middle;
@@ -19289,44 +19311,17 @@
     align-items: flex-end;
     gap: calc(var(--spacing) * 3);
   }
-  .answer-mark {
-    display: inline-flex;
-    height: calc(var(--spacing) * 7);
-    width: calc(var(--spacing) * 7);
+  .answer-mark-icon {
+    display: inline-block;
+    height: calc(var(--spacing) * 6);
+    width: calc(var(--spacing) * 6);
     flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    border-radius: calc(infinity * 1px);
-    font-size: var(--text-sm);
-    line-height: var(--tw-leading, var(--text-sm--line-height));
-    --tw-font-weight: var(--font-weight-bold);
-    font-weight: var(--font-weight-bold);
   }
-  .answer-mark-yes {
-    background-color: color-mix(in srgb, oklch(69.6% 0.17 162.48) 15%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-emerald-500) 15%, transparent);
-    }
-    color: var(--color-emerald-800);
-    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
-    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
-    --tw-ring-color: color-mix(in srgb, oklch(69.6% 0.17 162.48) 25%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      --tw-ring-color: color-mix(in oklab, var(--color-emerald-500) 25%, transparent);
-    }
+  .answer-mark-icon-yes {
+    color: var(--color-emerald-600);
   }
-  .answer-mark-no {
-    background-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 15%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--color-red-500) 15%, transparent);
-    }
-    color: var(--color-red-800);
-    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
-    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
-    --tw-ring-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 25%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      --tw-ring-color: color-mix(in oklab, var(--color-red-500) 25%, transparent);
-    }
+  .answer-mark-icon-no {
+    color: var(--color-red-600);
   }
   .domain-grid {
     margin-top: calc(var(--spacing) * 2);

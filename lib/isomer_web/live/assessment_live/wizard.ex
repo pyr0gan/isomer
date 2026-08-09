@@ -80,38 +80,45 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     end
   end
 
-  def handle_event("answer", %{"question_id" => qid, "value" => value} = params, socket) do
+  def handle_event("answer", %{"question_id" => qid} = params, socket) do
     question = Enum.find(socket.assigns.questions, &(&1.id == qid))
 
     if is_nil(question) do
       {:noreply, assign(socket, error: "Unknown question")}
     else
-      coerced = coerce_value(question.kind, value, params)
+      # Radio groups (and some browsers) may send `value` as a list when a
+      # hidden empty field is present; normalize before coerce.
+      raw = Map.get(params, "value")
+      coerced = coerce_value(question.kind, raw, params)
 
-      attrs = %{
-        "org_id" => socket.assigns.org_id,
-        "assessment_id" => socket.assigns.assessment_id,
-        "question_id" => qid,
-        "pack" => "question_set",
-        "pack_ref" => question.domain,
-        "value" => coerced
-      }
+      if question.kind == "boolean" and is_nil(coerced) do
+        {:noreply, assign(socket, error: "Choose Yes or No before saving")}
+      else
+        attrs = %{
+          "org_id" => socket.assigns.org_id,
+          "assessment_id" => socket.assigns.assessment_id,
+          "question_id" => qid,
+          "pack" => "question_set",
+          "pack_ref" => question.domain,
+          "value" => coerced
+        }
 
-      case Tenant.upsert_answer(socket.assigns.surreal, attrs) do
-        :ok ->
-          answers = Map.put(socket.assigns.answers, qid, coerced)
+        case Tenant.upsert_answer(socket.assigns.surreal, attrs) do
+          :ok ->
+            answers = Map.put(socket.assigns.answers, qid, coerced)
 
-          {:noreply,
-           socket
-           |> assign(:answers, answers)
-           |> assign(
-             :domain_sections,
-             refresh_section_progress(socket.assigns.domain_sections, answers)
-           )
-           |> assign(:error, nil)}
+            {:noreply,
+             socket
+             |> assign(:answers, answers)
+             |> assign(
+               :domain_sections,
+               refresh_section_progress(socket.assigns.domain_sections, answers)
+             )
+             |> assign(:error, nil)}
 
-        {:error, reason} ->
-          {:noreply, assign(socket, error: format_error(reason))}
+          {:error, reason} ->
+            {:noreply, assign(socket, error: format_error(reason))}
+        end
       end
     end
   end
@@ -122,7 +129,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          {:ok, answers} <- Tenant.list_answers(surreal, id) do
       domains = assessment["domains"] || []
       questions = project_questions(sets, domains)
-      answer_map = Map.new(answers, fn a -> {a["question_id"], a["value"]} end)
+
+      answer_map =
+        Map.new(answers, fn a ->
+          qid = a["question_id"]
+          kind = Enum.find_value(questions, "text", fn q -> q.id == qid && q.kind end)
+          {qid, normalize_loaded_value(kind, a["value"])}
+        end)
+
       domain_sections = group_by_domain(questions, answer_map)
 
       set_domains =
@@ -241,35 +255,42 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     {q.evidence_prompt}
                   </.p>
 
-                  <form phx-submit="answer">
-                    <input type="hidden" name="question_id" value={q.id} />
-                    <div class="answer-controls">
-                      <%= case q.kind do %>
-                        <% "boolean" -> %>
-                          <.field
-                            type="radio-group"
-                            name="value"
-                            label="Answer"
-                            options={[{"Yes", "true"}, {"No", "false"}]}
-                            value={boolean_select_value(@answers[q.id])}
-                            group_layout="row"
-                            no_margin
-                          />
-                          <span
-                            :if={@answers[q.id] == true}
-                            class="answer-mark answer-mark-yes"
-                            aria-label="Yes"
-                          >
-                            ✓
-                          </span>
-                          <span
-                            :if={@answers[q.id] == false}
-                            class="answer-mark answer-mark-no"
-                            aria-label="No"
-                          >
-                            ✕
-                          </span>
-                        <% "multi" -> %>
+                  <div class="answer-controls">
+                    <%= case q.kind do %>
+                      <% "boolean" -> %>
+                        <.button
+                          type="button"
+                          size="sm"
+                          label="Yes"
+                          color={if truthy_answer?(@answers[q.id]), do: "success", else: "gray"}
+                          variant={if truthy_answer?(@answers[q.id]), do: "solid", else: "outline"}
+                          phx-click="answer"
+                          phx-value-question_id={q.id}
+                          phx-value-value="true"
+                        />
+                        <.button
+                          type="button"
+                          size="sm"
+                          label="No"
+                          color={if falsey_answer?(@answers[q.id]), do: "danger", else: "gray"}
+                          variant={if falsey_answer?(@answers[q.id]), do: "solid", else: "outline"}
+                          phx-click="answer"
+                          phx-value-question_id={q.id}
+                          phx-value-value="false"
+                        />
+                        <.icon
+                          :if={truthy_answer?(@answers[q.id])}
+                          name="hero-check-circle-solid"
+                          class="answer-mark-icon answer-mark-icon-yes"
+                        />
+                        <.icon
+                          :if={falsey_answer?(@answers[q.id])}
+                          name="hero-x-circle-solid"
+                          class="answer-mark-icon answer-mark-icon-no"
+                        />
+                      <% "multi" -> %>
+                        <form phx-submit="answer" class="flex flex-wrap items-end gap-3">
+                          <input type="hidden" name="question_id" value={q.id} />
                           <.field
                             type="text"
                             name="value"
@@ -279,14 +300,22 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                             no_margin
                             wrapper_class="min-w-[14rem] flex-1"
                           />
-                          <span
+                          <.icon
                             :if={answered?(@answers, q.id)}
-                            class="answer-mark answer-mark-yes"
-                            aria-label="Saved"
-                          >
-                            ✓
-                          </span>
-                        <% _ -> %>
+                            name="hero-check-circle-solid"
+                            class="answer-mark-icon answer-mark-icon-yes"
+                          />
+                          <.button
+                            type="submit"
+                            size="sm"
+                            label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
+                            color={if answered?(@answers, q.id), do: "gray", else: "primary"}
+                            variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
+                          />
+                        </form>
+                      <% _ -> %>
+                        <form phx-submit="answer" class="flex flex-wrap items-end gap-3">
+                          <input type="hidden" name="question_id" value={q.id} />
                           <.field
                             type="text"
                             name="value"
@@ -295,23 +324,21 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                             no_margin
                             wrapper_class="min-w-[14rem] flex-1"
                           />
-                          <span
+                          <.icon
                             :if={answered?(@answers, q.id)}
-                            class="answer-mark answer-mark-yes"
-                            aria-label="Saved"
-                          >
-                            ✓
-                          </span>
-                      <% end %>
-                      <.button
-                        type="submit"
-                        size="sm"
-                        label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
-                        color={if answered?(@answers, q.id), do: "gray", else: "primary"}
-                        variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
-                      />
-                    </div>
-                  </form>
+                            name="hero-check-circle-solid"
+                            class="answer-mark-icon answer-mark-icon-yes"
+                          />
+                          <.button
+                            type="submit"
+                            size="sm"
+                            label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
+                            color={if answered?(@answers, q.id), do: "gray", else: "primary"}
+                            variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
+                          />
+                        </form>
+                    <% end %>
+                  </div>
                 </.card_content>
               </.card>
             </div>
@@ -407,26 +434,42 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     end
   end
 
-  defp boolean_select_value(true), do: "true"
-  defp boolean_select_value(false), do: "false"
-  defp boolean_select_value(_), do: ""
+  defp truthy_answer?(value), do: normalize_loaded_value("boolean", value) == true
+  defp falsey_answer?(value), do: normalize_loaded_value("boolean", value) == false
 
-  defp coerce_value("boolean", value, _params) do
-    case value do
-      "true" -> true
-      "false" -> false
+  defp normalize_loaded_value("boolean", value) do
+    case unwrap_param(value) do
+      v when v in [true, "true", 1, "1"] -> true
+      v when v in [false, "false", 0, "0"] -> false
       _ -> nil
     end
   end
 
-  defp coerce_value("multi", value, _params) when is_binary(value) do
+  defp normalize_loaded_value(_kind, value), do: value
+
+  defp coerce_value("boolean", value, _params) do
+    normalize_loaded_value("boolean", value)
+  end
+
+  defp coerce_value("multi", value, _params) do
     value
+    |> unwrap_param()
+    |> to_string()
     |> String.split(",")
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
   end
 
-  defp coerce_value(_kind, value, _params), do: value
+  defp coerce_value(_kind, value, _params), do: unwrap_param(value)
+
+  # Prefer the last non-empty entry when duplicate form fields are submitted.
+  defp unwrap_param(value) when is_list(value) do
+    value
+    |> Enum.reject(&(&1 in [nil, ""]))
+    |> List.last()
+  end
+
+  defp unwrap_param(value), do: value
 
   defp format_multi(list) when is_list(list), do: Enum.join(list, ", ")
   defp format_multi(other) when is_binary(other), do: other

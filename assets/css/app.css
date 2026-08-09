@@ -93,16 +93,16 @@
     @apply flex flex-wrap items-end gap-3;
   }
 
-  .answer-mark {
-    @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold;
+  .answer-mark-icon {
+    @apply inline-block h-6 w-6 shrink-0;
   }
 
-  .answer-mark-yes {
-    @apply bg-emerald-500/15 text-emerald-800 ring-1 ring-emerald-500/25;
+  .answer-mark-icon-yes {
+    @apply text-emerald-600;
   }
 
-  .answer-mark-no {
-    @apply bg-red-500/15 text-red-800 ring-1 ring-red-500/25;
+  .answer-mark-icon-no {
+    @apply text-red-600;
   }
 
   .domain-grid {
