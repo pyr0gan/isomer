@@ -21,8 +21,19 @@ defmodule IsomerWeb.CoreComponents do
 
   def brand_logo(assigns) do
     ~H"""
-    <.link navigate={@to} class={["inline-flex items-center gap-2 no-underline", @class]}>
-      <img src={~p"/images/isomer-logo.svg"} alt="Isomer" class="h-9 w-auto" />
+    <.link
+      navigate={@to}
+      class={[
+        "inline-flex items-center gap-2.5 text-slate-900 no-underline dark:text-slate-100",
+        @class
+      ]}
+    >
+      <span class="inline-flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#f4fbfd] ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-700">
+        <img src={~p"/images/isomer-mark.svg"} alt="" class="h-7 w-7" />
+      </span>
+      <span class="font-[family-name:var(--font-display)] text-xl font-semibold tracking-wide">
+        Isomer
+      </span>
     </.link>
     """
   end

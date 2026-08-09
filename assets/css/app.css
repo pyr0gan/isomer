@@ -7,8 +7,7 @@
 /* Heroicons CSS classes used by Petal `<.icon>` / button icons */
 @plugin "./tailwind_heroicons.js";
 
-/* Only opt into Petal `dark:` styles via an explicit .dark ancestor.
-   Without this, OS dark mode mixes Petal dark tokens onto our light shell. */
+/* Petal `dark:` styles only when `<html class="dark">` (set by color scheme script). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @custom-variant phx-click-loading (.phx-click-loading&, .phx-click-loading &);
@@ -50,13 +49,24 @@
     color-scheme: light;
   }
 
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
-    @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
+    @apply min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
     background-image:
       radial-gradient(ellipse 80% 50% at 10% -10%, oklch(92% 0.04 210 / 0.9), transparent 55%),
       radial-gradient(ellipse 60% 40% at 100% 0%, oklch(94% 0.03 180 / 0.7), transparent 50%),
       linear-gradient(180deg, oklch(98% 0.01 210), oklch(97% 0.008 220));
     background-attachment: fixed;
+  }
+
+  html.dark body {
+    background-image:
+      radial-gradient(ellipse 70% 45% at 8% -8%, oklch(28% 0.04 210 / 0.55), transparent 55%),
+      radial-gradient(ellipse 55% 40% at 100% 0%, oklch(26% 0.035 180 / 0.4), transparent 50%),
+      linear-gradient(180deg, oklch(18% 0.02 230), oklch(14% 0.015 240));
   }
 
   h1,
@@ -74,7 +84,7 @@
 
 @layer components {
   .isomer-app-header {
-    @apply sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-md;
+    @apply sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/80;
   }
 
   .isomer-page {
@@ -86,7 +96,7 @@
   }
 
   .isomer-lede {
-    @apply mt-1 max-w-2xl text-slate-600;
+    @apply mt-1 max-w-2xl text-slate-600 dark:text-slate-400;
   }
 
   .answer-controls {
@@ -94,11 +104,25 @@
   }
 
   .answer-select {
-    @apply min-w-[10rem];
+    @apply min-w-[12rem];
+  }
+
+  .answer-select__label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300;
   }
 
   .answer-select__control {
-    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm;
+    @apply block w-full appearance-none rounded-xl border border-slate-300 bg-white py-2.5 pl-3.5 pr-10 text-sm font-medium text-slate-900 shadow-sm transition;
+    @apply hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30;
+    @apply dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500 dark:focus:border-primary-400 dark:focus:ring-primary-400/30;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364758b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.65rem center;
+    background-repeat: no-repeat;
+    background-size: 1.15rem;
+  }
+
+  html.dark .answer-select__control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   }
 
   .answer-mark-icon {
@@ -106,11 +130,11 @@
   }
 
   .answer-mark-icon-yes {
-    @apply text-emerald-600;
+    @apply text-emerald-600 dark:text-emerald-400;
   }
 
   .answer-mark-icon-no {
-    @apply text-red-600;
+    @apply text-red-600 dark:text-red-400;
   }
 
   .domain-grid {
@@ -118,19 +142,19 @@
   }
 
   .domain-option {
-    @apply grid cursor-pointer grid-cols-[auto_1fr] items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition;
+    @apply grid cursor-pointer grid-cols-[auto_1fr] items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition dark:border-slate-700 dark:bg-slate-900;
   }
 
   .domain-option:hover {
-    @apply border-primary-300;
+    @apply border-primary-300 dark:border-primary-500;
   }
 
   .domain-option:has(.domain-option-input:checked) {
-    @apply border-primary-500 bg-primary-50/80 ring-1 ring-primary-500/30;
+    @apply border-primary-500 bg-primary-50/80 ring-1 ring-primary-500/30 dark:bg-primary-950/40;
   }
 
   .title-generated {
-    @apply inline-block rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 font-mono text-base text-slate-800;
+    @apply inline-block rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 font-mono text-base text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100;
   }
 
   .question-meta {
@@ -138,15 +162,15 @@
   }
 
   .wizard-accordion {
-    @apply overflow-hidden border border-slate-200;
+    @apply overflow-hidden border border-slate-200 dark:border-slate-700;
   }
 
   .wizard-accordion__item + .wizard-accordion__item {
-    @apply border-t border-slate-200;
+    @apply border-t border-slate-200 dark:border-slate-700;
   }
 
   .wizard-accordion__trigger {
-    @apply flex w-full items-center justify-between gap-3 bg-white px-4 py-3.5 text-left text-slate-900 transition hover:bg-slate-50;
+    @apply flex w-full items-center justify-between gap-3 bg-white px-4 py-3.5 text-left text-slate-900 transition hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800/80;
   }
 
   .wizard-accordion__heading {
@@ -154,11 +178,11 @@
   }
 
   .wizard-accordion__chevron {
-    @apply h-5 w-5 shrink-0 text-slate-500 transition-transform;
+    @apply h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400;
   }
 
   .wizard-accordion__panel {
-    @apply border-t border-slate-100 bg-slate-50/50 px-4 py-4;
+    @apply border-t border-slate-100 bg-slate-50/50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/50;
   }
 
   .wizard-domain-panel {
@@ -176,6 +200,6 @@
   }
 
   .wizard-progress {
-    @apply text-sm font-normal text-slate-500;
+    @apply text-sm font-normal text-slate-500 dark:text-slate-400;
   }
 }

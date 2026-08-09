@@ -1,27 +1,30 @@
 <header class="isomer-app-header">
   <.container max_width="lg" class="flex items-center justify-between gap-4 py-3.5">
     <.brand_logo to={~p"/"} />
-    <nav :if={assigns[:current_email]} class="flex items-center gap-2 sm:gap-3">
-      <span class="hidden max-w-[14rem] truncate text-sm text-slate-500 sm:inline">
-        {@current_email}
-      </span>
-      <.button
-        link_type="live_redirect"
-        to={~p"/orgs"}
-        color="gray"
-        variant="ghost"
-        size="sm"
-        label="Orgs"
-      />
-      <.button
-        link_type="a"
-        to={~p"/logout"}
-        color="gray"
-        variant="outline"
-        size="sm"
-        label="Sign out"
-      />
-    </nav>
+    <div class="flex items-center gap-2 sm:gap-3">
+      <.color_scheme_switch id="isomer-scheme" variant="dropdown" />
+      <nav :if={assigns[:current_email]} class="flex items-center gap-2 sm:gap-3">
+        <span class="hidden max-w-[14rem] truncate text-sm text-slate-500 dark:text-slate-400 sm:inline">
+          {@current_email}
+        </span>
+        <.button
+          link_type="live_redirect"
+          to={~p"/orgs"}
+          color="gray"
+          variant="ghost"
+          size="sm"
+          label="Orgs"
+        />
+        <.button
+          link_type="a"
+          to={~p"/logout"}
+          color="gray"
+          variant="outline"
+          size="sm"
+          label="Sign out"
+        />
+      </nav>
+    </div>
   </.container>
 </header>
 <main class="pb-16">

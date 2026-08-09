@@ -217,7 +217,9 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       <.card :if={@addable_domains != []} variant="muted">
         <.card_content>
           <details>
-            <summary class="cursor-pointer font-medium text-slate-800">Add domains</summary>
+            <summary class="cursor-pointer font-medium text-slate-800 dark:text-slate-200">
+              Add domains
+            </summary>
             <form phx-submit="add_domains" class="mt-4 space-y-4">
               <div class="domain-grid">
                 <label :for={domain <- @addable_domains} class="domain-option">
@@ -228,8 +230,12 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     class="domain-option-input"
                   />
                   <div>
-                    <span class="font-semibold text-slate-900">{domain["label"]}</span>
-                    <.p no_margin class="text-sm text-slate-600">{domain["description"]}</.p>
+                    <span class="font-semibold text-slate-900 dark:text-slate-100">
+                      {domain["label"]}
+                    </span>
+                    <.p no_margin class="text-sm text-slate-600 dark:text-slate-400">
+                      {domain["description"]}
+                    </.p>
                   </div>
                 </label>
               </div>
@@ -242,7 +248,9 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       <%= if @domain_sections == [] do %>
         <.card variant="muted">
           <.card_content>
-            <.p no_margin class="text-slate-600">No questions for the selected domains.</.p>
+            <.p no_margin class="text-slate-600 dark:text-slate-400">
+              No questions for the selected domains.
+            </.p>
           </.card_content>
         </.card>
       <% else %>
@@ -281,7 +289,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
               role="region"
               aria-labelledby={"domain-#{section.id}-toggle"}
             >
-              <.p :if={section.description != ""} class="text-sm text-slate-600">
+              <.p :if={section.description != ""} class="text-sm text-slate-600 dark:text-slate-400">
                 {section.description}
               </.p>
 
@@ -289,18 +297,25 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                 <.card_content class="space-y-3">
                   <div class="question-meta">
                     <.tooltip label={"Question id #{q.id}"} placement="bottom">
-                      <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                      <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         {q.id}
                       </code>
                     </.tooltip>
                     <.level_badge :if={q.level} level={q.level} />
                   </div>
 
-                  <.p no_margin class="text-base font-medium leading-snug text-slate-900">
+                  <.p
+                    no_margin
+                    class="text-base font-medium leading-snug text-slate-900 dark:text-slate-100"
+                  >
                     {q.ask}
                   </.p>
-                  <.p :if={q.evidence_prompt} no_margin class="text-sm text-slate-600">
-                    <span class="font-medium text-slate-700">Evidence:</span>
+                  <.p
+                    :if={q.evidence_prompt}
+                    no_margin
+                    class="text-sm text-slate-600 dark:text-slate-400"
+                  >
+                    <span class="font-medium text-slate-700 dark:text-slate-300">Evidence:</span>
                     {q.evidence_prompt}
                   </.p>
 
@@ -313,13 +328,13 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     <%= case q.kind do %>
                       <% "boolean" -> %>
                         <div class="answer-select">
-                          <label class="mb-1 block text-sm font-medium text-slate-700">
+                          <label class="answer-select__label" for={"answer-select-#{q.id}"}>
                             Answer
                           </label>
                           <select
                             id={"answer-select-#{q.id}-#{boolean_select_value(@answers[q.id])}"}
                             name="value"
-                            class="pc-select answer-select__control"
+                            class="answer-select__control"
                           >
                             {Phoenix.HTML.Form.options_for_select(
                               [{"—", ""}, {"Yes", "yes"}, {"No", "no"}],
