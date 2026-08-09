@@ -1,140 +1,235 @@
 # isomer
 
-Versioned, framework-agnostic corpus powering an integrated ISMS+AIMS
-playbook. Requirements, mappings, rubrics, rulesets, questions, and
-templates are data; eventual product will render and provide a workflow
-engine for this repo. Content release **1.0.0** — see `CHANGELOG.md`.
+<p align="center">
+  <a href="https://surrealdb.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-dark.svg" />
+      <img src="docs/assets/logos/surrealdb-light.svg" alt="SurrealDB" height="52" />
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://elixir-lang.org">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-dark.svg" />
+      <img src="docs/assets/logos/elixir-light.svg" alt="Elixir" height="52" />
+    </picture>
+  </a>
+</p>
 
-Tooling is **Elixir / Mix** (SurrealDB over WSS; password from Hashicorp Vault).
+<p align="center"><em>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></em></p>
 
-## Layout
+**isomer** is a shared library of AI governance content — the requirements,
+questions, and mappings that make up an integrated security + AI management
+playbook.
 
-```
-frameworks/<framework>/<version>/framework.yaml      manifest
-frameworks/<framework>/<version>/requirements/*.yaml one file per requirement
-mappings/<from>--<to>.yaml                           typed cross-framework mappings
-rulesets/*.yaml                                      regulatory classification rulesets
-rubrics/<domain>.yaml                                per-domain maturity rubrics (L0–L4)
-questions/<domain>.yaml                              assessment questions (L1/L2 focus)
-templates/tmpl-*.md                                  document templates + covers frontmatter
-vocab/domains.yaml                                   maturity domains (9 AIMS + 4 ISMS)
-schemas/*.schema.json                                JSON Schema 2020-12 definitions
-lib/                                                 Mix corpus + Surreal tooling
-CHANGELOG.md                                         content release notes
-```
+The content lives in plain YAML and Markdown in this repo. Elixir tooling
+checks it, and SurrealDB stores it so apps (and a future questionnaire UI) can
+query it.
 
-Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
-`iso42001/2023` (Annex A, 38 controls), `iso27001/2022` (Annex A, 93 controls),
-`eu-ai-act/2024+2026-1744` (18 obligations; consolidated post-Omnibus).
+Current content release: **1.0.0** — see [`CHANGELOG.md`](CHANGELOG.md).
 
-## Setup
+---
 
-Requires Elixir **1.20.3+** / OTP **29+** (see `mise.toml`). From the repo root:
+## What you get
 
-```
+| Kind | What it is |
+|---|---|
+| **Requirements** | Controls and legal obligations (what you must do), with evidence expectations |
+| **Mappings** | How one framework covers another (and where the gaps are) |
+| **Questions** | Assessment questions for maturity domains |
+| **Rulesets** | Guided classification (for example EU AI Act risk category) |
+| **Rubrics** | Maturity levels L0–L4 per domain |
+| **Templates** | Document starters (policy, SoA, impact assessment, …) |
+
+### Frameworks in the corpus
+
+| Framework | Contents |
+|---|---|
+| Shared management system (`annex-sl-core/1.0`) | Clauses 4–10 used by both ISO 27001 and ISO 42001 |
+| ISO/IEC 42001:2023 | AI management — Annex A controls |
+| ISO/IEC 27001:2022 | Information security — Annex A controls |
+| EU AI Act (`2024+2026-1744`) | Legal obligations, dates after the 2026 Omnibus update |
+
+Cross-framework mapping files:
+
+- ISO 27001 → ISO 42001 residual work  
+- EU AI Act → ISO 42001 / shared clauses residual work  
+
+---
+
+## Quick start
+
+You need **Elixir 1.20.3+** and **OTP 29+** (versions are pinned in `mise.toml`).
+
+<details>
+<summary><strong>Install dependencies and check the corpus</strong></summary>
+
+```bash
 mix deps.get
 mix lint
-mix isomer.sbom --pretty   # CycloneDX JSON → bom.cdx.json
 ```
 
-Copy `.env.example` to `.env` for Surreal + Vault credentials (never commit `.env`).
+`mix lint` checks schemas, cross-references, and that content stays in Latin
+script (no accidental CJK characters, and so on).
+
+</details>
+
+<details>
+<summary><strong>Connect to SurrealDB (optional)</strong></summary>
+
+1. Copy `.env.example` → `.env` and fill in Surreal + Vault values.  
+   Never commit `.env`. The Surreal password comes from **Vault**, not from a
+   plain `SURREAL_PASSWORD` variable.
+2. Smoke-test the connection:
+
+```bash
+mix isomer.db.ping
+```
+
 If `.env` uses 1Password `op://` references:
 
-```
+```bash
 op run --env-file=.env -- mix isomer.db.ping
 ```
 
-## Commands
+3. Publish the corpus into SurrealDB:
 
-| Task | Purpose |
-|---|---|
-| `mix lint` / `mix lint.corpus` | Validate schemas + charset |
-| `mix isomer.validate` | Schema + semantic corpus checks |
-| `mix isomer.charset` | Reject non-Latin letters in content |
-| `mix isomer.delta PATH` | Integration coverage buckets |
-| `mix isomer.ruleset.eval --ruleset PATH --answers JSON` | First-match classification |
-| `mix isomer.db.ping` | Surreal WSS + Vault smoke test |
-| `mix isomer.db.sync` | Upsert corpus; prune stale `content_source="repo"` rows |
-| `mix isomer.db.sync --dry-run` | Load + report counts only |
-| `mix isomer.db.ingest_sample` | Upsert one requirement (hello-world write) |
-| `mix isomer.db.ensure_runtime` | Assessment auth + tenant tables (Fork B) |
-| `mix isomer.sbom` / `mix sbom` | CycloneDX SBoM (`bom.cdx.json`, EEF `sbom`) |
-
-Assessment questionnaire design (Surreal record auth + LiveView map):
-`docs/assessment-runtime.md`.
-
-Cross-framework mappings (queryable residual work by tier):
-
-| Mapping set | Story |
-|---|---|
-| `mappings/iso42001-2023--iso27001-2022.yaml` | ISMS → AIMS residual |
-| `mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml` | AIMS → AI Act residual |
-
+```bash
+mix isomer.db.sync
+# or preview only:
+mix isomer.db.sync --dry-run
 ```
+
+4. (Optional) Create assessment/auth tables for the questionnaire design:
+
+```bash
+mix isomer.db.ensure_runtime
+```
+
+Design notes for the upcoming LiveView questionnaire:
+[`docs/assessment-runtime.md`](docs/assessment-runtime.md).
+
+</details>
+
+---
+
+## Common commands
+
+<details>
+<summary><strong>Validate content</strong></summary>
+
+| Command | What it does |
+|---|---|
+| `mix lint` | Full content check (schemas + charset) |
+| `mix isomer.validate` | Schema and cross-reference checks only |
+| `mix isomer.charset` | Reject non-Latin letters in content files |
+
+</details>
+
+<details>
+<summary><strong>Reports and classification</strong></summary>
+
+Coverage buckets for a mapping file (covered / partial / adjacent / net-new):
+
+```bash
 mix isomer.delta mappings/iso42001-2023--iso27001-2022.yaml
 mix isomer.delta mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml
 ```
 
-The AI Act → AIMS set may target **both** `iso42001/2023` controls and
-inherited `annex-sl-core/1.0` clauses in one file (`to_framework` names the
-AIMS umbrella; per-edge targets carry their own namespace).
+EU AI Act classification (first matching outcome wins; order in the YAML matters):
 
-Classification ruleset: `rulesets/eu-ai-act-classification.yaml`.
-Evaluate with first-match semantics (outcome order is semantic):
-
-```
+```bash
 mix isomer.ruleset.eval \
   --ruleset rulesets/eu-ai-act-classification.yaml \
   --answers '{"role":"provider","annex-iii-area":"employment"}'
 ```
 
-Assessment questions (`questions/<domain>.yaml`, 48 total) are L1/L2-weighted
-and may list multiple `requirements` (cross-framework probes). Templates under
-`templates/` carry `covers` frontmatter so completion can propose evidence
-links; unused `merge_fields` warn in CI.
+</details>
 
-## Conventions
+<details>
+<summary><strong>SurrealDB</strong></summary>
 
-- **No verbatim standard text.** `text_summary` is always an original
-  paraphrase. Customers hold their own licensed copies of ISO standards
-  (and should treat legal-obligation paraphrases as tooling aids pending
-  Official Journal review, not legal advice).
-- **IDs** are `<framework>/<version>/<ref>` and must match the file's
-  directory. Refs use the source document's own numbering (`6.1.3`,
-  `A.6.2.4`, `art-26`). Framework versions may encode amendments
-  (`2024+2026-1744`); a later amendment is a new version directory, not
-  an in-place edit.
-- **`evidence_expectations` is mandatory** on every requirement — it is
-  what the product tracks artifacts against.
-- **Obligations** (`type: obligation`, `authority: legal`) must carry
-  `applicable_from`; effective dates are data, never code. (Regulation
-  (EU) 2026/1744 moving the AI Act high-risk dates is the canonical
-  example of why.)
-- **Effective-date precedence (rulesets):** when a classification ruleset
-  outcome carries `applicable_from`, that date **overrides** the
-  requirement-level `applicable_from` for activated obligations. The
-  requirement date records the earliest binding pathway (e.g. Annex III
-  high-risk articles at `2027-12-02`); pathway-specific later dates
-  (e.g. Annex I at `2028-08-02`) live on the matching outcome. Same
-  article, two dates, resolved by classification.
-- **Ruleset evaluation is first-match.** `outcomes[]` order is semantic,
-  not cosmetic: prohibited screens first, then high-risk before
-  transparency, transparency before the minimal-risk default. Implementers
-  must walk outcomes in file order and stop at the first match.
-- **Mappings** are directed and typed; `partially_satisfied_by` and
-  `conflicts` require a gap note. Mappings reference framework
-  *versions*, and go `status: stale` when either side revs. Content YAML
-  must not contain non-Latin letters (CJK etc.); `mix isomer.charset`
-  enforces this (common typography like em dashes is allowed).
-- **Questions** key to rubric levels and requirement ids (`requirements` is
-  an array — one answer can claim coverage across frameworks). Prefer
-  L1/L2 self-report; L3/L4 distinction comes from rubric criteria against
-  evidence. Every question should carry an `evidence_prompt`.
-- **Templates** are markdown with YAML frontmatter (`covers`,
-  `merge_fields`). Completing a template is an evidence event for the
-  `covers` requirements (e.g. SoA → `annex-sl-core/1.0/6.1.3`).
-- **annex-sl-core** is a pseudo-framework holding the harmonized
-  clauses 4-10 shared by ISO/IEC 27001:2022 and ISO/IEC 42001:2023.
-  Both standards inherit it; standard-specific deltas live in each
-  requirement's `specializations` and the manifest's `extension_points`
-  (notably 42001's 6.1.4 and 8.4 impact assessment clauses).
+| Command | What it does |
+|---|---|
+| `mix isomer.db.ping` | Check Vault + Surreal connectivity |
+| `mix isomer.db.sync` | Load corpus into Surreal; remove stale repo-managed rows |
+| `mix isomer.db.sync --dry-run` | Show counts without writing |
+| `mix isomer.db.ingest_sample` | Write one sample requirement (sanity check) |
+| `mix isomer.db.ensure_runtime` | Auth + org/assessment tables for the questionnaire |
+
+</details>
+
+<details>
+<summary><strong>Software bill of materials</strong></summary>
+
+CycloneDX JSON (dev dependency; do not run with `MIX_ENV=prod`):
+
+```bash
+mix isomer.sbom --pretty
+# writes bom.cdx.json
+```
+
+CI also generates this file and uploads it as an artifact.
+
+</details>
+
+---
+
+## How the content is organized
+
+<details>
+<summary><strong>Repository layout</strong></summary>
+
+```
+frameworks/<name>/<version>/framework.yaml       framework manifest
+frameworks/<name>/<version>/requirements/*.yaml  one file per requirement
+mappings/*.yaml                                  links between frameworks
+rulesets/*.yaml                                  classification questionnaires
+rubrics/<domain>.yaml                            maturity levels L0–L4
+questions/<domain>.yaml                          assessment questions
+templates/tmpl-*.md                              document templates
+vocab/domains.yaml                               domain list
+schemas/*.schema.json                            JSON Schema definitions
+lib/                                             Elixir tooling
+docs/                                            design notes + logo assets
+```
+
+</details>
+
+**Questions** (48 today) lean toward practical L1/L2 self-report and can point
+at several requirements at once. **Templates** list which requirements they
+help evidence (`covers` in the frontmatter).
+
+---
+
+## Rules for writing content
+
+Keep these in mind when editing YAML:
+
+- **No copied standard text.** Summaries are original paraphrases. Readers
+  still need their own licensed ISO copies. Legal paraphrases are tooling aids,
+  not legal advice.
+- **IDs match folders.** A requirement id looks like
+  `framework/version/ref` (for example `iso42001/2023/A.5.2`) and must sit in
+  the matching directory.
+- **Every requirement lists evidence expectations** — what artifact would prove
+  it.
+- **Legal obligations need an effective date** (`applicable_from`). Dates are
+  data, not hard-coded in the app.
+- **Classification outcomes can override dates.** If a ruleset outcome sets
+  `applicable_from`, that date wins for the obligations it activates.
+- **Rulesets stop at the first match.** Put stronger screens (for example
+  prohibited uses) before weaker ones.
+- **Partial or conflicting mappings need a short gap note.**
+- **Prefer Latin script** in content files (`mix isomer.charset`); normal
+  punctuation such as em dashes is fine.
+- **Shared clauses** live in `annex-sl-core`. ISO 27001 and ISO 42001 both
+  inherit them; standard-specific extras stay on each requirement.
+
+---
+
+## Learn more
+
+- Content history: [`CHANGELOG.md`](CHANGELOG.md)
+- Questionnaire + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
+- Agent/contributor notes: [`AGENTS.md`](AGENTS.md)
