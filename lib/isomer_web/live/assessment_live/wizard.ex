@@ -259,15 +259,31 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     <input type="hidden" name="question_id" value={q.id} />
                     <%= case q.kind do %>
                       <% "boolean" -> %>
-                        <.field
-                          type="select"
-                          name="value"
-                          label="Answer"
-                          options={[{"—", ""}, {"Yes", "true"}, {"No", "false"}]}
-                          value={boolean_select_value(@answers[q.id])}
-                          no_margin
-                          wrapper_class="min-w-[10rem]"
-                        />
+                        <div class="answer-select">
+                          <label class="mb-1 block text-sm font-medium text-slate-700">
+                            Answer
+                          </label>
+                          <select
+                            name="value"
+                            class="pc-select answer-select__control"
+                          >
+                            <option value="" selected={boolean_select_value(@answers[q.id]) == ""}>
+                              —
+                            </option>
+                            <option
+                              value="yes"
+                              selected={boolean_select_value(@answers[q.id]) == "yes"}
+                            >
+                              Yes
+                            </option>
+                            <option
+                              value="no"
+                              selected={boolean_select_value(@answers[q.id]) == "no"}
+                            >
+                              No
+                            </option>
+                          </select>
+                        </div>
                         <.icon
                           :if={truthy_answer?(@answers[q.id])}
                           name="hero-check-circle-solid"
@@ -414,18 +430,20 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   defp truthy_answer?(value), do: normalize_loaded_value("boolean", value) == true
   defp falsey_answer?(value), do: normalize_loaded_value("boolean", value) == false
 
+  # Select option values are "yes" / "no" (not "true" / "false") so LiveView
+  # never drops a falsey phx-value / button.value overwrite for "false".
   defp boolean_select_value(value) do
     case normalize_loaded_value("boolean", value) do
-      true -> "true"
-      false -> "false"
+      true -> "yes"
+      false -> "no"
       _ -> ""
     end
   end
 
   defp normalize_loaded_value("boolean", value) do
     case unwrap_param(value) do
-      v when v in [true, "true", 1, "1"] -> true
-      v when v in [false, "false", 0, "0"] -> false
+      v when v in [true, "true", "yes", 1, "1"] -> true
+      v when v in [false, "false", "no", 0, "0"] -> false
       _ -> nil
     end
   end

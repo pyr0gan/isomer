@@ -93,6 +93,14 @@
     @apply flex flex-wrap items-end gap-3;
   }
 
+  .answer-select {
+    @apply min-w-[10rem];
+  }
+
+  .answer-select__control {
+    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm;
+  }
+
   .answer-mark-icon {
     @apply inline-block h-6 w-6 shrink-0;
   }
