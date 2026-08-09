@@ -1,6 +1,6 @@
 defmodule Isomer.Db.RuntimeSchema do
   @moduledoc """
-  Tenant/runtime Surreal schema for the assessment questionnaire (Fork B).
+  Tenant/runtime Surreal schema for the assessment questionnaire.
 
   Separate from corpus sync: these tables hold org/user data and must never be
   pruned by `mix isomer.db.sync`. See `docs/assessment-runtime.md`.
@@ -89,7 +89,7 @@ defmodule Isomer.Db.RuntimeSchema do
       SurrealDB.query(db, """
       DEFINE TABLE OVERWRITE org SCHEMAFULL
         PERMISSIONS
-          FOR select WHERE id IN fn::isomer::member_org_ids()
+          FOR select WHERE id IN fn::isomer::member_org_ids() OR created_by = $auth.id
           FOR create WHERE $auth != NONE
           FOR update WHERE id IN fn::isomer::member_org_ids_with_roles(["owner", "admin"])
           FOR delete WHERE id IN fn::isomer::member_org_ids_with_roles(["owner"])
@@ -185,7 +185,7 @@ defmodule Isomer.Db.RuntimeSchema do
 
   defp ensure_corpus_read_grants!(db) do
     # Record users default to PERMISSIONS NONE. Grant select on published corpus
-    # so LiveView can project questionnaires with the user JWT (Fork B).
+    # so LiveView can project questionnaires with the user JWT.
     {:ok, _} =
       SurrealDB.query(db, """
       DEFINE TABLE OVERWRITE domain SCHEMALESS

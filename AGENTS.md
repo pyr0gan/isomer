@@ -2,7 +2,7 @@
 
 ## Cursor Cloud specific instructions
 
-This repo is a **YAML/JSON Schema content corpus** (governance content layer) plus SurrealDB tooling in **Elixir / Mix**. There is no long-running web app/API to start yet.
+This repo is a **YAML/JSON Schema content corpus** (governance content layer) plus SurrealDB tooling and a **Phoenix LiveView** assessment UI in **Elixir / Mix**.
 
 ### Core workflow
 
@@ -12,7 +12,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - **Versioning:** tooling = `mix.exs` + `CHANGELOG.md` (currently **0.1.0**); content = per-file YAML `version` / framework edition directories — never Mix, and no GitHub Releases for content. Policy: `docs/versioning.md`. Cut the tooling changelog when tooling changes land; do not invent “content release” numbers.
 - Full corpus→DB sync: `mix isomer.db.sync` (or `--dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`, `question_set`, `template`; writes `maps_to` graph edges; prunes stale `content_source="repo"` rows; writes a `sync_run` record.
 - Sample single-requirement write: `mix isomer.db.ingest_sample`.
-- Assessment runtime (Fork B design): `docs/assessment-runtime.md`. Apply Surreal auth + tenant tables with `mix isomer.db.ensure_runtime` (does not prune; separate from corpus sync). Phoenix LiveViews are the projector; Surreal owns identity/session via `DEFINE ACCESS isomer_user`.
+- Assessment runtime: `docs/assessment-runtime.md`. Apply Surreal auth + tenant tables with `mix isomer.db.ensure_runtime` (does not prune; separate from corpus sync). Phoenix LiveViews (`mix phx.server`, `IsomerWeb`) are the projector; Surreal owns identity/session via `DEFINE ACCESS isomer_user`. No Ash / no Ecto user table. Deploy: `docs/deploy.md` (Fly.io or Railway).
 - CycloneDX SBoM: `mix isomer.sbom` (alias `mix sbom`) → `bom.cdx.json` via Hex package `sbom` (`only: :dev`). Do not run under `MIX_ENV=prod`. CI uploads the JSON as an artifact.
 
 ### SurrealDB + Vault
@@ -40,6 +40,13 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Required GitHub Actions secrets for live sync: `SURREAL_URL`, `SURREAL_NAMESPACE`, `SURREAL_DATABASE`, `SURREAL_USERNAME`, `VAULT_ADDR`, `VAULT_TOKEN`, `VAULT_SECRET_PATH`, `VAULT_SECRET_FIELD`.
 - Secrets are injected into the process environment on the runner (there is usually no `.env` file in CI). Set `DEBUG_SYNC=1` for full stacks on sync failure.
 
+### Web app (`IsomerWeb`)
+
+- Start: `mix phx.server` → `http://localhost:4000` (Bandit). Prod/release needs `PHX_SERVER=true`, `SECRET_KEY_BASE`, `PHX_HOST`, plus `SURREAL_*` for user JWT signup/signin (Vault root password is **not** required on the web request path).
+- Session cookie stores Surreal user JWT; each LiveView opens its own user-scoped WSS connection via `Isomer.Db.UserClient` and closes it on terminate.
+- Org create needs `org` select permission `created_by = $auth.id` (in addition to membership) so `CREATE` can return the row before the `member` edge exists — already in `RuntimeSchema`.
+- UI uses Hex `petal_components` + Tailwind v4 / esbuild (`assets/`, aliases `mix assets.setup` / `mix assets.build` / `mix assets.deploy`). Dev watchers rebuild CSS/JS; Docker runs `mix assets.deploy` before release. Deploy: `docs/deploy.md`.
+
 ### Gotchas
 
 - Run Mix tasks from the **repo root**.
@@ -48,3 +55,4 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - `rulesets/` may be empty or absent; the validator skips them when no YAML files are present. If any `rubrics/` exist, missing domain rubrics are warnings (filename = domain id).
 - Do not put the SurrealDB password in git or in plain `SURREAL_*` env vars for this phase — store it in Vault and point `VAULT_SECRET_*` at it.
 - The Surreal Elixir SDK is pulled from GitHub (`surrealdb/surrealdb.elixir`); it is not published on Hex yet.
+- Surreal `option<string>` rejects JSON `null` — omit optional fields (e.g. `assessment.ruleset_id`) instead of binding `nil`.

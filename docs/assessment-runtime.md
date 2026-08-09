@@ -1,4 +1,4 @@
-# Assessment runtime (Fork B)
+# Assessment runtime
 
 Phoenix LiveView is the **projector**; SurrealDB is the **system of record** for
 identity, tenancy, assessments, answers, and evidence. Corpus content continues
@@ -13,17 +13,17 @@ mix isomer.db.ensure_runtime
 (`Isomer.Db.RuntimeSchema` — separate from corpus sync so prune/upsert never
 touches tenant data.)
 
-## Design fork
+## Design
 
 | Concern | Owner |
 |---|---|
 | Sign-up / sign-in / JWT session | Surreal `DEFINE ACCESS isomer_user` |
 | Row-level authz | Surreal `PERMISSIONS` + `member` edges |
 | Corpus publish | Elixir Mix (root/Vault) |
-| UX / uploads / branching | Phoenix LiveView |
+| UX / uploads / branching | Phoenix LiveView (`IsomerWeb`) |
 | Surreal connection in UI | LiveView process holds the **user** token (not root) |
 
-No parallel user table in Ecto. No second auth product.
+No Ash. No parallel user table in Ecto. No second auth product.
 
 ## Minimum schema
 
@@ -103,8 +103,8 @@ Unique index: `(assessment, pack, pack_ref, question_id)`.
 
 ## LiveView map
 
-Routes are illustrative (`IsomerWeb` not scaffolded yet). Each LiveView uses a
-Surreal session authenticated as the signed-in `user` record.
+Implemented under `lib/isomer_web`. Each authenticated LiveView opens a Surreal
+session with the signed-in `user` JWT (never root/Vault).
 
 | LiveView | Route | Surreal touchpoints |
 |---|---|---|
@@ -155,4 +155,6 @@ Root connection remains Mix-only (`isomer.db.sync`, `isomer.db.ensure_runtime`).
 
 1. `mix isomer.db.sync` — corpus content + corpus DDL/params/functions  
 2. `mix isomer.db.ensure_runtime` — auth access + tenant tables + corpus read grants  
-3. Scaffold LiveViews against the map above  
+3. `mix phx.server` — LiveViews at `http://localhost:4000`  
+
+Deploy notes: [`docs/deploy.md`](deploy.md).

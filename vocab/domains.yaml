@@ -5,40 +5,79 @@
 domains:
   - id: leadership-policy
     name: Leadership & Policy
+    description: >
+      Direction, roles, and governing policies for AI and information security —
+      who is accountable and what rules apply.
     anchors: [iso42001 A.2, iso42001 A.3, clause 5]
   - id: ai-lifecycle
     name: AI Inventory & Lifecycle
+    description: >
+      Register of AI systems and the stage-gated lifecycle used to build, change,
+      release, and retire them.
     anchors: [iso42001 A.6]
   - id: risk-impact
     name: Risk & Impact Assessment
+    description: >
+      How AI and security risks are identified, assessed, and treated, including
+      impact on people and the organization.
     anchors: [clause 6, clause 8, iso42005, iso23894]
   - id: data-governance
     name: Data Governance
+    description: >
+      Quality, provenance, access, and protection of data used to train, tune,
+      and operate AI systems.
     anchors: [iso42001 A.7]
   - id: transparency-communication
     name: Transparency & Stakeholder Communication
+    description: >
+      What you tell users, customers, and other stakeholders about AI use,
+      limitations, and decisions that affect them.
     anchors: [iso42001 A.8]
   - id: responsible-use
     name: Responsible Use / Ethics
+    description: >
+      Ethical use, human oversight, and controls that keep AI aligned with
+      stated values and acceptable-use rules.
     anchors: [iso42001 A.9]
   - id: third-party
     name: Third-Party & Supply Chain
+    description: >
+      Vendors, models, and services in the AI supply chain — due diligence,
+      contracts, and ongoing assurance.
     anchors: [iso42001 A.10]
   - id: resources-competence
     name: Resources & Competence
+    description: >
+      People, skills, and other resources needed to run AI and security
+      responsibilities competently.
     anchors: [iso42001 A.4, clause 7]
   - id: monitoring-improvement
     name: Monitoring, Audit & Improvement
+    description: >
+      Ongoing monitoring, internal audit, and corrective action so the
+      management system improves over time.
     anchors: [clause 9, clause 10]
   - id: identity-access
     name: Identity & Access
+    description: >
+      Authentication, authorization, and privileged access for systems and data
+      that support AI and security operations.
     anchors: [iso27001 5.15-5.18, iso27001 8.2-8.5, iso27001 8.18]
   - id: security-operations
     name: Security Operations
+    description: >
+      Detection, response, and day-to-day security operations that protect AI
+      systems and the wider estate.
     anchors: [iso27001 5.24-5.28, iso27001 8.x, iso27001 5.7]
   - id: physical-environment
     name: Physical & Environmental Security
+    description: >
+      Facilities, equipment, and environmental controls that protect the places
+      where AI and supporting systems run.
     anchors: [iso27001 7.1-7.14]
   - id: resilience-continuity
     name: Resilience & Continuity
+    description: >
+      Backup, recovery, and continuity arrangements so AI-dependent services can
+      withstand disruption.
     anchors: [iso27001 5.29-5.30, iso27001 8.13-8.14]

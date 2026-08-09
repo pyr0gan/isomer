@@ -1,0 +1,89 @@
+<div class="mx-auto max-w-md">
+  <div class="mb-8 text-center">
+    <.h1>Welcome</.h1>
+    <.p class="isomer-lede mx-auto text-center">
+      Sign in to run assessments. Identity lives in SurrealDB.
+    </.p>
+  </div>
+
+  <.alert :if={@error} color="danger" variant="soft" with_icon class="mb-6" label={@error} />
+
+  <.card class="shadow-md">
+    <.card_content class="space-y-6">
+      <.tabs variant="segmented" id="auth-tabs" class="w-full justify-center">
+        <.tab
+          link_type="button"
+          label="Sign in"
+          is_active={@mode == "login"}
+          variant="segmented"
+          data-mode="login"
+          class="auth-tab"
+        />
+        <.tab
+          link_type="button"
+          label="Sign up"
+          is_active={@mode == "signup"}
+          variant="segmented"
+          data-mode="signup"
+          class="auth-tab"
+        />
+      </.tabs>
+
+      <form
+        id="login-form"
+        action={~p"/session"}
+        method="post"
+        class={"space-y-4 #{if @mode != "login", do: "hidden"}"}
+      >
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <.field type="email" name="email" label="Email" required autocomplete="username" />
+        <.field
+          type="password"
+          name="password"
+          label="Password"
+          required
+          viewable
+          autocomplete="current-password"
+        />
+        <.button type="submit" label="Sign in" class="w-full" />
+      </form>
+
+      <form
+        id="signup-form"
+        action={~p"/session/signup"}
+        method="post"
+        class={"space-y-4 #{if @mode != "signup", do: "hidden"}"}
+      >
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <.field type="text" name="name" label="Name" autocomplete="name" />
+        <.field type="email" name="email" label="Email" required autocomplete="username" />
+        <.field
+          type="password"
+          name="password"
+          label="Password"
+          required
+          viewable
+          minlength="8"
+          autocomplete="new-password"
+          help_text="At least 8 characters."
+        />
+        <.button type="submit" label="Create account" class="w-full" />
+      </form>
+    </.card_content>
+  </.card>
+</div>
+
+<script>
+  document.querySelectorAll(".auth-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.mode;
+      document.querySelectorAll(".auth-tab").forEach((b) => {
+        const active = b === btn;
+        b.setAttribute("aria-selected", active ? "true" : "false");
+        b.classList.toggle("pc-tab__link--active", active);
+      });
+      document.getElementById("login-form").classList.toggle("hidden", mode !== "login");
+      document.getElementById("signup-form").classList.toggle("hidden", mode !== "signup");
+    });
+  });
+</script>
