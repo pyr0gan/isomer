@@ -234,7 +234,6 @@ Keep these in mind when editing YAML:
 ## Learn more
 
 - Versioning (tooling vs content): [`docs/versioning.md`](docs/versioning.md)
-- Tooling changelog: [`CHANGELOG.md`](CHANGELOG.md)
 - Assessment runtime + LiveViews: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Deploy (Fly.io / Railway): [`docs/deploy.md`](docs/deploy.md)
 - Questionnaire + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
