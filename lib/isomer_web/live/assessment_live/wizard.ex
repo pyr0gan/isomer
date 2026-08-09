@@ -6,6 +6,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     surreal = socket.assigns.surreal
+    id = Tenant.canonicalize_record_id(id)
 
     with {:ok, assessment} <- Tenant.get_assessment(surreal, id),
          {:ok, sets} <- Tenant.list_question_sets(surreal),
@@ -19,7 +20,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          page_title: "Wizard · #{assessment["title"]}",
          assessment: assessment,
          assessment_id: id,
-         org_id: Tenant.record_id(assessment["org"]),
+         org_id: Tenant.canonicalize_record_id(assessment["org"]),
          questions: questions,
          answers: answer_map,
          notice: nil,
@@ -33,6 +34,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          |> push_navigate(to: ~p"/orgs")}
     end
   end
+
 
   @impl true
   def handle_event("answer", %{"question_id" => qid, "value" => value} = params, socket) do

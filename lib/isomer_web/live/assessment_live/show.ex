@@ -5,9 +5,11 @@ defmodule IsomerWeb.AssessmentLive.Show do
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
+    id = Tenant.canonicalize_record_id(id)
+
     case Tenant.get_assessment(socket.assigns.surreal, id) do
       {:ok, assessment} ->
-        org_id = Tenant.record_id(assessment["org"])
+        org_id = Tenant.canonicalize_record_id(assessment["org"])
 
         {:ok,
          assign(socket,
