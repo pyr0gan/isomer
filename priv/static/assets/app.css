@@ -19390,11 +19390,21 @@
       color: var(--color-slate-400);
     }
   }
+  .answer-form {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
   .answer-controls {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: calc(var(--spacing) * 3);
+  }
+  .answer-evidence {
+    width: 100%;
   }
   .answer-select {
     min-width: 12rem;

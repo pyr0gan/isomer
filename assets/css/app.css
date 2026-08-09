@@ -109,8 +109,16 @@
     @apply mt-1 max-w-2xl text-slate-600 dark:text-slate-400;
   }
 
+  .answer-form {
+    @apply space-y-4;
+  }
+
   .answer-controls {
     @apply flex flex-wrap items-end gap-3;
+  }
+
+  .answer-evidence {
+    @apply w-full;
   }
 
   .answer-select {
