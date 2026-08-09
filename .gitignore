@@ -11,3 +11,8 @@ deps/
 .elixir_ls/
 *.beam
 erl_crash.dump
+# Generated CycloneDX SBoM (produce via `mix isomer.sbom` / CI artifact)
+bom.cdx.json
+*.cdx.json
+*.cdx.xml
+*.cdx.pb

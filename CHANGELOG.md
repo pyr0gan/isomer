@@ -5,6 +5,9 @@
 - Tooling — replace Python (`tools/`) and Node (`src/`, `scripts/`, npm)
   with Elixir Mix tasks (`mix lint`, `mix isomer.db.*`, etc.). Surreal
   connectivity uses the official Elixir SDK over WSS; password still from Vault.
+- SBoM — CycloneDX via EEF `sbom` (`mix isomer.sbom` → `bom.cdx.json`);
+  CI uploads the artifact. Elixir/OTP pinned to latest stable
+  (**1.20.3 / 29.0.5**) for the generator toolchain.
 
 ## 1.0.0 — 2026-08-08
 First complete content layer. Corpus: 176 requirements, 13 domains,

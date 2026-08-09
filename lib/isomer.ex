@@ -10,6 +10,7 @@ defmodule Isomer do
     mix isomer.ruleset.eval --ruleset PATH --answers JSON
     mix isomer.db.ping
     mix isomer.db.sync [--dry-run] [--no-prune]
+    mix isomer.sbom [--pretty]
   """
 
   @doc "Repo root (directory containing mix.exs / corpus folders)."

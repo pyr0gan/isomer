@@ -29,11 +29,12 @@ Current frameworks: `annex-sl-core/1.0` (shared clauses 4–10),
 
 ## Setup
 
-Requires Elixir **1.17+** / OTP **25+** (see `mise.toml`). From the repo root:
+Requires Elixir **1.20.3+** / OTP **29+** (see `mise.toml`). From the repo root:
 
 ```
 mix deps.get
 mix lint
+mix isomer.sbom --pretty   # CycloneDX JSON → bom.cdx.json
 ```
 
 Copy `.env.example` to `.env` for Surreal + Vault credentials (never commit `.env`).
@@ -56,6 +57,7 @@ op run --env-file=.env -- mix isomer.db.ping
 | `mix isomer.db.sync` | Upsert corpus; prune stale `content_source="repo"` rows |
 | `mix isomer.db.sync --dry-run` | Load + report counts only |
 | `mix isomer.db.ingest_sample` | Upsert one requirement (hello-world write) |
+| `mix isomer.sbom` / `mix sbom` | CycloneDX SBoM (`bom.cdx.json`, EEF `sbom`) |
 
 Cross-framework mappings (queryable residual work by tier):
 
