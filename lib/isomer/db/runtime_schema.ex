@@ -67,10 +67,18 @@ defmodule Isomer.Db.RuntimeSchema do
 
       DEFINE ACCESS OVERWRITE #{@access_name} ON DATABASE TYPE RECORD
         SIGNUP (
-          CREATE user CONTENT {
-            name: $name,
-            email: $email,
-            password: crypto::argon2::generate($password)
+          IF !string::is_email($email) {
+            THROW "Enter a valid email address."
+          } ELSE IF string::len($password) < 8 {
+            THROW "Password must be at least 8 characters."
+          } ELSE IF count(SELECT * FROM user WHERE email = $email) > 0 {
+            THROW "An account with this email already exists. Sign in instead."
+          } ELSE {
+            CREATE user CONTENT {
+              name: $name,
+              email: $email,
+              password: crypto::argon2::generate($password)
+            }
           }
         )
         SIGNIN (

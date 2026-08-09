@@ -1,6 +1,8 @@
 defmodule IsomerWeb.SessionController do
   use IsomerWeb, :controller
 
+  require Logger
+
   alias Isomer.Db.UserClient
   alias IsomerWeb.UserAuth
 
@@ -33,6 +35,7 @@ defmodule IsomerWeb.SessionController do
         |> redirect(to: ~p"/orgs")
 
       {:error, reason} ->
+        log_auth_failure("signin", email, reason)
         render(conn, :new, error: format_error(reason), mode: "login")
     end
   end
@@ -54,6 +57,7 @@ defmodule IsomerWeb.SessionController do
         |> redirect(to: ~p"/orgs")
 
       {:error, reason} ->
+        log_auth_failure("signup", attrs["email"], reason)
         render(conn, :new, error: format_error(reason), mode: "signup")
     end
   end
@@ -65,6 +69,26 @@ defmodule IsomerWeb.SessionController do
     |> redirect(to: ~p"/login")
   end
 
-  defp format_error(%{message: msg}) when is_binary(msg), do: msg
+  defp log_auth_failure(kind, email, reason) do
+    Logger.warning("auth #{kind} failed email=#{inspect(email)} reason=#{format_error(reason)}")
+  end
+
+  # Surreal masks most SIGNUP failures as a generic string (by design). Our ACCESS
+  # SIGNUP uses THROW for common cases; strip the "An error occurred: " prefix.
+  defp format_error(%{message: msg}) when is_binary(msg) do
+    msg
+    |> String.replace_prefix("An error occurred: ", "")
+    |> then(fn
+      "The record access signup query failed" ->
+        "Could not create account. If you already signed up, use Sign in."
+
+      "The record access signin query failed" ->
+        "Invalid email or password."
+
+      other ->
+        other
+    end)
+  end
+
   defp format_error(other), do: inspect(other)
 end
