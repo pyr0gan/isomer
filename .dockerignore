@@ -1,0 +1,10 @@
+_build
+deps
+.git
+.env
+*.log
+.elixir_ls
+bom.cdx.json
+*.cdx.json
+node_modules
+.venv

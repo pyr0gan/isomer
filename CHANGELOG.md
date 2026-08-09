@@ -15,4 +15,6 @@ First cut of the Elixir / Surreal supporting stack (pre-product).
 - `decimal ~> 3.1` override + `ex_json_schema ~> 0.11.5`
 - Assessment runtime DDL + Surreal record auth (`mix isomer.db.ensure_runtime`);
   LiveView map in `docs/assessment-runtime.md`
+- `IsomerWeb` Phoenix LiveViews (session, orgs, assessments, wizard) over Surreal
+  user JWT; deploy notes for Fly.io / Railway in `docs/deploy.md`
 - README / docs for clear local workflow

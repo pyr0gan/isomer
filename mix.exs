@@ -9,7 +9,15 @@ defmodule Isomer.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: Mix.compilers(),
+      listeners: [Phoenix.CodeReloader],
+      releases: [
+        isomer: [
+          include_executables_for: [:unix],
+          applications: [runtime_tools: :permanent]
+        ]
+      ]
     ]
   end
 
@@ -33,10 +41,12 @@ defmodule Isomer.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :crypto, :ssl, :inets]
+      mod: {Isomer.Application, []},
+      extra_applications: [:logger, :runtime_tools, :crypto, :ssl, :inets]
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
@@ -49,6 +59,12 @@ defmodule Isomer.MixProject do
       {:req, "~> 0.5"},
       {:dotenvy, "~> 0.8"},
       {:surrealdb, github: "surrealdb/surrealdb.elixir"},
+      {:phoenix, "~> 1.8"},
+      {:phoenix_html, "~> 4.2"},
+      {:phoenix_live_view, "~> 1.1"},
+      {:phoenix_live_reload, "~> 1.5", only: :dev},
+      {:bandit, "~> 1.6"},
+      {:dns_cluster, "~> 0.2"},
       # CycloneDX SBoM generator (EEF mix_sbom). Dev-only — do not use MIX_ENV=prod.
       {:sbom, "~> 0.10", only: :dev, runtime: false}
     ]
@@ -58,7 +74,9 @@ defmodule Isomer.MixProject do
     [
       "lint.corpus": ["isomer.validate", "isomer.charset"],
       lint: ["lint.corpus"],
-      sbom: ["isomer.sbom"]
+      sbom: ["isomer.sbom"],
+      setup: ["deps.get"],
+      "phx.server": ["app.config", "phx.server"]
     ]
   end
 end

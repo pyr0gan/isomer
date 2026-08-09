@@ -1,0 +1,14 @@
+<header class="top">
+  <a href={~p"/"} class="brand">Isomer</a>
+  <nav>
+    <%= if assigns[:current_email] do %>
+      <span class="who">{@current_email}</span>
+      <.link navigate={~p"/orgs"}>Orgs</.link>
+      <a href={~p"/logout"}>Sign out</a>
+    <% end %>
+  </nav>
+</header>
+<main class="shell">
+  <.flash_group flash={@flash} />
+  {@inner_content}
+</main>

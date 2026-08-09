@@ -1,0 +1,256 @@
+:root {
+  --bg0: #dfe7ee;
+  --bg1: #c9d6e2;
+  --ink: #10233a;
+  --muted: #4d6174;
+  --line: #9eb0c1;
+  --accent: #156b84;
+  --accent-ink: #f4fbfd;
+  --danger: #9b2c2c;
+  --panel: rgba(244, 248, 252, 0.92);
+  --shadow: 0 16px 40px rgba(16, 35, 58, 0.1);
+  font-family: "Libre Franklin", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(900px 480px at 0% 0%, #b9d7e8 0%, transparent 55%),
+    radial-gradient(800px 420px at 100% 10%, #d5e4c9 0%, transparent 50%),
+    linear-gradient(165deg, var(--bg0), var(--bg1));
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(223, 231, 238, 0.82);
+}
+
+.brand {
+  font-family: "Fraunces", "Iowan Old Style", Georgia, serif;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 1.35rem;
+}
+
+.top nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.who {
+  color: var(--muted);
+}
+
+.shell,
+.auth {
+  width: min(720px, calc(100% - 2rem));
+  margin: 2rem auto 3rem;
+}
+
+.auth,
+section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  padding: 1.5rem 1.6rem 1.8rem;
+}
+
+h1 {
+  margin: 0 0 0.35rem;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.85rem;
+  line-height: 1.15;
+}
+
+.lede {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stack {
+  display: grid;
+  gap: 0.85rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+input,
+select,
+button,
+.btn {
+  font: inherit;
+}
+
+input,
+select {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+  background: #f7fafc;
+  color: var(--ink);
+}
+
+button,
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  padding: 0.55rem 1rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.btn-small {
+  padding: 0.35rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.list a {
+  display: block;
+  padding: 0.75rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #f7fafc;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+}
+
+.empty,
+.error {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.flash {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #f7fafc;
+}
+
+.flash-error {
+  border-color: #e2b4b4;
+  color: var(--danger);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.tab.active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.wizard {
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.q {
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.q-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+}
+
+code {
+  font-family: "IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
+  font-size: 0.9em;
+}

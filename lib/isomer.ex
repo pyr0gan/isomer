@@ -12,6 +12,7 @@ defmodule Isomer do
     mix isomer.db.sync [--dry-run] [--no-prune]
     mix isomer.db.ensure_runtime
     mix isomer.sbom [--pretty]
+    mix phx.server
   """
 
   @doc "Repo root (directory containing mix.exs / corpus folders)."

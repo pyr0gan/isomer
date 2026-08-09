@@ -1,0 +1,68 @@
+<section class="auth">
+  <h1>Isomer</h1>
+  <p class="lede">Sign in to run assessments. Identity lives in SurrealDB.</p>
+
+  <%= if @error do %>
+    <p class="error" role="alert">{@error}</p>
+  <% end %>
+
+  <div class="tabs">
+    <button type="button" class={"tab #{if @mode == "login", do: "active"}"} data-mode="login">
+      Sign in
+    </button>
+    <button type="button" class={"tab #{if @mode == "signup", do: "active"}"} data-mode="signup">
+      Sign up
+    </button>
+  </div>
+
+  <form
+    id="login-form"
+    action={~p"/session"}
+    method="post"
+    class={"auth-form #{if @mode != "login", do: "hidden"}"}
+  >
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <label>
+      Email
+      <input type="email" name="email" required autocomplete="username" />
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" required autocomplete="current-password" />
+    </label>
+    <button type="submit">Sign in</button>
+  </form>
+
+  <form
+    id="signup-form"
+    action={~p"/session/signup"}
+    method="post"
+    class={"auth-form #{if @mode != "signup", do: "hidden"}"}
+  >
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <label>
+      Name
+      <input type="text" name="name" autocomplete="name" />
+    </label>
+    <label>
+      Email
+      <input type="email" name="email" required autocomplete="username" />
+    </label>
+    <label>
+      Password
+      <input type="password" name="password" required minlength="8" autocomplete="new-password" />
+    </label>
+    <button type="submit">Create account</button>
+  </form>
+</section>
+
+<script>
+  document.querySelectorAll(".tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.mode;
+      document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b === btn));
+      document.getElementById("login-form").classList.toggle("hidden", mode !== "login");
+      document.getElementById("signup-form").classList.toggle("hidden", mode !== "signup");
+    });
+  });
+</script>
