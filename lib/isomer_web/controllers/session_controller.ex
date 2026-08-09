@@ -5,10 +5,20 @@ defmodule IsomerWeb.SessionController do
   alias IsomerWeb.UserAuth
 
   def new(conn, _params) do
-    if conn.assigns[:surreal_token] do
-      redirect(conn, to: ~p"/orgs")
-    else
-      render(conn, :new, error: nil, mode: "login")
+    token = conn.assigns[:surreal_token]
+
+    cond do
+      is_binary(token) and token != "" and UserAuth.valid_token?(token) ->
+        redirect(conn, to: ~p"/orgs")
+
+      is_binary(token) and token != "" ->
+        conn
+        |> UserAuth.log_out()
+        |> put_flash(:info, "Session expired — sign in again")
+        |> render(:new, error: nil, mode: "login")
+
+      true ->
+        render(conn, :new, error: nil, mode: "login")
     end
   end
 

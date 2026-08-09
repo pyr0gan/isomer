@@ -11,7 +11,6 @@ defmodule Isomer.MixProject do
       aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
-      listeners: [Phoenix.CodeReloader],
       releases: [
         isomer: [
           include_executables_for: [:unix],

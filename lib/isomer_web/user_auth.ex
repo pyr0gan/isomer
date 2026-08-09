@@ -34,6 +34,23 @@ defmodule IsomerWeb.UserAuth do
     |> clear_session()
   end
 
+  @doc """
+  Returns `:ok` if the session JWT still authenticates against Surreal.
+  Used to avoid `/login` ↔ `/orgs` redirect loops when the cookie is stale.
+  """
+  def valid_token?(token) when is_binary(token) and token != "" do
+    case UserClient.connect_with_token(token) do
+      {:ok, conn} ->
+        UserClient.stop(conn)
+        true
+
+      {:error, _} ->
+        false
+    end
+  end
+
+  def valid_token?(_), do: false
+
   def on_mount(:ensure_authenticated, _params, session, socket) do
     case session do
       %{"surreal_token" => token} when is_binary(token) and token != "" ->
@@ -48,7 +65,10 @@ defmodule IsomerWeb.UserAuth do
             {:cont, socket}
 
           {:error, _reason} ->
-            {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/login")}
+            # Clear the stale cookie via /logout — do not bounce to /login while
+            # the invalid token is still in the session (that loops with
+            # SessionController.new redirecting authenticated users to /orgs).
+            {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/logout")}
         end
 
       _ ->
