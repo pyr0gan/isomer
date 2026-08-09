@@ -3,6 +3,15 @@
 Tooling versions only (`mix.exs`). Content is versioned in YAML — see
 [`docs/versioning.md`](docs/versioning.md).
 
+## Unreleased
+
+- Org page: two-column maturity / objective-metrics panels (`lg+`); sparklines for
+  Yes %, unanswered, evidence coverage, and logged hours (placeholder until ≥2
+  assessments contribute)
+- Assessment wizard: per-domain **Collect metrics** opt-in with time scale +
+  manual hours; persisted on `assessment.domain_metrics` in Surreal
+- GitHub corner gusset ~28% larger; octocat in the corner, label along the edge
+
 ## 0.1.0 — 2026-08-09
 
 First cut of the Elixir / Surreal supporting stack (pre-product).

@@ -69,6 +69,7 @@ create/update/delete on corpus stay denied for them.
 | `kind` | `ruleset` \| `domains` \| `combined` |
 | `ruleset_id` | Corpus ruleset id string (e.g. `eu-ai-act/2024+2026-1744/classification`) |
 | `domains` | `array<string>` of question-set domain ids |
+| `domain_metrics` | Optional object keyed by domain id: `{ collect, time_scale?, time_hours? }`. Opt-in only; drives the org **Objective metrics** panel (sparklines for Yes %, unanswered, evidence coverage %, time hours). |
 | `classification` | Derived object from ruleset eval (nullable until complete/live) |
 | `activates` | Derived list of requirement corpus ids |
 | `created_by` | `record user` |
@@ -112,11 +113,11 @@ session with the signed-in `user` JWT (never root/Vault).
 | `SessionLive.Delete` | `/logout` | Drop token; optional `invalidate` |
 | `OrgLive.Index` | `/orgs` | `SELECT` orgs via `member` where `in = $auth` |
 | `OrgLive.New` | `/orgs/new` | `CREATE org` + `RELATE $auth->member->$org` (role `owner`) |
-| `OrgLive.Show` | `/orgs/:org_id` | Org header; list assessments for org |
+| `OrgLive.Show` | `/orgs/:org_id` | Org header; maturity + objective-metrics panels; list assessments for org |
 | `AssessmentLive.Index` | `/orgs/:org_id/assessments` | `SELECT assessment WHERE org = $org` |
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `ruleset` and/or `domains[]` from corpus; `CREATE assessment` |
 | `AssessmentLive.Show` | `/assessments/:id` | Shell: status, progress, nav to wizard/results |
-| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load questions from `ruleset` / `question_set`; upsert `answer` rows; optional LIVE on answers |
+| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load questions from `ruleset` / `question_set`; upsert `answer` rows; per-domain metric opt-in + time scale/hours; optional LIVE on answers |
 | `AssessmentLive.Results` | `/assessments/:id/results` | Show `classification` / `activates`; for each id call `fn::isomer::satisfiers` + linked domain answers for residual view |
 | `EvidenceLive.Upload` | modal / `/answers/:id/evidence` | Create `evidence` (+ object storage key later); link to `answer` |
 

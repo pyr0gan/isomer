@@ -294,6 +294,104 @@ defmodule Isomer.Db.Tenant do
   end
 
   @doc """
+  Merges one domain's metric collection entry into `assessment.domain_metrics`.
+
+  `attrs` keys (string): `collect` (bool), optional `time_scale`
+  (`low`|`medium`|`high`), optional `time_hours` (number). When `collect` is
+  false the domain key is removed. Omits optional fields rather than binding
+  `nil` (Surreal `option` rejects JSON null).
+  """
+  def update_domain_metric(conn, assessment_id, domain_id, attrs)
+      when is_binary(assessment_id) and is_binary(domain_id) and is_map(attrs) do
+    assessment_id = canonicalize_record_id(assessment_id)
+    domain_id = domain_id |> to_string() |> String.trim()
+    {table, key} = split_record_id!(assessment_id)
+
+    with {:ok, assessment} <- get_assessment(conn, assessment_id) do
+      current = normalize_domain_metrics(assessment["domain_metrics"])
+      collect? = truthy_metric?(Map.get(attrs, "collect") || Map.get(attrs, :collect))
+
+      next =
+        if collect? do
+          entry = build_domain_metric_entry(attrs)
+          Map.put(current, domain_id, entry)
+        else
+          Map.delete(current, domain_id)
+        end
+
+      # Empty map clears opt-ins; avoid binding JSON null into option<object>.
+      sql = """
+      LET $aid = type::record($table, $key);
+      UPDATE $aid SET domain_metrics = $domain_metrics, updated_at = time::now();
+      RETURN SELECT * FROM ONLY $aid;
+      """
+
+      vars = %{
+        "table" => table,
+        "key" => key,
+        "domain_metrics" => next
+      }
+
+      case UserClient.query(conn, sql, vars) do
+        {:ok, results} -> unwrap_one(results)
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp normalize_domain_metrics(metrics) when is_map(metrics) and not is_struct(metrics),
+    do: metrics
+
+  defp normalize_domain_metrics(_), do: %{}
+
+  defp build_domain_metric_entry(attrs) do
+    scale =
+      attrs
+      |> Map.get("time_scale", Map.get(attrs, :time_scale))
+      |> normalize_time_scale()
+
+    hours =
+      attrs
+      |> Map.get("time_hours", Map.get(attrs, :time_hours))
+      |> normalize_time_hours()
+
+    entry = %{"collect" => true}
+
+    entry =
+      if is_binary(scale) do
+        Map.put(entry, "time_scale", scale)
+      else
+        entry
+      end
+
+    if is_number(hours) do
+      Map.put(entry, "time_hours", hours)
+    else
+      entry
+    end
+  end
+
+  defp normalize_time_scale(scale) when scale in ["low", "medium", "high"], do: scale
+  defp normalize_time_scale(_), do: nil
+
+  defp normalize_time_hours(nil), do: nil
+  defp normalize_time_hours(""), do: nil
+
+  defp normalize_time_hours(value) when is_number(value) and value >= 0, do: value
+
+  defp normalize_time_hours(value) when is_binary(value) do
+    case Float.parse(String.trim(value)) do
+      {n, _} when n >= 0 -> n
+      _ -> nil
+    end
+  end
+
+  defp normalize_time_hours(_), do: nil
+
+  defp truthy_metric?(v) when v in [true, "true", "on", "1", 1], do: true
+  defp truthy_metric?(_), do: false
+
+  @doc """
   Unions `new_domains` into the assessment's `domains` array (does not remove
   existing domains). Returns the updated assessment.
   """
