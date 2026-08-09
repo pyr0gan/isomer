@@ -28,7 +28,7 @@ The content lives in plain YAML and Markdown in this repo. Elixir tooling
 checks it, and SurrealDB stores it so apps (and a future questionnaire UI) can
 query it.
 
-Current content release: **1.0.0** — see [`CHANGELOG.md`](CHANGELOG.md).
+Version **1.1.0** — see [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -232,6 +232,6 @@ Keep these in mind when editing YAML:
 
 ## Learn more
 
-- Content history: [`CHANGELOG.md`](CHANGELOG.md)
+- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
 - Questionnaire + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Agent/contributor notes: [`AGENTS.md`](AGENTS.md)

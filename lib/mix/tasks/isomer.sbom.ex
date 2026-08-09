@@ -12,7 +12,7 @@ defmodule Mix.Tasks.Isomer.Sbom do
   Examples:
 
       mix isomer.sbom --pretty
-      mix isomer.sbom -o sbom/isomer-1.0.0.cdx.json --pretty
+      mix isomer.sbom -o sbom/isomer-1.1.0.cdx.json --pretty
       mix isomer.sbom --only prod
   """
 
