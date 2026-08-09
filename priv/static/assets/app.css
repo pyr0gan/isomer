@@ -3,10 +3,9 @@
 @layer theme, base, components, utilities;
 @layer theme {
   :root, :host {
-    --font-sans: "Libre Franklin", "Avenir Next", "Segoe UI", sans-serif;
+    --font-sans: "PT Sans", "Segoe UI", sans-serif;
     --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+    --font-mono: "PT Mono", ui-monospace, monospace;
     --color-red-50: oklch(97.1% 0.013 17.38);
     --color-red-100: oklch(93.6% 0.032 17.717);
     --color-red-200: oklch(88.5% 0.062 18.334);
@@ -175,7 +174,7 @@
     --color-danger-700: oklch(50.5% 0.213 27.518);
     --color-danger-800: oklch(44.4% 0.177 26.899);
     --color-danger-900: oklch(39.6% 0.141 25.723);
-    --font-display: "Fraunces", Georgia, serif;
+    --font-display: "PT Sans", "Segoe UI", sans-serif;
   }
 }
 @layer base {
@@ -2205,9 +2204,6 @@
   }
   .align-middle {
     vertical-align: middle;
-  }
-  .font-\[family-name\:var\(--font-display\)\] {
-    font-family: var(--font-display);
   }
   .font-mono {
     font-family: var(--font-mono);
@@ -19315,6 +19311,7 @@
   body {
     min-height: 100vh;
     background-color: var(--color-slate-50);
+    font-family: var(--font-sans);
     color: var(--color-slate-900);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -19324,19 +19321,23 @@
     &:where(.dark, .dark *) {
       color: var(--color-slate-100);
     }
+    font-family: var(--font-sans);
     background-image: radial-gradient(ellipse 80% 50% at 10% -10%, oklch(92% 0.04 210 / 0.9), transparent 55%), radial-gradient(ellipse 60% 40% at 100% 0%, oklch(94% 0.03 180 / 0.7), transparent 50%), linear-gradient(180deg, oklch(98% 0.01 210), oklch(97% 0.008 220));
     background-attachment: fixed;
   }
   html.dark body {
     background-image: radial-gradient(ellipse 70% 45% at 8% -8%, oklch(28% 0.04 210 / 0.55), transparent 55%), radial-gradient(ellipse 55% 40% at 100% 0%, oklch(26% 0.035 180 / 0.4), transparent 50%), linear-gradient(180deg, oklch(18% 0.02 230), oklch(14% 0.015 240));
   }
+  code, kbd, pre, .title-generated, .font-mono {
+    font-family: var(--font-mono);
+  }
   h1, .pc-h1 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
   h2, .pc-h2 {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
   }
 }
 @layer components {

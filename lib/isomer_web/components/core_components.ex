@@ -31,7 +31,7 @@ defmodule IsomerWeb.CoreComponents do
       <span class="inline-flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#f4fbfd] ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-700">
         <img src={~p"/images/isomer-mark.svg"} alt="" class="h-7 w-7" />
       </span>
-      <span class="font-[family-name:var(--font-display)] text-xl font-semibold tracking-wide">
+      <span class="text-xl font-bold tracking-wide">
         Isomer
       </span>
     </.link>

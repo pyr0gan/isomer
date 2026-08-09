@@ -16,8 +16,9 @@
 
 /* Isomer brand tokens — cool teal primary, slate neutrals, no purple. */
 @theme {
-  --font-sans: "Libre Franklin", "Avenir Next", "Segoe UI", sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "PT Sans", "Segoe UI", sans-serif;
+  --font-mono: "PT Mono", ui-monospace, monospace;
+  --font-display: "PT Sans", "Segoe UI", sans-serif;
 
   --color-primary-50: oklch(97% 0.02 210);
   --color-primary-100: oklch(93% 0.04 210);
@@ -54,7 +55,8 @@
   }
 
   body {
-    @apply min-h-screen bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply min-h-screen bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    font-family: var(--font-sans);
     background-image:
       radial-gradient(ellipse 80% 50% at 10% -10%, oklch(92% 0.04 210 / 0.9), transparent 55%),
       radial-gradient(ellipse 60% 40% at 100% 0%, oklch(94% 0.03 180 / 0.7), transparent 50%),
@@ -69,16 +71,24 @@
       linear-gradient(180deg, oklch(18% 0.02 230), oklch(14% 0.015 240));
   }
 
+  code,
+  kbd,
+  pre,
+  .title-generated,
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
   h1,
   .pc-h1 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
   h2,
   .pc-h2 {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
   }
 }
 
