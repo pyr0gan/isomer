@@ -1,6 +1,13 @@
 <header class="isomer-app-header">
-  <.container max_width="lg" class="flex items-center justify-between gap-4 py-3.5">
+  <.container max_width="lg" class="relative flex items-center justify-between gap-4 py-3.5">
     <.brand_logo to={~p"/"} />
+    <div
+      id="sticky-page-title"
+      class="isomer-sticky-title"
+      hidden
+      aria-hidden="true"
+    >
+    </div>
     <div class="flex items-center gap-2 sm:gap-3">
       <.color_scheme_switch id="isomer-scheme" variant="dropdown" />
       <nav :if={assigns[:current_email]} class="flex items-center gap-2 sm:gap-3">

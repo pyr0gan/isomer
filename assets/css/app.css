@@ -212,7 +212,7 @@
   }
 
   .wizard-accordion {
-    @apply overflow-hidden border border-slate-200 dark:border-slate-700;
+    @apply overflow-visible border border-slate-200 dark:border-slate-700;
   }
 
   .wizard-accordion__item + .wizard-accordion__item {
@@ -232,24 +232,78 @@
   }
 
   .wizard-accordion__panel {
-    @apply border-t border-slate-100 bg-slate-50/50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/50;
+    @apply overflow-visible border-t border-slate-100 bg-slate-50/50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/50;
   }
 
   .wizard-domain-panel {
-    @apply space-y-4;
+    @apply space-y-4 overflow-visible;
   }
 
   /* Petal cards default to overflow-hidden, which clips CSS tooltips. */
   .wizard-question-card.pc-card,
-  .wizard-question-card .pc-card__inner {
+  .wizard-question-card .pc-card__inner,
+  .wizard-accordion,
+  .wizard-accordion__item,
+  .wizard-accordion__panel {
     overflow: visible;
   }
 
   .wizard-domain-panel .pc-tooltip__content {
     z-index: 60;
+    max-width: min(20rem, calc(100vw - 2rem));
+    white-space: normal;
   }
 
   .wizard-progress {
     @apply text-sm font-normal text-slate-500 dark:text-slate-400;
+  }
+
+  .maturity-chart {
+    @apply space-y-3;
+  }
+
+  .maturity-row {
+    @apply grid grid-cols-[minmax(7rem,11rem)_1fr_auto] items-center gap-3;
+  }
+
+  .maturity-row__label {
+    @apply truncate text-sm font-medium text-slate-700 dark:text-slate-300;
+  }
+
+  .maturity-row__track {
+    @apply h-2.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800;
+  }
+
+  .maturity-row__fill {
+    @apply h-full rounded-full bg-primary-500 transition-[width] duration-500 ease-out;
+  }
+
+  .maturity-row__fill--L0 {
+    @apply bg-slate-400 dark:bg-slate-500;
+  }
+
+  .maturity-row__fill--L1 {
+    @apply bg-primary-400;
+  }
+
+  .maturity-row__fill--L2 {
+    @apply bg-primary-600;
+  }
+
+  .maturity-row__fill--L3,
+  .maturity-row__fill--L4 {
+    @apply bg-emerald-600 dark:bg-emerald-500;
+  }
+
+  .maturity-row__level {
+    @apply justify-self-end;
+  }
+
+  .isomer-sticky-title {
+    @apply pointer-events-none absolute left-1/2 top-1/2 max-w-[min(40vw,20rem)] -translate-x-1/2 -translate-y-1/2 truncate text-center font-mono text-sm font-semibold text-slate-800 opacity-0 transition-opacity duration-300 dark:text-slate-100;
+  }
+
+  .isomer-sticky-title--visible {
+    @apply opacity-100;
   }
 }

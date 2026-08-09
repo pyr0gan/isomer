@@ -2,6 +2,7 @@ defmodule IsomerWeb.OrgLive.Show do
   use IsomerWeb.SurrealLive
 
   alias Isomer.Db.Tenant
+  alias Isomer.Maturity
 
   @impl true
   def mount(%{"org_id" => org_id}, _session, socket) do
@@ -9,12 +10,19 @@ defmodule IsomerWeb.OrgLive.Show do
 
     with {:ok, org} <- Tenant.get_org(socket.assigns.surreal, org_id),
          {:ok, assessments} <- Tenant.list_assessments(socket.assigns.surreal, org_id) do
+      maturity =
+        case Maturity.org_domain_bars(socket.assigns.surreal, assessments) do
+          {:ok, bars} -> bars
+          {:error, _} -> []
+        end
+
       {:ok,
        assign(socket,
          page_title: org["name"],
          org: org,
          org_id: org_id,
          assessments: assessments,
+         maturity: maturity,
          error: nil
        )}
     else
@@ -75,6 +83,28 @@ defmodule IsomerWeb.OrgLive.Show do
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
+      <.card :if={@maturity != []} class="maturity-card">
+        <.card_header
+          title="Org maturity"
+          description="Estimated from Yes answers on L1/L2 questions (newest assessment wins)."
+        />
+        <.card_content>
+          <div class="maturity-chart" role="img" aria-label="Domain maturity levels">
+            <div :for={bar <- @maturity} class="maturity-row">
+              <span class="maturity-row__label">{bar["label"]}</span>
+              <div class="maturity-row__track" title={"#{bar["answered"]}/#{bar["total"]} met"}>
+                <div
+                  class={"maturity-row__fill maturity-row__fill--#{bar["level"]}"}
+                  style={"width: #{bar["pct"]}%"}
+                >
+                </div>
+              </div>
+              <.badge color="primary" variant="soft" label={bar["level"]} class="maturity-row__level" />
+            </div>
+          </div>
+        </.card_content>
+      </.card>
+
       <%= if @assessments == [] do %>
         <.card variant="muted">
           <.card_content class="py-8 text-center">
@@ -93,7 +123,7 @@ defmodule IsomerWeb.OrgLive.Show do
             <.card class="transition hover:border-primary-300 hover:shadow-md">
               <.card_content class="flex flex-wrap items-center justify-between gap-3">
                 <.link navigate={~p"/assessments/#{a["id"]}"} class="min-w-0 flex-1 no-underline">
-                  <span class="block font-mono text-base font-semibold text-slate-900">
+                  <span class="block font-mono text-base font-semibold text-slate-900 dark:text-slate-100">
                     {a["title"]}
                   </span>
                 </.link>

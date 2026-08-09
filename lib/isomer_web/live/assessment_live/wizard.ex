@@ -205,7 +205,9 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     <section class="isomer-page">
       <div class="isomer-page-header">
         <div>
-          <.h1>{@assessment["title"]}</.h1>
+          <.h1 id="assessment-title" phx-hook="StickyTitle" data-sticky-title={@assessment["title"]}>
+            {@assessment["title"]}
+          </.h1>
           <.p class="isomer-lede">
             Work domain by domain. Each answer is saved with your Surreal user JWT.
           </.p>
@@ -322,7 +324,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                   </div>
 
                   <div class="question-meta">
-                    <.tooltip label={"Question id #{q.id}"} placement="bottom">
+                    <.tooltip label={"Question id #{q.id}"} placement="right">
                       <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         {q.id}
                       </code>
@@ -420,7 +422,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     assigns = assign(assigns, :meta, meta)
 
     ~H"""
-    <.tooltip label={"#{@level} — #{@meta.name}. #{@meta.tip}"} placement="bottom">
+    <.tooltip label={"#{@level} — #{@meta.name}. #{@meta.tip}"} placement="right">
       <.badge color={@meta.color} variant="soft" label={@level} class="cursor-help" />
     </.tooltip>
     """
