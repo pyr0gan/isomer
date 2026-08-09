@@ -72,8 +72,10 @@ defmodule IsomerWeb.OrgLive.Index do
             <.card class="transition hover:border-primary-300 hover:shadow-md">
               <.card_content class="flex flex-wrap items-center justify-between gap-3">
                 <.link navigate={~p"/orgs/#{org["id"]}"} class="min-w-0 flex-1 no-underline">
-                  <span class="block text-lg font-semibold text-slate-900">{org["name"]}</span>
-                  <span class="text-sm text-slate-500">
+                  <span class="block text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {org["name"]}
+                  </span>
+                  <span class="text-sm text-slate-500 dark:text-slate-400">
                     id …{Tenant.short_key(org["id"])}
                   </span>
                 </.link>
