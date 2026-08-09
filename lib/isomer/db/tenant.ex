@@ -12,12 +12,15 @@ defmodule Isomer.Db.Tenant do
   end
 
   def create_org(conn, name) when is_binary(name) do
-    # Select permissions allow `created_by = $auth.id` so CREATE returns the row
-    # before the member edge exists (chicken-and-egg with member_org_ids()).
+    # Pre-generate the org id so RELATE does not depend on CREATE's return value.
+    # Under older org PERMISSIONS (select only via member_org_ids), CREATE returns
+    # NONE until the member edge exists — which broke `RELATE … -> $org`.
     sql = """
-    LET $org = CREATE ONLY org SET name = $name, created_by = $auth.id;
-    RELATE $auth -> member -> $org SET role = 'owner';
-    RETURN $org;
+    LET $key = string::concat("o", rand::string(16));
+    LET $oid = type::record("org", $key);
+    CREATE $oid SET name = $name, created_by = $auth.id;
+    RELATE $auth -> member -> $oid SET role = 'owner';
+    RETURN SELECT * FROM ONLY $oid;
     """
 
     case UserClient.query(conn, sql, %{"name" => String.trim(name)}) do
