@@ -1,0 +1,7 @@
+isomer is maintained by humans who care about AI governance corpora.
+
+Site: https://isomer-demo.fly.dev
+Repo: https://github.com/pyr0gan/isomer
+Contact: roganx@tuta.io
+
+/* robots prefer /robots.txt; machines prefer /llms.txt */

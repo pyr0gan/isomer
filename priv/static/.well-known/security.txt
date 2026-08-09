@@ -1,0 +1,7 @@
+Contact: mailto:roganx@tuta.io
+Contact: https://github.com/pyr0gan/isomer/security/advisories/new
+Expires: 2027-08-09T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://isomer-demo.fly.dev/.well-known/security.txt
+Policy: https://github.com/pyr0gan/isomer/security/policy
+Acknowledgments: https://github.com/pyr0gan/isomer/security/advisories

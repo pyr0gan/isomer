@@ -67,11 +67,16 @@ You need **Elixir 1.20.3+** and **OTP 29+** (versions are pinned in `mise.toml`)
 
 ```bash
 mix deps.get
+mix setup          # deps + assets + git pre-commit hooks (format/lint)
 mix lint
 ```
 
 `mix lint` checks schemas, cross-references, and that content stays in Latin
 script (no accidental CJK characters, and so on).
+
+`mix setup` configures `.githooks/` so commits run `mix format`, compile
+warnings-as-errors, and `mix lint` before they land (same gates as CI). Re-run
+`mix git.hooks` if hooks are missing. Manual: `mix precommit`.
 
 </details>
 
@@ -234,7 +239,6 @@ Keep these in mind when editing YAML:
 ## Learn more
 
 - Versioning (tooling vs content): [`docs/versioning.md`](docs/versioning.md)
-- Tooling changelog: [`CHANGELOG.md`](CHANGELOG.md)
 - Assessment runtime + LiveViews: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Deploy (Fly.io / Railway): [`docs/deploy.md`](docs/deploy.md)
 - Questionnaire + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)

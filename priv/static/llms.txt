@@ -1,0 +1,38 @@
+# isomer — https://isomer-demo.fly.dev
+# See https://llmstxt.org/
+
+> isomer is a shared library of AI governance content (requirements, questions,
+> mappings) plus Elixir/Surreal tooling and a Phoenix LiveView assessment UI.
+
+The content corpus lives as YAML/Markdown in the GitHub repo. SurrealDB is the
+system of record for synced corpus rows and assessment tenancy. The web app is
+a projector over Surreal record-auth sessions (no parallel Ecto user table).
+
+## Product
+
+- Assessment UI (demo): https://isomer-demo.fly.dev
+- Source: https://github.com/pyr0gan/isomer
+- Docs in-repo: README.md, docs/assessment-runtime.md, docs/deploy.md, docs/versioning.md
+
+## Public URLs
+
+- /login — sign in / sign up
+- /health — liveness probe (plain text `ok`)
+- /robots.txt — crawler policy
+- /.well-known/security.txt — vulnerability disclosure
+- /llms.txt — this file
+
+Authenticated app routes (`/orgs`, `/assessments`, …) require a Surreal user
+JWT session and are not useful to anonymous crawlers.
+
+## Frameworks in the corpus
+
+- annex-sl-core / 1.0
+- ISO/IEC 42001:2023 (AIMS)
+- ISO/IEC 27001:2022 (ISMS)
+- EU AI Act (2024+2026-1744 obligations + classification ruleset)
+
+## Optional
+
+- GitHub issues / PRs for tooling and content changes
+- CycloneDX SBoM via `mix isomer.sbom` (dev)

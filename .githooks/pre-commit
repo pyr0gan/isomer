@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Installed via `mix setup` / `mix git.hooks` (sets core.hooksPath=.githooks).
+# Keep this aligned with .github/workflows/ci.yml checks that block merge.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+if ! command -v mix >/dev/null 2>&1; then
+  echo "pre-commit: mix not found on PATH; skip (install Elixir or use mise)." >&2
+  exit 0
+fi
+
+echo "pre-commit: mix format"
+mix format
+
+# Re-stage formatted tracked sources so the commit includes fixes.
+mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ex|exs|heex)$' || true)
+if [ "${#staged[@]}" -gt 0 ]; then
+  git add -- "${staged[@]}"
+fi
+
+echo "pre-commit: mix format --check-formatted"
+mix format --check-formatted
+
+echo "pre-commit: mix compile --warnings-as-errors"
+mix compile --warnings-as-errors
+
+echo "pre-commit: mix lint"
+mix lint
+
+echo "pre-commit: ok"

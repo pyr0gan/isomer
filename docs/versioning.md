@@ -6,9 +6,9 @@ Two version tracks. Do not mix them.
 
 | Where | What |
 |---|---|
-| `mix.exs` → `version` | **Source of truth** for the supporting tooling |
-| `CHANGELOG.md` | Human history of tooling changes |
-| GitHub Releases / tags | **Optional.** Only use if/when there is an automated bump + release build. Until then, bump `mix.exs` and the changelog; do not hand-tag “product” versions for content |
+| `mix.exs` → `version` | **Source of truth** for the supporting tooling package version |
+| Pull request descriptions | **Human history** of tooling changes (merged PRs are the changelog) |
+| GitHub Releases / tags | **Optional.** Only use if/when there is an automated bump + release build. Until then, bump `mix.exs` in the PR; do not hand-tag “product” versions for content |
 
 Bump the Mix version when the Elixir/Surreal tooling or assessment runtime
 changes in a way callers care about. Start at **0.x** until the product is
@@ -16,10 +16,13 @@ actually shippable.
 
 ```
 # after a tooling change
-# 1. edit mix.exs version
-# 2. add a section to CHANGELOG.md
-# 3. merge — no GitHub Release required
+# 1. bump mix.exs version in the same PR
+# 2. describe the change in the PR body (that is the changelog)
+# 3. merge — no CHANGELOG.md and no GitHub Release required
 ```
+
+Do **not** maintain a separate `CHANGELOG.md`. It drifts from what actually
+shipped; PR notes already capture intent and review context.
 
 ## Content (YAML / Markdown corpus)
 

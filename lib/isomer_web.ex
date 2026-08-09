@@ -3,7 +3,9 @@ defmodule IsomerWeb do
   The entrypoint for defining web interfaces (LiveViews, controllers, components).
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths,
+    do:
+      ~w(assets fonts images favicon.ico robots.txt humans.txt llms.txt security.txt .well-known)
 
   def router do
     quote do
