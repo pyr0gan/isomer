@@ -3,15 +3,25 @@
 <p align="center">
   <a href="https://surrealdb.com" title="SurrealDB">
     <picture>
+<<<<<<< Updated upstream
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-dark.svg" />
       <img src="docs/assets/logos/surrealdb-light.svg" alt="SurrealDB" height="40" />
+=======
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
+      <img src="docs/assets/logos/surrealdb-dark.svg" alt="SurrealDB" width="240" style="max-width: 80%; height: auto;" />
+>>>>>>> Stashed changes
     </picture>
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://elixir-lang.org" title="Elixir">
     <picture>
+<<<<<<< Updated upstream
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-dark.svg" />
       <img src="docs/assets/logos/elixir-light.svg" alt="Elixir" height="48" />
+=======
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-light.svg" />
+      <img src="docs/assets/logos/elixir-dark.svg" alt="Elixir" width="180" style="max-width: 60%; height: auto;" />
+>>>>>>> Stashed changes
     </picture>
   </a>
 </p>
