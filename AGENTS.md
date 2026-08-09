@@ -34,8 +34,9 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 ### CI
 
 - `.github/workflows/ci.yml` — `npm run lint` on PR/push (corpus + JS). No Surreal dry-run in CI; live sync is separate.
-- `.github/workflows/sync-corpus.yml` — on push to `main` (and `workflow_dispatch`), validate then `npm run db:sync`.
+- `.github/workflows/sync-corpus.yml` — on push to `main` (and `workflow_dispatch`), validate then `npm run db:sync`. Preflight checks that required secrets are non-empty (does not print values). Vault HTTP reads retry on transient `fetch failed` from runners.
 - Required GitHub Actions secrets for live sync: `SURREAL_URL`, `SURREAL_NAMESPACE`, `SURREAL_DATABASE`, `SURREAL_USERNAME`, `VAULT_ADDR`, `VAULT_TOKEN`, `VAULT_SECRET_PATH`, `VAULT_SECRET_FIELD`.
+- `injected env (0) from .env` in CI is normal — Actions injects secrets into `process.env`; there is no `.env` file on the runner. Set `DEBUG_SYNC=1` for full stacks on sync failure.
 
 ### Gotchas
 

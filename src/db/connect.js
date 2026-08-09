@@ -63,6 +63,17 @@ export async function pingSurreal(overrides = {}) {
       wrapped.cause = err;
       throw wrapped;
     }
+    if (err?.name === "TypeError" || err?.message === "fetch failed") {
+      const surreal = { ...getSurrealConfig(), ...overrides };
+      const cause = err?.cause;
+      const wrapped = new Error(
+        `Network error connecting to SurrealDB at ${surreal.url}` +
+          (cause?.code ? ` (code=${cause.code})` : "") +
+          (cause?.message ? `: ${cause.message}` : ""),
+      );
+      wrapped.cause = err;
+      throw wrapped;
+    }
     throw err;
   } finally {
     if (db) await db.close();

@@ -34,6 +34,17 @@ try {
   process.exit(0);
 } catch (err) {
   console.error("corpus sync FAILED");
-  console.error(err?.stack || err?.message || err);
+  console.error(err?.message || err);
+  if (err?.cause) {
+    const c = err.cause;
+    console.error(
+      "cause:",
+      c?.code || c?.name || "",
+      c?.message || c,
+    );
+  }
+  if (process.env.DEBUG_SYNC) {
+    console.error(err?.stack || err);
+  }
   process.exit(1);
 }
