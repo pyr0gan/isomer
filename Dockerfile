@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 ARG ELIXIR_VERSION=1.20.3
 ARG OTP_VERSION=29.0.5
-ARG DEBIAN_VERSION=bookworm-20250203-slim
+ARG DEBIAN_VERSION=bookworm-20260803-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
@@ -24,6 +24,8 @@ RUN mkdir -p lib
 RUN mix deps.compile
 
 COPY priv priv
+# Domain catalog for assessment UI (release uses :code.priv_dir/:isomer).
+COPY vocab/domains.yaml priv/vocab/domains.yaml
 COPY assets assets
 COPY lib lib
 
@@ -50,6 +52,8 @@ ENV MIX_ENV=prod
 ENV PHX_SERVER=true
 
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/isomer ./
+# Keep cwd-relative vocab path working for Isomer.root() fallbacks.
+COPY --from=builder --chown=nobody:root /app/priv/vocab ./vocab
 
 USER nobody
 CMD ["/app/bin/isomer", "start"]

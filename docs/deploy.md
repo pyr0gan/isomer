@@ -29,15 +29,33 @@ sync.
 
 ## Fly.io
 
+The checked-in demo app is **`isomer-demo`** (`https://isomer-demo.fly.dev`).
+The global name `isomer` is already taken on Fly.io.
+
 ```bash
-fly launch --no-deploy   # use the checked-in Dockerfile / fly.toml
-fly secrets set SECRET_KEY_BASE=… PHX_HOST=your-app.fly.dev \
+# First time (app already exists for this repo's demo):
+#   fly apps create isomer-demo
+fly secrets set SECRET_KEY_BASE="$(mix phx.gen.secret)" \
+  PHX_HOST=isomer-demo.fly.dev \
   SURREAL_URL=… SURREAL_NAMESPACE=main SURREAL_DATABASE=main
 fly deploy
 ```
 
-`fly.toml` sets `PHX_SERVER=true` and binds `PORT`. Attach a custom domain with
-`fly certs add` when ready.
+`fly.toml` sets `PHX_SERVER=true` and binds internal port `4000`. Health checks
+hit `/login`. Attach a custom domain with `fly certs add` when ready.
+
+Before the first deploy (and after corpus changes), apply Surreal content +
+runtime DDL from a machine that has Vault access — the release image does not
+run Mix sync tasks:
+
+```bash
+mix isomer.db.sync
+mix isomer.db.ensure_runtime
+```
+
+Re-run `ensure_runtime` after sync so record users can `SELECT` corpus tables
+(including `question_set`). The Docker image ships `vocab/domains.yaml` for
+domain labels in the assessment UI; question text itself is loaded from Surreal.
 
 ## Railway
 

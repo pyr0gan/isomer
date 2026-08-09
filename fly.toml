@@ -1,4 +1,4 @@
-app = "isomer"
+app = "isomer-demo"
 primary_region = "iad"
 
 [build]
