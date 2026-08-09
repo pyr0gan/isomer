@@ -5,8 +5,7 @@ defmodule Isomer.Db.Tenant do
 
   def list_orgs(conn) do
     case UserClient.query(conn, "SELECT * FROM org ORDER BY name ASC;") do
-      {:ok, [rows]} when is_list(rows) -> {:ok, Enum.map(rows, &normalize_record/1)}
-      {:ok, rows} when is_list(rows) -> {:ok, Enum.map(rows, &normalize_record/1)}
+      {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -24,37 +23,15 @@ defmodule Isomer.Db.Tenant do
     """
 
     case UserClient.query(conn, sql, %{"name" => String.trim(name)}) do
-      {:ok, results} ->
-        case last_result(results) do
-          row when is_map(row) -> {:ok, normalize_record(row)}
-          [row | _] when is_map(row) -> {:ok, normalize_record(row)}
-          other -> {:error, {:unexpected_create_org, other}}
-        end
-
-      {:error, reason} ->
-        {:error, reason}
+      {:ok, results} -> unwrap_created(results, :unexpected_create_org)
+      {:error, reason} -> {:error, reason}
     end
   end
 
   def get_org(conn, org_id) when is_binary(org_id) do
     case UserClient.query(conn, "SELECT * FROM type::record($id);", %{"id" => org_id}) do
-      {:ok, [row]} when is_map(row) ->
-        {:ok, normalize_record(row)}
-
-      {:ok, [[row]]} when is_map(row) ->
-        {:ok, normalize_record(row)}
-
-      {:ok, [rows]} when is_list(rows) ->
-        case rows do
-          [row | _] -> {:ok, normalize_record(row)}
-          [] -> {:error, :not_found}
-        end
-
-      {:ok, []} ->
-        {:error, :not_found}
-
-      {:error, reason} ->
-        {:error, reason}
+      {:ok, results} -> unwrap_one(results)
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -66,8 +43,7 @@ defmodule Isomer.Db.Tenant do
     """
 
     case UserClient.query(conn, sql, %{"org_id" => org_id}) do
-      {:ok, [rows]} when is_list(rows) -> {:ok, Enum.map(rows, &normalize_record/1)}
-      {:ok, rows} when is_list(rows) -> {:ok, Enum.map(rows, &normalize_record/1)}
+      {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -78,7 +54,8 @@ defmodule Isomer.Db.Tenant do
     domains = Map.get(attrs, "domains") || []
     ruleset_id = Map.get(attrs, "ruleset_id")
 
-    # Surreal option<string> rejects JSON null — omit the field when unset.
+    # Pre-generate id + SELECT back. CREATE ONLY often returns NONE when the
+    # statement result is filtered by PERMISSIONS even though the write succeeds.
     {ruleset_sql, vars} =
       if is_binary(ruleset_id) and ruleset_id != "" do
         {"ruleset_id = $ruleset_id,",
@@ -100,7 +77,9 @@ defmodule Isomer.Db.Tenant do
       end
 
     sql = """
-    CREATE ONLY assessment SET
+    LET $key = string::concat("a", rand::string(16));
+    LET $aid = type::record("assessment", $key);
+    CREATE $aid SET
       org = type::record($org_id),
       title = $title,
       kind = $kind,
@@ -109,45 +88,19 @@ defmodule Isomer.Db.Tenant do
       status = 'draft',
       created_by = $auth.id,
       updated_at = time::now();
+    RETURN SELECT * FROM ONLY $aid;
     """
 
     case UserClient.query(conn, sql, vars) do
-      {:ok, [row]} when is_map(row) ->
-        {:ok, normalize_record(row)}
-
-      {:ok, [[row]]} when is_map(row) ->
-        {:ok, normalize_record(row)}
-
-      {:ok, [rows]} when is_list(rows) ->
-        case rows do
-          [row | _] -> {:ok, normalize_record(row)}
-          other -> {:error, {:unexpected_create_assessment, other}}
-        end
-
-      {:error, reason} ->
-        {:error, reason}
+      {:ok, results} -> unwrap_created(results, :unexpected_create_assessment)
+      {:error, reason} -> {:error, reason}
     end
   end
 
   def get_assessment(conn, assessment_id) when is_binary(assessment_id) do
     case UserClient.query(conn, "SELECT * FROM type::record($id);", %{"id" => assessment_id}) do
-      {:ok, [row]} when is_map(row) ->
-        {:ok, normalize_record(row)}
-
-      {:ok, [[row]]} when is_map(row) ->
-        {:ok, normalize_record(row)}
-
-      {:ok, [rows]} when is_list(rows) ->
-        case rows do
-          [row | _] -> {:ok, normalize_record(row)}
-          [] -> {:error, :not_found}
-        end
-
-      {:ok, []} ->
-        {:error, :not_found}
-
-      {:error, reason} ->
-        {:error, reason}
+      {:ok, results} -> unwrap_one(results)
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -156,8 +109,7 @@ defmodule Isomer.Db.Tenant do
            conn,
            "SELECT corpus_id, title, domain, questions FROM question_set ORDER BY domain ASC;"
          ) do
-      {:ok, [rows]} when is_list(rows) -> {:ok, rows}
-      {:ok, rows} when is_list(rows) -> {:ok, rows}
+      {:ok, results} -> {:ok, rows_of(results)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -168,8 +120,7 @@ defmodule Isomer.Db.Tenant do
     """
 
     case UserClient.query(conn, sql, %{"id" => assessment_id}) do
-      {:ok, [rows]} when is_list(rows) -> {:ok, rows}
-      {:ok, rows} when is_list(rows) -> {:ok, rows}
+      {:ok, results} -> {:ok, rows_of(results)}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -203,10 +154,14 @@ defmodule Isomer.Db.Tenant do
       is_binary(value) ->
         value
 
+      none?(value) ->
+        ""
+
       is_struct(value) ->
         to_string(value)
 
-      is_map(value) and Map.has_key?(value, "tb") and Map.has_key?(value, "id") ->
+      is_map(value) and not is_struct(value) and Map.has_key?(value, "tb") and
+          Map.has_key?(value, "id") ->
         "#{value["tb"]}:#{value["id"]}"
 
       true ->
@@ -214,20 +169,68 @@ defmodule Isomer.Db.Tenant do
     end
   end
 
-  defp normalize_record(row) when is_map(row) do
-    id = record_id(Map.get(row, "id") || Map.get(row, :id))
-    Map.put(row, "id", id)
+  defp unwrap_created(results, error_tag) do
+    case useful_result(results) do
+      row when is_map(row) and not is_struct(row) ->
+        {:ok, normalize_record(row)}
+
+      [row | _] when is_map(row) and not is_struct(row) ->
+        {:ok, normalize_record(row)}
+
+      other ->
+        {:error, {error_tag, other}}
+    end
   end
 
-  defp last_result(results) when is_list(results) do
+  defp unwrap_one(results) do
+    case useful_result(results) do
+      row when is_map(row) and not is_struct(row) ->
+        {:ok, normalize_record(row)}
+
+      [row | _] when is_map(row) and not is_struct(row) ->
+        {:ok, normalize_record(row)}
+
+      [] ->
+        {:error, :not_found}
+
+      nil ->
+        {:error, :not_found}
+
+      other ->
+        if none?(other), do: {:error, :not_found}, else: {:error, {:unexpected, other}}
+    end
+  end
+
+  defp rows_of(results) do
+    case useful_result(results) do
+      rows when is_list(rows) ->
+        Enum.filter(rows, &(is_map(&1) and not is_struct(&1)))
+
+      row when is_map(row) and not is_struct(row) ->
+        [row]
+
+      _ ->
+        []
+    end
+  end
+
+  defp useful_result(results) when is_list(results) do
     results
     |> Enum.reverse()
     |> Enum.find(fn
       nil -> false
       :ok -> false
-      _ -> true
+      value -> not none?(value)
     end)
   end
 
-  defp last_result(other), do: other
+  defp useful_result(other), do: other
+
+  defp normalize_record(row) when is_map(row) and not is_struct(row) do
+    id = record_id(Map.get(row, "id") || Map.get(row, :id))
+    Map.put(row, "id", id)
+  end
+
+  defp none?(%SurrealDB.None{}), do: true
+  defp none?(_), do: false
 end
