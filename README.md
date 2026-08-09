@@ -9,17 +9,19 @@ checks it, and SurrealDB stores it so apps (and a future questionnaire UI) can
 query it.
 
 <p align="center">
-  <a href="https://surrealdb.com" title="Built with SurrealDB">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
-      <img src="docs/assets/logos/surrealdb-dark.svg" alt="Built with SurrealDB" width="200" height="48" />
-    </picture>
-  </a>
-  &nbsp;&nbsp;<strong>+</strong>&nbsp;&nbsp;
-  <a href="https://elixir-lang.org" title="Built with Elixir">
+  <a href="https://elixir-lang.org" title="Built with Elixir" style="text-decoration: none;">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/elixir-light.svg" />
-      <img src="docs/assets/logos/elixir-dark.svg" alt="Built with Elixir" width="140" height="48" />
+      <img src="docs/assets/logos/elixir-dark.svg" alt="Built with Elixir" width="140" height="48" style="display: inline-block; border: 0;" />
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://surrealdb.com" title="Built with SurrealDB" style="text-decoration: none;">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
+      <img src="docs/assets/logos/surrealdb-dark.svg" alt="Built with SurrealDB" width="200" height="48" style="display: inline-block; border: 0;" />
     </picture>
   </a>
 </p>
