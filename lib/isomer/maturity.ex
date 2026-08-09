@@ -13,11 +13,70 @@ defmodule Isomer.Maturity do
   @level_order ~w(L0 L1 L2 L3 L4)
   @level_fill %{"L0" => 8, "L1" => 35, "L2" => 60, "L3" => 80, "L4" => 100}
 
+  @levels %{
+    "L0" => %{
+      name: "Ad hoc / Unaware",
+      color: "gray",
+      tip: "No structured practice yet — work happens without governance awareness."
+    },
+    "L1" => %{
+      name: "Foundational",
+      color: "info",
+      tip: "Foundational — first policies or practices exist on paper and are communicated."
+    },
+    "L2" => %{
+      name: "Defined",
+      color: "primary",
+      tip: "Defined — working, reviewable system ready for certification-style scrutiny."
+    },
+    "L3" => %{
+      name: "Measured",
+      color: "success",
+      tip: "Measured / certified — steered by KPIs, audits, or certification evidence."
+    },
+    "L4" => %{
+      name: "Optimizing",
+      color: "warning",
+      tip: "Optimizing — anticipates change and treats governance as a strategic capability."
+    }
+  }
+
+  @doc "Ordered maturity level ids."
+  def level_order, do: @level_order
+
+  @doc "Map of level id => `%{name, color, tip}`."
+  def levels, do: @levels
+
+  @doc """
+  Metadata for a maturity level id (`L0`–`L4`).
+
+  Returns `%{id, name, color, tip, label}` where `label` is `"L1 · Foundational"`.
+  """
+  def level_meta(level) when is_binary(level) do
+    meta =
+      Map.get(@levels, level, %{
+        name: level,
+        color: "gray",
+        tip: level
+      })
+
+    %{
+      id: level,
+      name: meta.name,
+      color: meta.color,
+      tip: meta.tip,
+      label: "#{level} · #{meta.name}"
+    }
+  end
+
+  def level_meta(_), do: level_meta("L0")
+
   @doc """
   Builds domain maturity bars for an org from its assessments (newest answers win).
 
   Returns `{:ok, bars}` where each bar is a map with string keys:
-  `domain`, `label`, `level`, `pct`, `answered`, `total`.
+  `domain`, `label`, `level`, `level_name`, `level_tip`, `level_label`,
+  `level_color`, `pct`, `answered`, `total`.
   """
   def org_domain_bars(conn, assessments) when is_list(assessments) do
     with {:ok, sets} <- Tenant.list_question_sets(conn) do
@@ -35,11 +94,16 @@ defmodule Isomer.Maturity do
           else
             scored = score_domain(questions, answer_index)
             level = scored.level
+            meta = level_meta(level)
 
             %{
               "domain" => domain_id,
               "label" => domain["label"] || Domains.sentence_case(domain_id),
               "level" => level,
+              "level_name" => meta.name,
+              "level_tip" => meta.tip,
+              "level_label" => meta.label,
+              "level_color" => meta.color,
               "pct" => Map.get(@level_fill, level, 8),
               "answered" => scored.answered,
               "total" => scored.total,
@@ -139,6 +203,4 @@ defmodule Isomer.Maturity do
 
   defp unwrap(value) when is_list(value), do: List.last(value)
   defp unwrap(value), do: value
-
-  def level_order, do: @level_order
 end

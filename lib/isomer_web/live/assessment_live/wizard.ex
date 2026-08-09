@@ -3,34 +3,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   alias Isomer.Domains
   alias Isomer.Db.Tenant
-
-  @maturity_levels %{
-    "L0" => %{
-      name: "Ad hoc / Unaware",
-      color: "gray",
-      tip: "No structured practice yet — work happens without governance awareness."
-    },
-    "L1" => %{
-      name: "Foundational",
-      color: "info",
-      tip: "Foundational — first policies or practices exist on paper and are communicated."
-    },
-    "L2" => %{
-      name: "Defined",
-      color: "primary",
-      tip: "Defined — working, reviewable system ready for certification-style scrutiny."
-    },
-    "L3" => %{
-      name: "Measured",
-      color: "success",
-      tip: "Measured / certified — steered by KPIs, audits, or certification evidence."
-    },
-    "L4" => %{
-      name: "Optimizing",
-      color: "warning",
-      tip: "Optimizing — anticipates change and treats governance as a strategic capability."
-    }
-  }
+  alias Isomer.Maturity
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -412,18 +385,12 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   attr(:level, :string, required: true)
 
   def level_badge(assigns) do
-    meta =
-      Map.get(@maturity_levels, assigns.level, %{
-        name: assigns.level,
-        color: "gray",
-        tip: assigns.level
-      })
-
+    meta = Maturity.level_meta(assigns.level)
     assigns = assign(assigns, :meta, meta)
 
     ~H"""
-    <.tooltip label={"#{@level} — #{@meta.name}. #{@meta.tip}"} placement="right">
-      <.badge color={@meta.color} variant="soft" label={@level} class="cursor-help" />
+    <.tooltip label={"#{@meta.label} — #{@meta.tip}"} placement="right">
+      <.badge color={@meta.color} variant="soft" label={@meta.label} class="cursor-help" />
     </.tooltip>
     """
   end
