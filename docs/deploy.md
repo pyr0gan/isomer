@@ -53,6 +53,10 @@ mix isomer.db.sync
 mix isomer.db.ensure_runtime
 ```
 
+Re-run `ensure_runtime` after sync so record users can `SELECT` corpus tables
+(including `question_set`). The Docker image ships `vocab/domains.yaml` for
+domain labels in the assessment UI; question text itself is loaded from Surreal.
+
 ## Railway
 
 1. New project → deploy from this repo.
