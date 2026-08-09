@@ -3,6 +3,7 @@ defmodule IsomerWeb.AssessmentLive.New do
 
   alias Isomer.Domains
   alias Isomer.Db.Tenant
+  alias Isomer.Namegen
 
   @impl true
   def mount(%{"org_id" => org_id}, _session, socket) do
@@ -20,26 +21,68 @@ defmodule IsomerWeb.AssessmentLive.New do
       end
 
     domains = Domains.selectable(set_domains)
+    title = Namegen.generate()
 
     {:ok,
      assign(socket,
        page_title: "New assessment",
        org_id: org_id,
-       title: "",
+       title: title,
+       edit_title?: false,
        domains: domains,
        error: nil
      )}
   end
 
   @impl true
+  def handle_event("toggle_edit_title", _params, socket) do
+    edit? = !socket.assigns.edit_title?
+
+    socket =
+      if edit? do
+        assign(socket, edit_title?: true)
+      else
+        # Turning edit off restores / keeps a generated-style title.
+        title =
+          if Namegen.valid?(socket.assigns.title) do
+            socket.assigns.title
+          else
+            Namegen.generate()
+          end
+
+        assign(socket, edit_title?: false, title: title)
+      end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("regenerate_title", _params, socket) do
+    {:noreply, assign(socket, title: Namegen.generate())}
+  end
+
+  def handle_event("title_change", %{"title" => title}, socket) do
+    {:noreply, assign(socket, title: title)}
+  end
+
   def handle_event("save", params, socket) do
     selected =
       params
       |> Map.get("domains", %{})
       |> Map.keys()
 
+    title =
+      cond do
+        socket.assigns.edit_title? ->
+          params["title"] |> to_string() |> String.trim()
+
+        true ->
+          socket.assigns.title
+      end
+
+    title = if title == "", do: Namegen.generate(), else: title
+
     attrs = %{
-      "title" => params["title"] || "Assessment",
+      "title" => title,
       "kind" => "domains",
       "domains" => selected,
       "ruleset_id" => nil
@@ -70,10 +113,43 @@ defmodule IsomerWeb.AssessmentLive.New do
       <p :if={@error} class="error" role="alert">{@error}</p>
 
       <form phx-submit="save" class="stack">
-        <label>
-          Title
-          <input type="text" name="title" value={@title} required autofocus />
-        </label>
+        <div class="title-block">
+          <div class="row title-row">
+            <span class="title-label">Title</span>
+            <label class="toggle">
+              <input
+                type="checkbox"
+                checked={@edit_title?}
+                phx-click="toggle_edit_title"
+              />
+              <span>Edit title</span>
+            </label>
+          </div>
+
+          <%= if @edit_title? do %>
+            <input
+              type="text"
+              name="title"
+              value={@title}
+              required
+              autofocus
+              phx-change="title_change"
+              phx-debounce="200"
+              pattern={"[a-z]+-[a-z]+-[a-z0-9]{6}"}
+              title="Format: shortword-shortword-xxxxxx"
+              class="title-input"
+            />
+            <p class="hint">Use <code>shortword-shortword-xxxxxx</code> (6 alphanumeric).</p>
+          <% else %>
+            <input type="hidden" name="title" value={@title} />
+            <div class="title-default row">
+              <code class="title-generated">{@title}</code>
+              <button type="button" class="btn btn-quiet btn-small" phx-click="regenerate_title">
+                Regenerate
+              </button>
+            </div>
+          <% end %>
+        </div>
 
         <fieldset class="domain-fieldset">
           <legend>Domains</legend>
