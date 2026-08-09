@@ -35,6 +35,7 @@ defmodule Isomer.MixProject do
         "isomer.db.ensure_runtime": :dev,
         "isomer.db.reset_password": :dev,
         "isomer.sbom": :dev,
+        "isomer.git_hooks": :dev,
         "sbom.cyclonedx": :dev,
         sbom: :dev
       ]
@@ -90,7 +91,9 @@ defmodule Isomer.MixProject do
       "lint.corpus": ["isomer.validate", "isomer.charset"],
       lint: ["lint.corpus"],
       sbom: ["isomer.sbom"],
-      setup: ["deps.get", "assets.setup", "assets.build"],
+      "git.hooks": ["isomer.git_hooks"],
+      precommit: ["format", "compile --warnings-as-errors", "lint"],
+      setup: ["deps.get", "assets.setup", "assets.build", "git.hooks"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["tailwind isomer", "esbuild isomer"],
       "assets.deploy": [

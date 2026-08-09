@@ -4,7 +4,8 @@ defmodule IsomerWeb do
   """
 
   def static_paths,
-    do: ~w(assets fonts images favicon.ico robots.txt humans.txt llms.txt security.txt .well-known)
+    do:
+      ~w(assets fonts images favicon.ico robots.txt humans.txt llms.txt security.txt .well-known)
 
   def router do
     quote do

@@ -6,7 +6,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 
 ### Core workflow
 
-- Lint: `mix lint` (alias for `mix isomer.validate` + `mix isomer.charset`). See root `README.md`.
+- Lint: `mix lint` (alias for `mix isomer.validate` + `mix isomer.charset`). See root `README.md`. Pre-commit: `mix setup` / `mix git.hooks` installs `.githooks/pre-commit` (format + compile warnings-as-errors + lint). Manual: `mix precommit`.
 - Deps: `mix deps.get` (see `mix.exs` / `mix.lock`). Latest stable Elixir/OTP pinned in `mise.toml` (**1.20.3** / **29.0.5**); required for EEF `sbom` / CycloneDX.
 - SurrealDB smoke test: `mix isomer.db.ping` (password from Hashicorp Vault; never commit `.env`).
 - **Versioning:** tooling = `mix.exs` (currently **0.1.1**) + **merged PR descriptions** as the human history; content = per-file YAML `version` / framework edition directories — never Mix, and no GitHub Releases for content. Policy: `docs/versioning.md`. No `CHANGELOG.md`. Do not invent “content release” numbers.
@@ -36,7 +36,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 
 ### CI
 
-- `.github/workflows/ci.yml` — `mix deps.get`, compile, format check, `mix lint`, then `mix isomer.sbom` (upload `bom.cdx.json`). No Surreal dry-run in CI; live sync is separate.
+- `.github/workflows/ci.yml` — `mix deps.get`, compile, format check, `mix lint`, then `mix isomer.sbom` (upload `bom.cdx.json`). Uses Node 24 actions (`actions/cache@v5`, `actions/upload-artifact@v6`). No Surreal dry-run in CI; live sync is separate.
 - `.github/workflows/sync-corpus.yml` — on push to `main` (and `workflow_dispatch`), validate then `mix isomer.db.sync`. Preflight checks that required secrets are non-empty (does not print values). Vault HTTP reads retry on transient failures from runners.
 - `.github/workflows/fly-deploy.yml` — on push to `main` (and `workflow_dispatch`), `flyctl deploy -a isomer-demo --remote-only`. Requires Actions secret `FLY_API_TOKEN` (`fly tokens create deploy -a isomer-demo -x 999999h`).
 - Required GitHub Actions secrets for live sync: `SURREAL_URL`, `SURREAL_NAMESPACE`, `SURREAL_DATABASE`, `SURREAL_USERNAME`, `VAULT_ADDR`, `VAULT_TOKEN`, `VAULT_SECRET_PATH`, `VAULT_SECRET_FIELD`.
