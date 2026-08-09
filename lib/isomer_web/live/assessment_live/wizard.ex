@@ -255,28 +255,18 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     {q.evidence_prompt}
                   </.p>
 
-                  <div class="answer-controls">
+                  <form phx-submit="answer" class="answer-controls">
+                    <input type="hidden" name="question_id" value={q.id} />
                     <%= case q.kind do %>
                       <% "boolean" -> %>
-                        <.button
-                          type="button"
-                          size="sm"
-                          label="Yes"
-                          color={if truthy_answer?(@answers[q.id]), do: "success", else: "gray"}
-                          variant={if truthy_answer?(@answers[q.id]), do: "solid", else: "outline"}
-                          phx-click="answer"
-                          phx-value-question_id={q.id}
-                          phx-value-value="true"
-                        />
-                        <.button
-                          type="button"
-                          size="sm"
-                          label="No"
-                          color={if falsey_answer?(@answers[q.id]), do: "danger", else: "gray"}
-                          variant={if falsey_answer?(@answers[q.id]), do: "solid", else: "outline"}
-                          phx-click="answer"
-                          phx-value-question_id={q.id}
-                          phx-value-value="false"
+                        <.field
+                          type="select"
+                          name="value"
+                          label="Answer"
+                          options={[{"—", ""}, {"Yes", "true"}, {"No", "false"}]}
+                          value={boolean_select_value(@answers[q.id])}
+                          no_margin
+                          wrapper_class="min-w-[10rem]"
                         />
                         <.icon
                           :if={truthy_answer?(@answers[q.id])}
@@ -289,56 +279,43 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                           class="answer-mark-icon answer-mark-icon-no"
                         />
                       <% "multi" -> %>
-                        <form phx-submit="answer" class="flex flex-wrap items-end gap-3">
-                          <input type="hidden" name="question_id" value={q.id} />
-                          <.field
-                            type="text"
-                            name="value"
-                            label="Answer"
-                            placeholder="comma-separated"
-                            value={format_multi(@answers[q.id])}
-                            no_margin
-                            wrapper_class="min-w-[14rem] flex-1"
-                          />
-                          <.icon
-                            :if={answered?(@answers, q.id)}
-                            name="hero-check-circle-solid"
-                            class="answer-mark-icon answer-mark-icon-yes"
-                          />
-                          <.button
-                            type="submit"
-                            size="sm"
-                            label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
-                            color={if answered?(@answers, q.id), do: "gray", else: "primary"}
-                            variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
-                          />
-                        </form>
+                        <.field
+                          type="text"
+                          name="value"
+                          label="Answer"
+                          placeholder="comma-separated"
+                          value={format_multi(@answers[q.id])}
+                          no_margin
+                          wrapper_class="min-w-[14rem] flex-1"
+                        />
+                        <.icon
+                          :if={answered?(@answers, q.id)}
+                          name="hero-check-circle-solid"
+                          class="answer-mark-icon answer-mark-icon-yes"
+                        />
                       <% _ -> %>
-                        <form phx-submit="answer" class="flex flex-wrap items-end gap-3">
-                          <input type="hidden" name="question_id" value={q.id} />
-                          <.field
-                            type="text"
-                            name="value"
-                            label="Answer"
-                            value={to_string(@answers[q.id] || "")}
-                            no_margin
-                            wrapper_class="min-w-[14rem] flex-1"
-                          />
-                          <.icon
-                            :if={answered?(@answers, q.id)}
-                            name="hero-check-circle-solid"
-                            class="answer-mark-icon answer-mark-icon-yes"
-                          />
-                          <.button
-                            type="submit"
-                            size="sm"
-                            label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
-                            color={if answered?(@answers, q.id), do: "gray", else: "primary"}
-                            variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
-                          />
-                        </form>
+                        <.field
+                          type="text"
+                          name="value"
+                          label="Answer"
+                          value={to_string(@answers[q.id] || "")}
+                          no_margin
+                          wrapper_class="min-w-[14rem] flex-1"
+                        />
+                        <.icon
+                          :if={answered?(@answers, q.id)}
+                          name="hero-check-circle-solid"
+                          class="answer-mark-icon answer-mark-icon-yes"
+                        />
                     <% end %>
-                  </div>
+                    <.button
+                      type="submit"
+                      size="sm"
+                      label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
+                      color={if answered?(@answers, q.id), do: "gray", else: "primary"}
+                      variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
+                    />
+                  </form>
                 </.card_content>
               </.card>
             </div>
@@ -436,6 +413,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   defp truthy_answer?(value), do: normalize_loaded_value("boolean", value) == true
   defp falsey_answer?(value), do: normalize_loaded_value("boolean", value) == false
+
+  defp boolean_select_value(value) do
+    case normalize_loaded_value("boolean", value) do
+      true -> "true"
+      false -> "false"
+      _ -> ""
+    end
+  end
 
   defp normalize_loaded_value("boolean", value) do
     case unwrap_param(value) do
