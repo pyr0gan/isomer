@@ -22,28 +22,93 @@ defmodule IsomerWeb.AssessmentLive.Show do
 
   @impl true
   def handle_event("add_domains", params, socket) do
-    selected =
-      params
-      |> Map.get("domains", %{})
-      |> Map.keys()
+    if finalized?(socket.assigns.assessment) do
+      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    else
+      selected =
+        params
+        |> Map.get("domains", %{})
+        |> Map.keys()
 
-    case Tenant.add_assessment_domains(
-           socket.assigns.surreal,
-           socket.assigns.assessment_id,
-           selected
-         ) do
-      {:ok, _assessment} ->
-        case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
-          {:ok, state} ->
-            {:noreply,
-             socket
-             |> assign(state)
-             |> assign(:error, nil)
-             |> put_flash(:info, "Domains updated")}
+      case Tenant.add_assessment_domains(
+             socket.assigns.surreal,
+             socket.assigns.assessment_id,
+             selected
+           ) do
+        {:ok, _assessment} ->
+          case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
+            {:ok, state} ->
+              {:noreply,
+               socket
+               |> assign(state)
+               |> assign(:error, nil)
+               |> put_flash(:info, "Domains updated")}
 
-          {:error, reason} ->
-            {:noreply, assign(socket, error: format_error(reason))}
-        end
+            {:error, reason} ->
+              {:noreply, assign(socket, error: format_error(reason))}
+          end
+
+        {:error, reason} ->
+          {:noreply, assign(socket, error: format_error(reason))}
+      end
+    end
+  end
+
+  def handle_event("finalize", _params, socket) do
+    if finalized?(socket.assigns.assessment) do
+      {:noreply, assign(socket, error: "Already finalized.")}
+    else
+      case Tenant.update_assessment_status(
+             socket.assigns.surreal,
+             socket.assigns.assessment_id,
+             "complete"
+           ) do
+        {:ok, assessment} ->
+          {:noreply,
+           socket
+           |> assign(:assessment, assessment)
+           |> assign(:finalized, true)
+           |> assign(:error, nil)
+           |> put_flash(:info, "Assessment finalized — editing is locked.")}
+
+        {:error, reason} ->
+          {:noreply, assign(socket, error: format_error(reason))}
+      end
+    end
+  end
+
+  def handle_event("reopen", _params, socket) do
+    if finalized?(socket.assigns.assessment) do
+      case Tenant.update_assessment_status(
+             socket.assigns.surreal,
+             socket.assigns.assessment_id,
+             "in_progress"
+           ) do
+        {:ok, assessment} ->
+          {:noreply,
+           socket
+           |> assign(:assessment, assessment)
+           |> assign(:finalized, false)
+           |> assign(:error, nil)
+           |> put_flash(:info, "Assessment reopened for editing.")}
+
+        {:error, reason} ->
+          {:noreply, assign(socket, error: format_error(reason))}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("delete", _params, socket) do
+    org_id = socket.assigns.org_id
+
+    case Tenant.delete_assessment(socket.assigns.surreal, socket.assigns.assessment_id) do
+      :ok ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Assessment deleted")
+         |> push_navigate(to: ~p"/orgs/#{org_id}")}
 
       {:error, reason} ->
         {:noreply, assign(socket, error: format_error(reason))}
@@ -70,10 +135,14 @@ defmodule IsomerWeb.AssessmentLive.Show do
          assessment_id: id,
          org_id: Tenant.canonicalize_record_id(assessment["org"]),
          selected_domains: selected,
-         addable_domains: addable
+         addable_domains: addable,
+         finalized: finalized?(assessment)
        }}
     end
   end
+
+  defp finalized?(%{"status" => status}) when status in ["complete", "archived"], do: true
+  defp finalized?(_), do: false
 
   defp format_error(reason) when is_binary(reason), do: reason
   defp format_error(%{message: msg}) when is_binary(msg), do: msg
@@ -87,19 +156,61 @@ defmodule IsomerWeb.AssessmentLive.Show do
         <div>
           <.h1>{@assessment["title"]}</.h1>
           <.p class="isomer-lede flex flex-wrap items-center gap-2">
-            <.badge color="info" variant="soft" label={@assessment["status"] || "draft"} />
+            <.badge
+              color={status_badge_color(@assessment["status"])}
+              variant="soft"
+              label={status_label(@assessment["status"])}
+            />
             <.badge color="gray" variant="soft" label={@assessment["kind"] || "domains"} />
           </.p>
         </div>
-        <.button
-          link_type="live_redirect"
-          to={~p"/assessments/#{@assessment_id}/q"}
-          label="Open wizard"
-          icon="hero-play"
-        />
+        <div class="flex flex-wrap gap-2">
+          <.button
+            link_type="live_redirect"
+            to={~p"/assessments/#{@assessment_id}/q"}
+            label={if @finalized, do: "View wizard", else: "Open wizard"}
+            icon="hero-play"
+          />
+          <%= if @finalized do %>
+            <.button
+              type="button"
+              color="gray"
+              variant="outline"
+              label="Reopen"
+              phx-click="reopen"
+              data-confirm="Reopen this assessment for editing?"
+            />
+          <% else %>
+            <.button
+              type="button"
+              color="success"
+              variant="outline"
+              label="Finalize"
+              phx-click="finalize"
+              data-confirm="Finalize this assessment? Editing will be locked until you reopen it."
+            />
+          <% end %>
+          <.button
+            type="button"
+            color="danger"
+            variant="outline"
+            label="Delete"
+            phx-click="delete"
+            data-confirm={"Delete “#{@assessment["title"]}” and all its answers? This cannot be undone."}
+          />
+        </div>
       </div>
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
+
+      <.alert
+        :if={@finalized}
+        color="warning"
+        variant="soft"
+        with_icon
+        label="Finalized — answers and domains are locked. Reopen to edit, or delete the assessment."
+        class="mb-4"
+      />
 
       <.card>
         <.card_header title="Domains in this assessment" />
@@ -114,7 +225,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
             </ul>
           <% end %>
 
-          <%= if @addable_domains != [] do %>
+          <%= if not @finalized and @addable_domains != [] do %>
             <form phx-submit="add_domains" class="space-y-4 border-t border-slate-200 pt-4">
               <fieldset>
                 <legend class="mb-2 text-sm font-medium text-slate-700">Add domains</legend>
@@ -136,7 +247,9 @@ defmodule IsomerWeb.AssessmentLive.Show do
               <.button type="submit" label="Add selected domains" size="sm" />
             </form>
           <% else %>
-            <.p class="text-slate-500">All available domains are already on this assessment.</.p>
+            <.p :if={not @finalized} class="text-slate-500">
+              All available domains are already on this assessment.
+            </.p>
           <% end %>
         </.card_content>
       </.card>
@@ -151,4 +264,12 @@ defmodule IsomerWeb.AssessmentLive.Show do
     </section>
     """
   end
+
+  defp status_label(status) when status in ["complete", "archived"], do: "finalized"
+  defp status_label(status) when is_binary(status) and status != "", do: status
+  defp status_label(_), do: "draft"
+
+  defp status_badge_color(status) when status in ["complete", "archived"], do: "success"
+  defp status_badge_color("in_progress"), do: "primary"
+  defp status_badge_color(_), do: "info"
 end

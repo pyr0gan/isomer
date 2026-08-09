@@ -65,7 +65,7 @@ create/update/delete on corpus stay denied for them.
 |---|---|
 | `org` | `record org` |
 | `title` | Display name |
-| `status` | `draft` \| `in_progress` \| `complete` \| `archived` |
+| `status` | `draft` \| `in_progress` \| `complete` \| `archived` — UI treats `complete`/`archived` as **finalized** (editing locked; listed separately from ongoing on the org page) |
 | `kind` | `ruleset` \| `domains` \| `combined` |
 | `ruleset_id` | Corpus ruleset id string (e.g. `eu-ai-act/2024+2026-1744/classification`) |
 | `domains` | `array<string>` of question-set domain ids |
