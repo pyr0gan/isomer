@@ -1,5 +1,7 @@
 # isomer
 
+<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
+
 <p align="center">
   <a href="https://surrealdb.com" title="SurrealDB">
     <picture>
@@ -17,8 +19,6 @@
     </picture>
   </a>
 </p>
-
-<p align="center"><strong>Built with <a href="https://surrealdb.com">SurrealDB</a> and <a href="https://elixir-lang.org">Elixir</a></strong></p>
 
 **isomer** is a shared library of AI governance content — the requirements,
 questions, and mappings that make up an integrated security + AI management
