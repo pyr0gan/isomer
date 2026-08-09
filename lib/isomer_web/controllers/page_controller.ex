@@ -7,16 +7,27 @@ defmodule IsomerWeb.PageController do
     token = conn.assigns[:surreal_token]
 
     cond do
-      is_binary(token) and token != "" and UserAuth.valid_token?(token) ->
-        redirect(conn, to: ~p"/orgs")
-
-      is_binary(token) and token != "" ->
-        conn
-        |> UserAuth.log_out()
-        |> redirect(to: ~p"/login")
+      not (is_binary(token) and token != "") ->
+        redirect(conn, to: ~p"/login")
 
       true ->
-        redirect(conn, to: ~p"/login")
+        case UserAuth.check_token(token) do
+          :valid ->
+            redirect(conn, to: ~p"/orgs")
+
+          :unavailable ->
+            conn
+            |> put_flash(
+              :error,
+              "Database unreachable right now (timeout). Wait a few seconds and retry."
+            )
+            |> redirect(to: ~p"/login")
+
+          :invalid ->
+            conn
+            |> UserAuth.log_out()
+            |> redirect(to: ~p"/login")
+        end
     end
   end
 end
