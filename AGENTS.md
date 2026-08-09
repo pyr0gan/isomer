@@ -9,11 +9,11 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Lint: `mix lint` (alias for `mix isomer.validate` + `mix isomer.charset`). See root `README.md`.
 - Deps: `mix deps.get` (see `mix.exs` / `mix.lock`). Latest stable Elixir/OTP pinned in `mise.toml` (**1.20.3** / **29.0.5**); required for EEF `sbom` / CycloneDX.
 - SurrealDB smoke test: `mix isomer.db.ping` (password from Hashicorp Vault; never commit `.env`).
-- **Versioning:** tooling = `mix.exs` + `CHANGELOG.md` (currently **0.1.0**); content = per-file YAML `version` / framework edition directories — never Mix, and no GitHub Releases for content. Policy: `docs/versioning.md`. Cut the tooling changelog when tooling changes land; do not invent “content release” numbers.
+- **Versioning:** tooling = `mix.exs` + `CHANGELOG.md` (currently **0.1.1**); content = per-file YAML `version` / framework edition directories — never Mix, and no GitHub Releases for content. Policy: `docs/versioning.md`. Cut a **dated** changelog section when tooling changes land (no `Unreleased` heading); do not invent “content release” numbers.
 - Full corpus→DB sync: `mix isomer.db.sync` (or `--dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`, `question_set`, `template`; writes `maps_to` graph edges; prunes stale `content_source="repo"` rows; writes a `sync_run` record.
 - Sample single-requirement write: `mix isomer.db.ingest_sample`.
 - Assessment runtime: `docs/assessment-runtime.md`. Apply Surreal auth + tenant tables with `mix isomer.db.ensure_runtime` (does not prune; separate from corpus sync). Phoenix LiveViews (`mix phx.server`, `IsomerWeb`) are the projector; Surreal owns identity/session via `DEFINE ACCESS isomer_user`. No Ash / no Ecto user table. Deploy: `docs/deploy.md` (Fly.io or Railway).
-- **Fly demo:** app `isomer-demo` → `https://isomer-demo.fly.dev` (`fly.toml`). Web secrets are `SECRET_KEY_BASE`, `PHX_HOST=isomer-demo.fly.dev`, `SURREAL_*` (no Vault on the web dyno). Health check path is `/health`. After corpus sync, re-run `mix isomer.db.ensure_runtime` so record users can `SELECT` published `question_set` rows. Deploy with `fly deploy -a isomer-demo --remote-only` (needs `FLY_API_TOKEN`).
+- **Fly demo:** app `isomer-demo` → `https://isomer-demo.fly.dev` (`fly.toml`). Web secrets are `SECRET_KEY_BASE`, `PHX_HOST=isomer-demo.fly.dev`, `SURREAL_*` (no Vault on the web dyno). Health check path is `/health`. Deploy on merge to `main` via `.github/workflows/fly-deploy.yml` (needs Actions secret `FLY_API_TOKEN`). After corpus sync, re-run `mix isomer.db.ensure_runtime` so record users can `SELECT` published `question_set` rows. Manual: `fly deploy -a isomer-demo --remote-only`.
 - CycloneDX SBoM: `mix isomer.sbom` (alias `mix sbom`) → `bom.cdx.json` via Hex package `sbom` (`only: :dev`). Do not run under `MIX_ENV=prod`. CI uploads the JSON as an artifact.
 
 ### SurrealDB + Vault
@@ -38,6 +38,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 
 - `.github/workflows/ci.yml` — `mix deps.get`, compile, format check, `mix lint`, then `mix isomer.sbom` (upload `bom.cdx.json`). No Surreal dry-run in CI; live sync is separate.
 - `.github/workflows/sync-corpus.yml` — on push to `main` (and `workflow_dispatch`), validate then `mix isomer.db.sync`. Preflight checks that required secrets are non-empty (does not print values). Vault HTTP reads retry on transient failures from runners.
+- `.github/workflows/fly-deploy.yml` — on push to `main` (and `workflow_dispatch`), `flyctl deploy -a isomer-demo --remote-only`. Requires Actions secret `FLY_API_TOKEN` (`fly tokens create deploy -a isomer-demo -x 999999h`).
 - Required GitHub Actions secrets for live sync: `SURREAL_URL`, `SURREAL_NAMESPACE`, `SURREAL_DATABASE`, `SURREAL_USERNAME`, `VAULT_ADDR`, `VAULT_TOKEN`, `VAULT_SECRET_PATH`, `VAULT_SECRET_FIELD`.
 - Secrets are injected into the process environment on the runner (there is usually no `.env` file in CI). Set `DEBUG_SYNC=1` for full stacks on sync failure.
 

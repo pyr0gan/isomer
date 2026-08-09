@@ -17,9 +17,12 @@ actually shippable.
 ```
 # after a tooling change
 # 1. edit mix.exs version
-# 2. add a section to CHANGELOG.md
+# 2. add a **dated** section to CHANGELOG.md (e.g. `## 0.1.2 — 2026-08-10`)
 # 3. merge — no GitHub Release required
 ```
+
+Do **not** use an `Unreleased` heading. Cut the changelog section in the same PR
+as the tooling change (or immediately after merge with the version bump).
 
 ## Content (YAML / Markdown corpus)
 

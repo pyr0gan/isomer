@@ -1,0 +1,36 @@
+name: Deploy Fly demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: fly-deploy-isomer-demo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy isomer-demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check FLY_API_TOKEN is set
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "Missing or empty GitHub Actions secret FLY_API_TOKEN." >&2
+            echo "Create a deploy token: fly tokens create deploy -a isomer-demo -x 999999h" >&2
+            echo "Then set it under Settings → Secrets and variables → Actions." >&2
+            exit 1
+          fi
+          echo "FLY_API_TOKEN is present (value not printed)."
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy -a isomer-demo --remote-only --config fly.toml

@@ -3,11 +3,15 @@
 Tooling versions only (`mix.exs`). Content is versioned in YAML — see
 [`docs/versioning.md`](docs/versioning.md).
 
-## Unreleased
+Cut a dated section when tooling changes merge — do not use an “Unreleased”
+heading.
+
+## 0.1.1 — 2026-08-09
 
 - Fly health check uses `/health` (plain-text liveness) instead of `/login`
 - Public discovery: `/robots.txt`, `/llms.txt`, `/humans.txt`,
   `/.well-known/security.txt` (+ `/security.txt`)
+- CI deploys `isomer-demo` to Fly.io on push to `main` (`FLY_API_TOKEN`)
 - Whole-app type ramp: root `font-size: 112.5%` (18px), body `text-base` + relaxed
   leading; lift cramped `text-xs`/`text-sm` UI copy in wizard, org, and metrics
 - `assessment.domain_metrics` is `FLEXIBLE` so SCHEMAFULL accepts dynamic domain-id keys
@@ -16,8 +20,7 @@ Tooling versions only (`mix.exs`). Content is versioned in YAML — see
   assessments contribute)
 - Assessment wizard: per-domain **Collect metrics** opt-in with time scale +
   manual hours; persisted on `assessment.domain_metrics` in Surreal
-- GitHub corner gusset ~28% larger; octocat in the corner, label along the edge
-  (readable 1rem label)
+- GitHub corner gusset enlarged; octocat in the corner, label inset along the edge
 
 ## 0.1.0 — 2026-08-09
 

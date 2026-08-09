@@ -32,13 +32,29 @@ sync.
 The checked-in demo app is **`isomer-demo`** (`https://isomer-demo.fly.dev`).
 The global name `isomer` is already taken on Fly.io.
 
+### Continuous deploy
+
+On every push to `main` (merged PRs), GitHub Actions runs
+[`.github/workflows/fly-deploy.yml`](../.github/workflows/fly-deploy.yml) and
+deploys with `flyctl deploy -a isomer-demo --remote-only`.
+
+Required Actions secret:
+
+| Secret | How to create |
+|---|---|
+| `FLY_API_TOKEN` | `fly tokens create deploy -a isomer-demo -x 999999h` → paste into repo **Settings → Secrets and variables → Actions** |
+
+Manual deploy remains available (`workflow_dispatch` on that workflow, or local
+`fly deploy`).
+
+### First-time / secrets on the app
+
 ```bash
 # First time (app already exists for this repo's demo):
 #   fly apps create isomer-demo
 fly secrets set SECRET_KEY_BASE="$(mix phx.gen.secret)" \
   PHX_HOST=isomer-demo.fly.dev \
   SURREAL_URL=… SURREAL_NAMESPACE=main SURREAL_DATABASE=main
-fly deploy
 ```
 
 `fly.toml` sets `PHX_SERVER=true` and binds internal port `4000`. Health checks
