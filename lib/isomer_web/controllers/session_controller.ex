@@ -85,6 +85,10 @@ defmodule IsomerWeb.SessionController do
       "The record access signin query failed" ->
         "Invalid email or password."
 
+      # Surreal SIGNIN when email exists but argon2 compare fails (or no row).
+      "No record was returned" ->
+        "Invalid email or password."
+
       other ->
         other
     end)
