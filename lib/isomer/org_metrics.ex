@@ -100,6 +100,7 @@ defmodule Isomer.OrgMetrics do
   defp snapshot_for(conn, assessment, question_index, catalog) do
     metrics = normalize_metrics(assessment["domain_metrics"])
     collecting = collecting_domains(metrics)
+    assessment_domains = assessment["domains"] || []
 
     if collecting == [] do
       nil
@@ -112,8 +113,18 @@ defmodule Isomer.OrgMetrics do
           {:error, _} -> {%{}, %{}}
         end
 
+      # Yes % / unanswered / evidence use every domain on the assessment;
+      # time rows stay opt-in only.
+      score_domains =
+        assessment_domains
+        |> Enum.map(&to_string/1)
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.uniq()
+
+      score_domains = if score_domains == [], do: collecting, else: score_domains
+
       questions =
-        collecting
+        score_domains
         |> Enum.flat_map(fn domain_id -> Map.get(question_index, domain_id, []) end)
 
       stats = score_questions(questions, answers, notes)
