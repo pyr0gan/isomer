@@ -5,7 +5,7 @@ questions, and mappings that make up an integrated security + AI management
 playbook.
 
 The content lives in plain YAML and Markdown in this repo. Elixir tooling
-checks it, and SurrealDB stores it so apps (and a future questionnaire UI) can
+checks it, and SurrealDB stores it so apps (including a questionnaire UI) can
 query it.
 
 <p align="center">
