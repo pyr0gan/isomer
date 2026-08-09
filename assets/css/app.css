@@ -48,7 +48,7 @@
 /* Petal default is 0.625rem; keep forms tighter (less pill-like). */
 @layer base {
   :root {
-    --pc-radius: 0.375rem;
+    --pc-radius: 0.25rem;
   }
 }
 
@@ -103,14 +103,14 @@
   /* Petal sets border-color but not border-width on .pc-text-input, so light
      mode fields can look invisible until focus. Force a real border + fill. */
   .pc-text-input {
-    @apply border border-slate-300 bg-white text-slate-900 shadow-sm;
-    @apply hover:border-slate-400;
-    @apply dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500;
-    border-radius: 0.375rem;
+    @apply border border-slate-400 bg-white text-slate-900 shadow-sm;
+    @apply hover:border-slate-500;
+    @apply dark:border-slate-500 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-400;
+    border-radius: 0.25rem;
   }
 
   select.pc-text-input {
-    @apply border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900;
+    @apply border border-slate-400 bg-white dark:border-slate-500 dark:bg-slate-900;
   }
 
   .isomer-app-header {
