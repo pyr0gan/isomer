@@ -88,12 +88,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
           {:ok, state} ->
             answers = socket.assigns.answers
+            notes = Map.get(socket.assigns, :evidence_notes, %{})
             open = Map.get(socket.assigns, :open_domain_ids, MapSet.new())
 
             {:noreply,
              socket
              |> assign(state)
              |> assign(:answers, answers)
+             |> assign(:evidence_notes, notes)
              |> assign(:open_domain_ids, open)
              |> assign(:error, nil)}
 
@@ -116,6 +118,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       # hidden empty field is present; normalize before coerce.
       raw = Map.get(params, "value")
       coerced = coerce_value(question.kind, raw, params)
+      evidence_note = evidence_note_from_params(params)
 
       if question.kind == "boolean" and is_nil(coerced) do
         {:noreply, assign(socket, error: "Choose Yes or No before saving")}
@@ -126,16 +129,18 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           "question_id" => qid,
           "pack" => "question_set",
           "pack_ref" => question.domain,
-          "value" => coerced
+          "value" => pack_stored_value(coerced, evidence_note)
         }
 
         case Tenant.upsert_answer(socket.assigns.surreal, attrs) do
           :ok ->
             answers = Map.put(socket.assigns.answers, qid, coerced)
+            notes = Map.put(socket.assigns.evidence_notes, qid, evidence_note)
 
             {:noreply,
              socket
              |> assign(:answers, answers)
+             |> assign(:evidence_notes, notes)
              |> assign(
                :domain_sections,
                refresh_section_progress(socket.assigns.domain_sections, answers)
@@ -156,11 +161,13 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       domains = assessment["domains"] || []
       questions = project_questions(sets, domains)
 
-      answer_map =
-        Map.new(answers, fn a ->
+      {answer_map, evidence_notes} =
+        Enum.reduce(answers, {%{}, %{}}, fn a, {vals, notes} ->
           qid = a["question_id"]
           kind = Enum.find_value(questions, "text", fn q -> q.id == qid && q.kind end)
-          {qid, normalize_loaded_value(kind, a["value"])}
+          {raw_value, note} = unpack_stored_value(a["value"])
+          val = normalize_loaded_value(kind, raw_value)
+          {Map.put(vals, qid, val), Map.put(notes, qid, note)}
         end)
 
       domain_sections = group_by_domain(questions, answer_map)
@@ -182,6 +189,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          questions: questions,
          domain_sections: domain_sections,
          answers: answer_map,
+         evidence_notes: evidence_notes,
          addable_domains: addable
        }}
     end
@@ -310,84 +318,85 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                   >
                     {q.ask}
                   </.p>
-                  <.p
-                    :if={q.evidence_prompt}
-                    no_margin
-                    class="text-sm text-slate-600 dark:text-slate-400"
-                  >
-                    <span class="font-medium text-slate-700 dark:text-slate-300">Evidence:</span>
-                    {q.evidence_prompt}
-                  </.p>
 
-                  <form
-                    id={"answer-form-#{q.id}"}
-                    phx-submit="answer"
-                    class="answer-controls"
-                  >
+                  <form id={"answer-form-#{q.id}"} phx-submit="answer" class="answer-form">
                     <input type="hidden" name="question_id" value={q.id} />
-                    <%= case q.kind do %>
-                      <% "boolean" -> %>
-                        <div class="answer-select">
-                          <label class="answer-select__label" for={"answer-select-#{q.id}"}>
-                            Answer
-                          </label>
-                          <select
-                            id={"answer-select-#{q.id}-#{boolean_select_value(@answers[q.id])}"}
+                    <div class="answer-controls">
+                      <%= case q.kind do %>
+                        <% "boolean" -> %>
+                          <div class="answer-select">
+                            <label class="answer-select__label" for={"answer-select-#{q.id}"}>
+                              Answer
+                            </label>
+                            <select
+                              id={"answer-select-#{q.id}-#{boolean_select_value(@answers[q.id])}"}
+                              name="value"
+                              class="answer-select__control"
+                            >
+                              {Phoenix.HTML.Form.options_for_select(
+                                [{"—", ""}, {"Yes", "yes"}, {"No", "no"}],
+                                boolean_select_value(@answers[q.id])
+                              )}
+                            </select>
+                          </div>
+                          <.icon
+                            :if={truthy_answer?(@answers[q.id])}
+                            name="hero-check-circle-solid"
+                            class="answer-mark-icon answer-mark-icon-yes"
+                          />
+                          <.icon
+                            :if={falsey_answer?(@answers[q.id])}
+                            name="hero-x-circle-solid"
+                            class="answer-mark-icon answer-mark-icon-no"
+                          />
+                        <% "multi" -> %>
+                          <.field
+                            type="text"
                             name="value"
-                            class="answer-select__control"
-                          >
-                            {Phoenix.HTML.Form.options_for_select(
-                              [{"—", ""}, {"Yes", "yes"}, {"No", "no"}],
-                              boolean_select_value(@answers[q.id])
-                            )}
-                          </select>
-                        </div>
-                        <.icon
-                          :if={truthy_answer?(@answers[q.id])}
-                          name="hero-check-circle-solid"
-                          class="answer-mark-icon answer-mark-icon-yes"
-                        />
-                        <.icon
-                          :if={falsey_answer?(@answers[q.id])}
-                          name="hero-x-circle-solid"
-                          class="answer-mark-icon answer-mark-icon-no"
-                        />
-                      <% "multi" -> %>
-                        <.field
-                          type="text"
-                          name="value"
-                          label="Answer"
-                          placeholder="comma-separated"
-                          value={format_multi(@answers[q.id])}
-                          no_margin
-                          wrapper_class="min-w-[14rem] flex-1"
-                        />
-                        <.icon
-                          :if={answered?(@answers, q.id)}
-                          name="hero-check-circle-solid"
-                          class="answer-mark-icon answer-mark-icon-yes"
-                        />
-                      <% _ -> %>
-                        <.field
-                          type="text"
-                          name="value"
-                          label="Answer"
-                          value={to_string(@answers[q.id] || "")}
-                          no_margin
-                          wrapper_class="min-w-[14rem] flex-1"
-                        />
-                        <.icon
-                          :if={answered?(@answers, q.id)}
-                          name="hero-check-circle-solid"
-                          class="answer-mark-icon answer-mark-icon-yes"
-                        />
-                    <% end %>
-                    <.button
-                      type="submit"
-                      size="sm"
-                      label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
-                      color={if answered?(@answers, q.id), do: "gray", else: "primary"}
-                      variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
+                            label="Answer"
+                            placeholder="comma-separated"
+                            value={format_multi(@answers[q.id])}
+                            no_margin
+                            wrapper_class="min-w-[14rem] flex-1"
+                          />
+                          <.icon
+                            :if={answered?(@answers, q.id)}
+                            name="hero-check-circle-solid"
+                            class="answer-mark-icon answer-mark-icon-yes"
+                          />
+                        <% _ -> %>
+                          <.field
+                            type="text"
+                            name="value"
+                            label="Answer"
+                            value={to_string(@answers[q.id] || "")}
+                            no_margin
+                            wrapper_class="min-w-[14rem] flex-1"
+                          />
+                          <.icon
+                            :if={answered?(@answers, q.id)}
+                            name="hero-check-circle-solid"
+                            class="answer-mark-icon answer-mark-icon-yes"
+                          />
+                      <% end %>
+                      <.button
+                        type="submit"
+                        size="sm"
+                        label={if answered?(@answers, q.id), do: "Edit", else: "Save"}
+                        color={if answered?(@answers, q.id), do: "gray", else: "primary"}
+                        variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
+                      />
+                    </div>
+
+                    <.field
+                      :if={q.evidence_prompt}
+                      type="text"
+                      name="evidence"
+                      label="Evidence"
+                      help_text={q.evidence_prompt}
+                      value={Map.get(@evidence_notes, q.id, "")}
+                      placeholder="Short note or reference for now"
+                      class="answer-evidence"
                     />
                   </form>
                 </.card_content>
@@ -531,6 +540,28 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   defp unwrap_param(value), do: value
+
+  defp evidence_note_from_params(params) do
+    params
+    |> Map.get("evidence", "")
+    |> unwrap_param()
+    |> to_string()
+    |> String.trim()
+  end
+
+  # MVP: keep a short evidence note beside the answer value until file upload exists.
+  # Shape: %{"v" => <answer>, "evidence" => <note>} — plain values remain supported.
+  defp pack_stored_value(coerced, evidence_note) when evidence_note in [nil, ""], do: coerced
+
+  defp pack_stored_value(coerced, evidence_note) do
+    %{"v" => coerced, "evidence" => evidence_note}
+  end
+
+  defp unpack_stored_value(%{"v" => value} = map) when is_map(map) do
+    {value, map |> Map.get("evidence", "") |> to_string()}
+  end
+
+  defp unpack_stored_value(value), do: {value, ""}
 
   defp format_multi(list) when is_list(list), do: Enum.join(list, ", ")
   defp format_multi(other) when is_binary(other), do: other
