@@ -7,10 +7,11 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 ### Core workflow
 
 - Lint: `mix lint` (alias for `mix isomer.validate` + `mix isomer.charset`). See root `README.md`.
-- Deps: `mix deps.get` (see `mix.exs` / `mix.lock`). Elixir **1.17.3** pinned in `mise.toml`; OTP **25+**.
+- Deps: `mix deps.get` (see `mix.exs` / `mix.lock`). Elixir **1.19.4** / OTP **27.3.4** pinned in `mise.toml` (needed for EEF `sbom` / CycloneDX).
 - SurrealDB smoke test: `mix isomer.db.ping` (password from Hashicorp Vault; never commit `.env`).
 - Content release **1.0.0** (`CHANGELOG.md`, `mix.exs` version). Full corpus→DB sync: `mix isomer.db.sync` (or `--dry-run`). Upserts `domain`, `framework`, `requirement`, `mapping_set`, `ruleset`, `rubric`, `question_set`, `template`; writes `maps_to` graph edges; prunes stale `content_source="repo"` rows; writes a `sync_run` record.
 - Sample single-requirement write: `mix isomer.db.ingest_sample`.
+- CycloneDX SBoM: `mix isomer.sbom` (alias `mix sbom`) → `bom.cdx.json` via Hex package `sbom` (`only: :dev`). Do not run under `MIX_ENV=prod`. CI uploads the JSON as an artifact.
 
 ### SurrealDB + Vault
 
@@ -32,7 +33,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 
 ### CI
 
-- `.github/workflows/ci.yml` — `mix deps.get`, compile, format check, `mix lint` on PR/push. No Surreal dry-run in CI; live sync is separate.
+- `.github/workflows/ci.yml` — `mix deps.get`, compile, format check, `mix lint`, then `mix isomer.sbom` (upload `bom.cdx.json`). No Surreal dry-run in CI; live sync is separate.
 - `.github/workflows/sync-corpus.yml` — on push to `main` (and `workflow_dispatch`), validate then `mix isomer.db.sync`. Preflight checks that required secrets are non-empty (does not print values). Vault HTTP reads retry on transient failures from runners.
 - Required GitHub Actions secrets for live sync: `SURREAL_URL`, `SURREAL_NAMESPACE`, `SURREAL_DATABASE`, `SURREAL_USERNAME`, `VAULT_ADDR`, `VAULT_TOKEN`, `VAULT_SECRET_PATH`, `VAULT_SECRET_FIELD`.
 - Secrets are injected into the process environment on the runner (there is usually no `.env` file in CI). Set `DEBUG_SYNC=1` for full stacks on sync failure.
