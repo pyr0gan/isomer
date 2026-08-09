@@ -3,6 +3,7 @@ defmodule IsomerWeb.CoreComponents do
   use Phoenix.Component
 
   use PetalComponents
+
   use Phoenix.VerifiedRoutes,
     endpoint: IsomerWeb.Endpoint,
     router: IsomerWeb.Router,
