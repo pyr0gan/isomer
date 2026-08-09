@@ -26,11 +26,10 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Mapping sets: `mappings/iso42001-2023--iso27001-2022.yaml` (ISMS→AIMS) and `mappings/eu-ai-act-2024-2026-1744--iso42001-2023.yaml` (AIMS→AI Act). `npm run report:delta -- <file>` for coverage buckets. Validator normalizes YAML 1.1 dates so `reviewed` schema-checks as ISO strings; also validates `questions/` + `templates/` (`covers` / `requirements` resolve; unused merge fields warn). `npm run lint:corpus` also runs `tools/check_content_charset.py` (rejects non-Latin letters / CJK leakage; allows em dashes etc.).
 - Questions: `questions/<domain>.yaml` (48 L1/L2-weighted; cross-framework `requirements[]`). Templates: `templates/tmpl-*.md` with `covers` frontmatter. Synced as `question_set` / `template` tables.
 - Vault secret read: `src/vault/secrets.js` (token or AppRole; KV v1/v2).
-- Config via `.env` (see `.env.example`). Surreal password comes from Vault (`VAULT_SECRET_PATH` / `VAULT_SECRET_FIELD`), not from a `SURREAL_PASSWORD` env var.
+- Config via `.env` (see `.env.example`). `SURREAL_URL` is required and must not be committed — use local `.env`, 1Password `op://`, or the GitHub Actions secret. Surreal password comes from Vault (`VAULT_SECRET_PATH` / `VAULT_SECRET_FIELD`), not from a `SURREAL_PASSWORD` env var.
 - `VAULT_SECRET_PATH` is the path after `/v1/` (e.g. `kv/data/surreal`). A leading `v1/` is stripped automatically if present.
-- Current Surrealist defaults used in this environment: namespace `main`, database `main`, username `admin` (password from Vault).
+- Typical Surrealist defaults in this environment: namespace `main`, database `main`, username `admin` (password from Vault). Namespace/database must match what you created in Surrealist.
 - If `.env` uses 1Password `op://` references, run `npm run db:ping:op` (requires `op` CLI) instead of `npm run db:ping`.
-- Default cloud endpoint is configured in `.env.example`; namespace/database must match what you created in Surrealist.
 
 ### CI
 
