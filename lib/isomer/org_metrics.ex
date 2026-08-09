@@ -2,9 +2,11 @@ defmodule Isomer.OrgMetrics do
   @moduledoc """
   Org-level assessment metric series for the maturity dashboard.
 
-  Only domains opted in via `assessment.domain_metrics[domain].collect` contribute.
-  Sparklines need at least two assessment points; otherwise the UI shows
-  "data req'd".
+  An assessment contributes once at least one domain is opted in via
+  `assessment.domain_metrics[domain].collect`. Yes %, unanswered, and evidence
+  coverage are scored across **all** domains on that assessment; time scale /
+  hours are opt-in domains only. Sparklines need at least two assessment
+  points; otherwise the UI shows "data req'd".
   """
 
   alias Isomer.Domains
