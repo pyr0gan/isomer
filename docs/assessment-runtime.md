@@ -27,13 +27,22 @@ No parallel user table in Ecto. No second auth product.
 
 ## Minimum schema
 
+```mermaid
+flowchart LR
+  user -->|member role| org
+  org --> assessment
+  assessment --> answer
+  answer --> evidence
+  assessment -.->|ruleset_id / domains| corpus["corpus: ruleset / question_set / requirement"]
+```
+
 ```
 user ──member──▶ org
                 │
                 ▼
            assessment ──▶ answer ──▶ evidence
                 │
-                ├── ruleset?          (corpus record / corpus_id)
+                ├── ruleset_id?       (corpus ruleset id string)
                 └── domains[]         (question_set keys)
 ```
 
