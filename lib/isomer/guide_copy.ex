@@ -184,16 +184,17 @@ defmodule Isomer.GuideCopy do
   def evidence_help_text(prefs, prompt) do
     prefs = normalize(prefs)
     prompt = blank_to_nil(prompt)
+    sufficiency = "A filename, ticket link, or simple note is sufficient."
 
     cond do
       concise?(prefs) ->
         prompt
 
-      is_nil(prompt) and guided?(prefs) ->
-        "Optional: a short note, link, or document name so a future reader knows where the proof lives."
+      is_binary(prompt) ->
+        prompt <> " " <> sufficiency
 
-      is_binary(prompt) and guided?(prefs) ->
-        prompt <> " A filename, ticket, or one-line note is enough for now."
+      guided?(prefs) ->
+        sufficiency
 
       true ->
         prompt
