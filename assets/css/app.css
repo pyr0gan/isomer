@@ -147,7 +147,7 @@
   }
 
   .answer-evidence {
-    @apply w-full;
+    @apply w-full min-h-[4.5rem] resize-y;
   }
 
   .answer-select {

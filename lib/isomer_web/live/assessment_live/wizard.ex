@@ -675,21 +675,15 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                         :if={
                           q.evidence_prompt || GuideCopy.guided?(@guide_prefs)
                         }
-                        type="text"
+                        type="textarea"
+                        rows="3"
                         name="evidence"
                         label="Evidence"
                         help_text={GuideCopy.evidence_help_text(@guide_prefs, q.evidence_prompt)}
                         value={Map.get(@evidence_notes, q.id, "")}
-                        placeholder="Short note or reference for now"
+                        placeholder="Short note or reference"
                         class="answer-evidence"
                       />
-                      <.p
-                        :if={not GuideCopy.concise?(@guide_prefs)}
-                        no_margin
-                        class="text-sm text-slate-500"
-                      >
-                        Choose — and Update to clear an answer (progress will drop).
-                      </.p>
                     </form>
                   <% end %>
                 </.card_content>

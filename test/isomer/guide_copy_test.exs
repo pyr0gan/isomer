@@ -42,4 +42,15 @@ defmodule Isomer.GuideCopyTest do
     assert GuideCopy.artifacts_intro(%{}) =~ "This is where documents for this assessment"
     assert GuideCopy.library_empty_artifacts(%{}) =~ "Generate documents"
   end
+
+  test "evidence_help_text keeps the prompt and a short sufficiency line" do
+    prefs = %{"experience_level" => "beginner"}
+    prompt = "Attach the approved policy and a communication/acknowledgement record."
+
+    assert GuideCopy.evidence_help_text(prefs, prompt) ==
+             prompt <> " A filename, ticket link, or simple note is sufficient."
+
+    assert GuideCopy.evidence_help_text(prefs, nil) ==
+             "A filename, ticket link, or simple note is sufficient."
+  end
 end
