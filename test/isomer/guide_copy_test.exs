@@ -36,4 +36,10 @@ defmodule Isomer.GuideCopyTest do
     assert GuideCopy.wizard_lede(expert, false) =~ "Answers save"
     assert GuideCopy.question_help(expert, %{level: "L1"}) == nil
   end
+
+  test "artifacts discovery copy points at per-assessment generation" do
+    assert GuideCopy.artifacts_nav_label() == "Generate documents"
+    assert GuideCopy.artifacts_intro(%{}) =~ "This is where documents for this assessment"
+    assert GuideCopy.library_empty_artifacts(%{}) =~ "Generate documents"
+  end
 end

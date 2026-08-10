@@ -2,6 +2,7 @@ defmodule IsomerWeb.OrgLive.Show do
   use IsomerWeb.SurrealLive
 
   alias Isomer.Db.Tenant
+  alias Isomer.GuideCopy
   alias Isomer.Maturity
   alias Isomer.OrgMetrics
 
@@ -262,11 +263,22 @@ defmodule IsomerWeb.OrgLive.Show do
                 {a["title"]}
               </span>
             </.link>
-            <.badge
-              color={status_badge_color(a["status"])}
-              variant="soft"
-              label={status_label(a["status"])}
-            />
+            <div class="flex flex-wrap items-center gap-2">
+              <.badge
+                color={status_badge_color(a["status"])}
+                variant="soft"
+                label={status_label(a["status"])}
+              />
+              <.button
+                link_type="live_redirect"
+                to={~p"/assessments/#{a["id"]}/artifacts"}
+                color="gray"
+                variant="ghost"
+                size="sm"
+                label={GuideCopy.artifacts_nav_label()}
+                icon="hero-document-text"
+              />
+            </div>
           </.card_content>
         </.card>
       </li>

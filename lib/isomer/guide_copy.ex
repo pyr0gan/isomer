@@ -110,18 +110,37 @@ defmodule Isomer.GuideCopy do
   def library_intro(prefs) do
     if guided?(prefs) do
       "Templates are starting points for policies and registers. " <>
-        "Generate a draft from an assessment, fill the blanks, then download Markdown or a print-ready page (Save as PDF in your browser)."
+        "Open an assessment → Generate documents to fill a draft, then download Markdown or print to PDF from here."
     else
-      "Corpus templates and generated assessment artifacts."
+      "Corpus templates and drafts generated from each assessment’s Generate documents page."
     end
   end
 
   def artifacts_intro(prefs) do
     if guided?(prefs) do
-      "Pick a template, fill any merge fields you know, and generate a draft document for this assessment. " <>
+      "This is where documents for this assessment are created. " <>
+        "Pick a template, fill any merge fields you know, and generate a draft. " <>
         "You can regenerate later — earlier drafts stay listed until you delete them."
     else
-      "Generate documents from corpus templates using this assessment’s organization context."
+      "Document generation for this assessment — templates use the organization context below."
+    end
+  end
+
+  def artifacts_nav_label, do: "Generate documents"
+
+  def artifacts_finalize_hint(prefs) do
+    if guided?(prefs) do
+      "Answers are locked. Next step: generate policy or register drafts for this assessment."
+    else
+      "Finalized — generate documents from this assessment when ready."
+    end
+  end
+
+  def library_empty_artifacts(prefs) do
+    if guided?(prefs) do
+      "No drafts yet. Open an assessment, then use Generate documents (header button or Menu)."
+    else
+      "No drafts yet — generate from an assessment’s Generate documents page."
     end
   end
 

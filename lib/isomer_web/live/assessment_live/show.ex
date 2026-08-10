@@ -3,6 +3,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
 
   alias Isomer.Domains
   alias Isomer.Db.Tenant
+  alias Isomer.GuideCopy
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -187,9 +188,9 @@ defmodule IsomerWeb.AssessmentLive.Show do
           <.button
             link_type="live_redirect"
             to={~p"/assessments/#{@assessment_id}/artifacts"}
-            color="gray"
+            color="primary"
             variant="outline"
-            label="Artifacts"
+            label={GuideCopy.artifacts_nav_label()}
             icon="hero-document-text"
           />
           <%= if @finalized do %>
@@ -229,9 +230,16 @@ defmodule IsomerWeb.AssessmentLive.Show do
         color="warning"
         variant="soft"
         with_icon
-        label="Finalized — answers and domains are locked. Reopen to edit, or delete the assessment."
         class="mb-4"
-      />
+      >
+        {GuideCopy.artifacts_finalize_hint(@guide_prefs)}
+        <.link
+          navigate={~p"/assessments/#{@assessment_id}/artifacts"}
+          class="ml-1 font-medium underline underline-offset-2"
+        >
+          {GuideCopy.artifacts_nav_label()}
+        </.link>
+      </.alert>
 
       <.card>
         <.card_header title="Domains in this assessment" />

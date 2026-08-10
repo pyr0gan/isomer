@@ -54,7 +54,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 - Assessment lifecycle: org page splits **Ongoing** (`draft`/`in_progress`) vs **Finalized** (`complete`/`archived`). Finalize/Reopen/Delete live on assessment Details; finalized assessments lock wizard edits. Accordion progress counts Yes, No, and unanswered (clear via — + Update). `html` uses `scrollbar-gutter: stable` to avoid layout shift.
 - Header **Menu** dropdown is the central nav (Organizations, Library, Settings, Sign out; plus Org dashboard / Assessment / Questionnaire / Artifacts when those assigns are set). Avoid one-off back links as the only way out of the wizard.
 - Guidance prefs on `user` (`self_role`, `experience_level`, `comfort_level`) via `/settings` when Surreal has those columns; otherwise prefs persist in the Phoenix session. Generated documents are stored as `answer` rows (`pack_ref=__artifacts__`) so Library works without a standalone `artifact` table. `Isomer.GuideCopy` adapts wizard/library wording only — same UX for every level. Re-run `mix isomer.db.ensure_runtime` after pulling schema changes.
-- Artifacts: generate from corpus `template` on `/assessments/:id/artifacts` (`Isomer.Artifacts.Render` → tenant `artifact` table); catalog + all drafts at `/library`; download Markdown or print-ready HTML (`format=pdf`) via `/artifacts/:id/download`.
+- Artifacts: generate from corpus `template` on `/assessments/:id/artifacts` (**Generate documents** from Details / Wizard / Org / Menu). `Isomer.Artifacts.Render` → `answer` rows with `pack_ref=__artifacts__`; catalog + downloads at `/library`.
 
 ### Gotchas
 
