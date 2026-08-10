@@ -65,7 +65,7 @@ defmodule IsomerWeb.UserAuth do
       %{"surreal_token" => token} when is_binary(token) and token != "" ->
         case UserClient.connect_with_token(token) do
           {:ok, conn} ->
-            {user, prefs} = load_user_and_prefs(conn)
+            {user, prefs} = load_user_and_prefs(conn, session)
 
             socket =
               socket
@@ -75,7 +75,7 @@ defmodule IsomerWeb.UserAuth do
                 :current_email,
                 (user && user["email"]) || session["surreal_email"]
               )
-              |> Phoenix.Component.assign(:current_user, user)
+              |> Phoenix.Component.assign(:current_user, maybe_overlay_name(user, session))
               |> Phoenix.Component.assign(:guide_prefs, prefs)
               |> Phoenix.Component.assign(:nav_org_id, nil)
               |> Phoenix.Component.assign(:nav_assessment_id, nil)
@@ -107,13 +107,35 @@ defmodule IsomerWeb.UserAuth do
     end
   end
 
-  defp load_user_and_prefs(conn) do
+  defp load_user_and_prefs(conn, session) do
     case Tenant.get_current_user(conn) do
       {:ok, user} ->
-        {user, GuideCopy.normalize(user)}
+        surreal_prefs = GuideCopy.normalize(user)
+        session_prefs = normalize_session_prefs(session["guide_prefs"])
+        prefs = GuideCopy.normalize(Map.merge(surreal_prefs, session_prefs))
+        {user, prefs}
 
       {:error, _} ->
-        {nil, GuideCopy.default_prefs()}
+        {nil, GuideCopy.normalize(normalize_session_prefs(session["guide_prefs"]))}
+    end
+  end
+
+  defp normalize_session_prefs(prefs) when is_map(prefs) do
+    %{
+      "self_role" => prefs["self_role"] || prefs[:self_role],
+      "experience_level" => prefs["experience_level"] || prefs[:experience_level],
+      "comfort_level" => prefs["comfort_level"] || prefs[:comfort_level]
+    }
+  end
+
+  defp normalize_session_prefs(_), do: %{}
+
+  defp maybe_overlay_name(nil, _session), do: nil
+
+  defp maybe_overlay_name(user, session) when is_map(user) do
+    case session["guide_name"] do
+      name when is_binary(name) and name != "" -> Map.put(user, "name", name)
+      _ -> user
     end
   end
 

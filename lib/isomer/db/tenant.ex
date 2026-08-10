@@ -4,6 +4,11 @@ defmodule Isomer.Db.Tenant do
   alias Isomer.Db.UserClient
   alias Isomer.GuideCopy
 
+  # Generated docs live as answer rows (pack_ref below) so they work when Surreal
+  # Cloud has not applied a standalone `artifact` table on the dyno's compute node.
+  @artifact_pack "question_set"
+  @artifact_pack_ref "__artifacts__"
+
   def list_orgs(conn) do
     case UserClient.query(conn, "SELECT * FROM org ORDER BY name ASC;") do
       {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
@@ -603,18 +608,26 @@ defmodule Isomer.Db.Tenant do
     end
   end
 
+  # Generated docs are stored as answer rows so Library/delete work even when
+  # Surreal Cloud has not applied the standalone `artifact` table DDL on the
+  # compute node the dyno reaches (DEFINE can pass in Actions while Fly still
+  # sees "table does not exist").
+
   def list_artifacts(conn) do
     case UserClient.query(
            conn,
            """
-           SELECT * FROM artifact ORDER BY created_at DESC;
-           """
+           SELECT * FROM answer
+           WHERE pack = $pack AND pack_ref = $pack_ref
+           ORDER BY answered_at DESC;
+           """,
+           %{"pack" => @artifact_pack, "pack_ref" => @artifact_pack_ref}
          ) do
       {:ok, results} ->
-        {:ok, Enum.map(rows_of(results), &normalize_record/1)}
+        {:ok, Enum.map(rows_of(results), &answer_as_artifact/1)}
 
       {:error, reason} ->
-        if table_missing?(reason, "artifact"), do: {:ok, []}, else: {:error, reason}
+        {:error, reason}
     end
   end
 
@@ -622,17 +635,24 @@ defmodule Isomer.Db.Tenant do
     {table, key} = split_record_id!(assessment_id)
 
     sql = """
-    SELECT * FROM artifact
+    SELECT * FROM answer
     WHERE assessment = type::record($table, $key)
-    ORDER BY created_at DESC;
+      AND pack = $pack
+      AND pack_ref = $pack_ref
+    ORDER BY answered_at DESC;
     """
 
-    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+    case UserClient.query(conn, sql, %{
+           "table" => table,
+           "key" => key,
+           "pack" => @artifact_pack,
+           "pack_ref" => @artifact_pack_ref
+         }) do
       {:ok, results} ->
-        {:ok, Enum.map(rows_of(results), &normalize_record/1)}
+        {:ok, Enum.map(rows_of(results), &answer_as_artifact/1)}
 
       {:error, reason} ->
-        if table_missing?(reason, "artifact"), do: {:ok, []}, else: {:error, reason}
+        {:error, reason}
     end
   end
 
@@ -643,8 +663,21 @@ defmodule Isomer.Db.Tenant do
            "table" => table,
            "key" => key
          }) do
-      {:ok, results} -> unwrap_one(results)
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} ->
+            if to_string(row["pack_ref"] || "") == @artifact_pack_ref do
+              {:ok, answer_as_artifact(row)}
+            else
+              {:error, :not_found}
+            end
+
+          other ->
+            other
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -655,21 +688,29 @@ defmodule Isomer.Db.Tenant do
     {assessment_table, assessment_key} = split_record_id!(assessment_id)
 
     merge_values = Map.get(attrs, "merge_values") || %{}
+    question_id = "artifact:" <> "d" <> random_key(16)
+
+    value = %{
+      "template_id" => attrs["template_id"],
+      "title" => attrs["title"],
+      "body" => attrs["body"],
+      "format" => "markdown",
+      "merge_values" => merge_values
+    }
 
     sql = """
     LET $key = string::concat("d", rand::string(16));
-    LET $did = type::record("artifact", $key);
-    CREATE $did SET
+    LET $aid = type::record("answer", $key);
+    CREATE $aid SET
       org = type::record($org_table, $org_key),
       assessment = type::record($assessment_table, $assessment_key),
-      template_id = $template_id,
-      title = $title,
-      body = $body,
-      format = 'markdown',
-      merge_values = $merge_values,
-      created_by = $auth.id,
-      created_at = time::now();
-    RETURN SELECT * FROM ONLY $did;
+      question_id = $question_id,
+      pack = $pack,
+      pack_ref = $pack_ref,
+      value = $value,
+      answered_by = $auth.id,
+      answered_at = time::now();
+    RETURN SELECT * FROM ONLY $aid;
     """
 
     vars = %{
@@ -677,15 +718,21 @@ defmodule Isomer.Db.Tenant do
       "org_key" => org_key,
       "assessment_table" => assessment_table,
       "assessment_key" => assessment_key,
-      "template_id" => attrs["template_id"],
-      "title" => attrs["title"],
-      "body" => attrs["body"],
-      "merge_values" => merge_values
+      "question_id" => question_id,
+      "pack" => @artifact_pack,
+      "pack_ref" => @artifact_pack_ref,
+      "value" => value
     }
 
     case UserClient.query(conn, sql, vars) do
-      {:ok, results} -> unwrap_one(results)
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} -> {:ok, answer_as_artifact(row)}
+          other -> other
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -695,6 +742,7 @@ defmodule Isomer.Db.Tenant do
 
     sql = """
     LET $did = type::record($table, $key);
+    DELETE evidence WHERE answer = $did;
     DELETE $did;
     RETURN SELECT * FROM ONLY $did;
     """
@@ -717,49 +765,39 @@ defmodule Isomer.Db.Tenant do
     end
   end
 
+  defp answer_as_artifact(row) when is_map(row) do
+    value =
+      case row["value"] do
+        %{} = map -> map
+        _ -> %{}
+      end
+
+    row
+    |> normalize_record()
+    |> Map.merge(%{
+      "template_id" => value["template_id"],
+      "title" => value["title"] || value["template_id"] || "Artifact",
+      "body" => value["body"] || "",
+      "format" => value["format"] || "markdown",
+      "merge_values" => value["merge_values"] || %{},
+      "created_at" => row["answered_at"] || row["created_at"],
+      "created_by" => row["answered_by"] || row["created_by"]
+    })
+  end
+
+  defp random_key(len) when is_integer(len) and len > 0 do
+    :crypto.strong_rand_bytes(len)
+    |> Base.url_encode64(padding: false)
+    |> binary_part(0, len)
+    |> String.downcase()
+  end
+
   defp blank_to_nil(nil), do: nil
   defp blank_to_nil(""), do: nil
   defp blank_to_nil(value) when is_binary(value), do: String.trim(value)
   defp blank_to_nil(value), do: value
 
-  defp delete_artifacts_for(conn, "org", vars) do
-    case UserClient.query(
-           conn,
-           """
-           LET $org = type::record($table, $key);
-           DELETE artifact WHERE org = $org;
-           """,
-           vars
-         ) do
-      {:ok, _} -> :ok
-      {:error, reason} -> if table_missing?(reason, "artifact"), do: :ok, else: {:error, reason}
-    end
-  end
-
-  defp delete_artifacts_for(conn, "assessment", vars) do
-    case UserClient.query(
-           conn,
-           """
-           LET $aid = type::record($table, $key);
-           DELETE artifact WHERE assessment = $aid;
-           """,
-           vars
-         ) do
-      {:ok, _} -> :ok
-      {:error, reason} -> if table_missing?(reason, "artifact"), do: :ok, else: {:error, reason}
-    end
-  end
-
-  defp table_missing?(reason, table) when is_binary(table) do
-    msg =
-      case reason do
-        %{message: m} when is_binary(m) -> m
-        m when is_binary(m) -> m
-        other -> inspect(other)
-      end
-
-    String.contains?(msg, "does not exist") and String.contains?(msg, table)
-  end
+  defp delete_artifacts_for(_conn, _scope, _vars), do: :ok
 
   def list_answers(conn, assessment_id) when is_binary(assessment_id) do
     {table, key} = split_record_id!(assessment_id)

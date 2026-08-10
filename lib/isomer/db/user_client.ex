@@ -59,8 +59,28 @@ defmodule Isomer.Db.UserClient do
   end
 
   def query(conn, sql, vars \\ %{}) do
-    SurrealDB.query(conn, sql, vars)
+    case SurrealDB.query(conn, sql, vars) do
+      {:ok, results} -> reject_embedded_errors(results)
+      other -> other
+    end
   end
+
+  # SurrealDB.RPC.parse_query only treats string-keyed %{"status"=>"ERR"} as
+  # errors; atom-keyed %{status: "ERR"} was previously returned as {:ok, _}.
+  defp reject_embedded_errors(results) when is_list(results) do
+    Enum.find_value(results, fn
+      %{"status" => "ERR", "result" => message} ->
+        {:error, SurrealDB.Error.new(:rpc, message)}
+
+      %{status: "ERR", result: message} ->
+        {:error, SurrealDB.Error.new(:rpc, to_string(message))}
+
+      _ ->
+        nil
+    end) || {:ok, results}
+  end
+
+  defp reject_embedded_errors(results), do: {:ok, results}
 
   def info(conn), do: SurrealDB.info(conn)
 
