@@ -125,7 +125,7 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `question_set`; upsert `answer`; adaptive help from user prefs; domain metric opt-in |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE artifact`; download links |
 | `LibraryLive` | `/library` | All templates + artifacts visible to the user |
-| `SettingsLive` | `/settings` | `UPDATE user` prefs (`self_role`, `experience_level`, `comfort_level`, `name`) |
+| `SettingsLive` | `/settings` | `UPDATE $auth` prefs (`self_role`, `experience_level`, `comfort_level`, `name`) |
 | `ArtifactController` | `/artifacts/:id/download` | Fetch `artifact` with user JWT; Markdown or print-ready HTML (Save as PDF) |
 
 ### Planned (not yet routed)

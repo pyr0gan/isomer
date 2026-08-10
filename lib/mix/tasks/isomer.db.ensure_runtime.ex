@@ -8,9 +8,10 @@ defmodule Mix.Tasks.Isomer.Db.EnsureRuntime do
   `mix isomer.db.sync` separately (usually first).
 
   After DEFINE, verifies `user` has guidance-pref fields (`self_role`,
-  `experience_level`, `comfort_level`) so CI cannot report success when the
-  schema change was a no-op. Prints a non-secret Surreal host fingerprint so
-  Fly vs Actions target mismatches are obvious.
+  `experience_level`, `comfort_level`) via `INFO FOR TABLE` **and** a SCHEMAFULL
+  write probe (INFO alone can be green while Settings still fails). Prints a
+  non-secret Surreal host fingerprint so Fly vs Actions target mismatches are
+  obvious.
 
       mix isomer.db.ensure_runtime
   """

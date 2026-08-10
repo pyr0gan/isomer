@@ -64,9 +64,11 @@ defmodule IsomerWeb.SettingsLive do
   defp format_error(reason), do: inspect(reason)
 
   defp humanize_error(msg) when is_binary(msg) do
-    if String.contains?(msg, "no such field") and
-         (String.contains?(msg, "comfort_level") or String.contains?(msg, "self_role") or
-            String.contains?(msg, "experience_level")) do
+    pref_fields? =
+      String.contains?(msg, "comfort_level") or String.contains?(msg, "self_role") or
+        String.contains?(msg, "experience_level") or String.contains?(msg, "updated_at")
+
+    if String.contains?(msg, "no such field") and pref_fields? do
       "Guidance prefs are not on the database yet. An admin needs to run " <>
         "`mix isomer.db.ensure_runtime` (also runs after corpus sync on main)."
     else

@@ -2,6 +2,7 @@ defmodule Isomer.Db.Tenant do
   @moduledoc "Surreal queries for orgs, assessments, and wizard answers (user JWT)."
 
   alias Isomer.Db.UserClient
+  alias Isomer.GuideCopy
 
   def list_orgs(conn) do
     case UserClient.query(conn, "SELECT * FROM org ORDER BY name ASC;") do
@@ -472,51 +473,96 @@ defmodule Isomer.Db.Tenant do
   Updates self-identified guidance prefs on the auth user.
 
   Empty strings clear optional fields via `UNSET` (Surreal cannot store JSON null /
-  `NONE` into `option` fields the way Postgres does).
+  `NONE` into `option` fields the way Postgres does). Pref enum membership is
+  checked in Elixir — Surreal columns are plain `option<string>`.
   """
   def update_user_prefs(conn, attrs) when is_map(attrs) do
     fields = [
-      {"name", attrs |> Map.get("name", Map.get(attrs, :name))},
-      {"self_role", attrs |> Map.get("self_role", Map.get(attrs, :self_role))},
+      {"name", attrs |> Map.get("name", Map.get(attrs, :name)), :any},
+      {"self_role", attrs |> Map.get("self_role", Map.get(attrs, :self_role)), GuideCopy.roles()},
       {"experience_level",
-       attrs |> Map.get("experience_level", Map.get(attrs, :experience_level))},
-      {"comfort_level", attrs |> Map.get("comfort_level", Map.get(attrs, :comfort_level))}
+       attrs |> Map.get("experience_level", Map.get(attrs, :experience_level)),
+       GuideCopy.experience_levels()},
+      {"comfort_level", attrs |> Map.get("comfort_level", Map.get(attrs, :comfort_level)),
+       GuideCopy.comfort_levels()}
     ]
 
-    {set_parts, unset_parts, vars} =
-      Enum.reduce(fields, {["updated_at = time::now()"], [], %{}}, fn {field, raw},
-                                                                      {sets, unsets, vars} ->
+    with :ok <- validate_pref_enums(fields) do
+      {set_parts, unset_parts, vars} =
+        Enum.reduce(fields, {[], [], %{}}, fn {field, raw, _allowed}, {sets, unsets, vars} ->
+          case blank_to_nil(raw) do
+            nil when field == "name" ->
+              # Keep name present (option<string>); blank becomes empty string.
+              {["name = $name" | sets], unsets, Map.put(vars, "name", "")}
+
+            nil ->
+              {sets, [field | unsets], vars}
+
+            value ->
+              {["#{field} = $#{field}" | sets], unsets, Map.put(vars, field, value)}
+          end
+        end)
+
+      # Prefer UPDATE $auth — same subject as the LiveView JWT. Do not SET
+      # updated_at here; the field VALUE clause refreshes it when defined.
+      statements =
+        []
+        |> then(fn acc ->
+          case set_parts do
+            [] -> acc
+            parts -> ["UPDATE $auth SET #{Enum.join(Enum.reverse(parts), ", ")};" | acc]
+          end
+        end)
+        |> then(fn acc ->
+          case unset_parts do
+            [] ->
+              acc
+
+            fields ->
+              ["UPDATE $auth UNSET #{Enum.join(Enum.reverse(fields), ", ")};" | acc]
+          end
+        end)
+        |> Enum.reverse()
+
+      sql = """
+      #{Enum.join(statements, "\n")}
+      RETURN {
+        id: $auth.id,
+        email: $auth.email,
+        name: $auth.name,
+        self_role: $auth.self_role,
+        experience_level: $auth.experience_level,
+        comfort_level: $auth.comfort_level,
+        created_at: $auth.created_at,
+        updated_at: $auth.updated_at
+      };
+      """
+
+      case UserClient.query(conn, sql, vars) do
+        {:ok, results} -> unwrap_one(results)
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp validate_pref_enums(fields) do
+    Enum.reduce_while(fields, :ok, fn
+      {_field, _raw, :any}, :ok ->
+        {:cont, :ok}
+
+      {field, raw, allowed}, :ok when is_list(allowed) ->
         case blank_to_nil(raw) do
           nil ->
-            {sets, [field | unsets], vars}
+            {:cont, :ok}
 
           value ->
-            {["#{field} = $#{field}" | sets], unsets, Map.put(vars, field, value)}
+            if value in allowed do
+              {:cont, :ok}
+            else
+              {:halt, {:error, "invalid #{field}: #{inspect(value)}"}}
+            end
         end
-      end)
-
-    set_sql = "UPDATE user SET #{Enum.join(Enum.reverse(set_parts), ", ")} WHERE id = $auth.id;"
-
-    unset_sql =
-      case unset_parts do
-        [] ->
-          ""
-
-        fields ->
-          "UPDATE user UNSET #{Enum.join(Enum.reverse(fields), ", ")} WHERE id = $auth.id;"
-      end
-
-    sql = """
-    #{set_sql}
-    #{unset_sql}
-    RETURN SELECT id, email, name, self_role, experience_level, comfort_level, created_at, updated_at
-      FROM ONLY $auth.id;
-    """
-
-    case UserClient.query(conn, sql, vars) do
-      {:ok, results} -> unwrap_one(results)
-      {:error, reason} -> {:error, reason}
-    end
+    end)
   end
 
   def list_templates(conn) do
