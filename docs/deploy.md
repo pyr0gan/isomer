@@ -45,10 +45,12 @@ even when CI `ensure_runtime` is green — the schema was applied to the other D
 Fix: `fly secrets set SURREAL_URL=… SURREAL_NAMESPACE=… SURREAL_DATABASE=…`
 to match Actions, then re-run **Sync corpus to SurrealDB** (`workflow_dispatch`).
 
-`ensure_runtime` also runs a root write probe (`user:isomer_schema_probe`) for
-pref columns, asserts tenant tables (including `artifact`) via `INFO FOR DB`, and
-runs a **record-auth** signup/update/`SELECT artifact` probe. If any probe fails,
-CI fails — do not treat INFO-only success as enough after schema changes.
+`ensure_runtime` applies schema across several fresh connections (default 8,
+`ENSURE_RUNTIME_PASSES`) because Surreal Cloud hostnames often resolve to
+multiple IPs — a single DEFINE + probe can be green in Actions while the Fly
+dyno still misses `artifact` / pref fields. Each pass runs root INFO checks, a
+root write probe, and a **record-auth** signup/update/`SELECT artifact` probe.
+
 
 ### Surreal connect timeouts on sign-in
 
