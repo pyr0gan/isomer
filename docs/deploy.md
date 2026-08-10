@@ -27,6 +27,24 @@ Signup/signin use Surreal record access and do **not** need the Vault password
 on the web process. Keep Vault on a one-off release command or CI for schema
 sync.
 
+### Fly vs Actions Surreal target
+
+The demo dyno (`isomer-demo`) and `sync-corpus.yml` must talk to the **same**
+Surreal Cloud instance. After a sync run, compare:
+
+```text
+# from the Actions “Print Surreal target fingerprint” / ensure_runtime log
+host=….aws-usw2.surreal.cloud ns=main db=main
+
+# from the Fly machine
+fly ssh console -a isomer-demo -C 'printenv SURREAL_URL'  # host only; do not paste secrets into tickets
+```
+
+If the hosts differ, Settings saves fail with “no such field” for `comfort_level`
+even when CI `ensure_runtime` is green — the schema was applied to the other DB.
+Fix: `fly secrets set SURREAL_URL=… SURREAL_NAMESPACE=… SURREAL_DATABASE=…`
+to match Actions, then re-run **Sync corpus to SurrealDB** (`workflow_dispatch`).
+
 ### Surreal connect timeouts on sign-in
 
 If Fly logs show `auth signin failed … reason=could not connect:

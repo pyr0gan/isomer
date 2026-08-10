@@ -471,7 +471,8 @@ defmodule Isomer.Db.Tenant do
   @doc """
   Updates self-identified guidance prefs on the auth user.
 
-  Empty strings clear optional fields (`NONE` in SurQL) without binding JSON null.
+  Empty strings clear optional fields via `UNSET` (Surreal cannot store JSON null /
+  `NONE` into `option` fields the way Postgres does).
   """
   def update_user_prefs(conn, attrs) when is_map(attrs) do
     fields = [
@@ -482,19 +483,32 @@ defmodule Isomer.Db.Tenant do
       {"comfort_level", attrs |> Map.get("comfort_level", Map.get(attrs, :comfort_level))}
     ]
 
-    {set_parts, vars} =
-      Enum.reduce(fields, {["updated_at = time::now()"], %{}}, fn {field, raw}, {sets, vars} ->
+    {set_parts, unset_parts, vars} =
+      Enum.reduce(fields, {["updated_at = time::now()"], [], %{}}, fn {field, raw},
+                                                                      {sets, unsets, vars} ->
         case blank_to_nil(raw) do
           nil ->
-            {["#{field} = NONE" | sets], vars}
+            {sets, [field | unsets], vars}
 
           value ->
-            {["#{field} = $#{field}" | sets], Map.put(vars, field, value)}
+            {["#{field} = $#{field}" | sets], unsets, Map.put(vars, field, value)}
         end
       end)
 
+    set_sql = "UPDATE user SET #{Enum.join(Enum.reverse(set_parts), ", ")} WHERE id = $auth.id;"
+
+    unset_sql =
+      case unset_parts do
+        [] ->
+          ""
+
+        fields ->
+          "UPDATE user UNSET #{Enum.join(Enum.reverse(fields), ", ")} WHERE id = $auth.id;"
+      end
+
     sql = """
-    UPDATE user SET #{Enum.join(Enum.reverse(set_parts), ", ")} WHERE id = $auth.id;
+    #{set_sql}
+    #{unset_sql}
     RETURN SELECT id, email, name, self_role, experience_level, comfort_level, created_at, updated_at
       FROM ONLY $auth.id;
     """
