@@ -6,7 +6,8 @@ defmodule IsomerWeb.Router do
     plug(:fetch_session)
     plug(:fetch_live_flash)
     plug(:put_root_layout, html: {IsomerWeb.Layouts, :root})
-    plug(:protect_from_forgery)
+    # Custom wrapper: auth POST CSRF races redirect instead of bare "Forbidden".
+    plug(IsomerWeb.Plugs.ForgeryProtection)
     plug(:put_secure_browser_headers)
     plug(IsomerWeb.UserAuth)
   end
