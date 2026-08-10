@@ -39,21 +39,26 @@ defmodule IsomerWeb.UserAuth do
   end
 
   @doc """
-  Returns `:ok` if the session JWT still authenticates against Surreal.
-  Used to avoid `/login` ↔ `/orgs` redirect loops when the cookie is stale.
+  Checks whether the session JWT still authenticates against Surreal.
+
+  Returns `:valid`, `:invalid`, or `:unavailable` (transient transport/timeout —
+  do **not** clear the cookie for `:unavailable`).
   """
-  def valid_token?(token) when is_binary(token) and token != "" do
+  def check_token(token) when is_binary(token) and token != "" do
     case UserClient.connect_with_token(token) do
       {:ok, conn} ->
         UserClient.stop(conn)
-        true
+        :valid
 
-      {:error, _} ->
-        false
+      {:error, reason} ->
+        if UserClient.transient_error?(reason), do: :unavailable, else: :invalid
     end
   end
 
-  def valid_token?(_), do: false
+  def check_token(_), do: :invalid
+
+  @doc "True only when Surreal accepts the JWT (not on transient outages)."
+  def valid_token?(token), do: check_token(token) == :valid
 
   def on_mount(:ensure_authenticated, _params, session, socket) do
     case session do
@@ -78,11 +83,23 @@ defmodule IsomerWeb.UserAuth do
 
             {:cont, socket}
 
-          {:error, _reason} ->
-            # Clear the stale cookie via /logout — do not bounce to /login while
-            # the invalid token is still in the session (that loops with
-            # SessionController.new redirecting authenticated users to /orgs).
-            {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/logout")}
+          {:error, reason} ->
+            if UserClient.transient_error?(reason) do
+              # Keep the cookie — Surreal Cloud free tiers pause; logging out
+              # forces a painful re-auth loop while the DB is merely slow.
+              {:halt,
+               socket
+               |> Phoenix.LiveView.put_flash(
+                 :error,
+                 "Database unreachable right now (timeout). Wait a few seconds and retry."
+               )
+               |> Phoenix.LiveView.redirect(to: ~p"/login")}
+            else
+              # Clear the stale cookie via /logout — do not bounce to /login while
+              # the invalid token is still in the session (that loops with
+              # SessionController.new redirecting authenticated users to /orgs).
+              {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/logout")}
+            end
         end
 
       _ ->

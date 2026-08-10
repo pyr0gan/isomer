@@ -5,10 +5,16 @@ defmodule Isomer.Db.UserClient do
   Root/`Isomer.Db.Connect` stays Mix-only. The web app never holds the Surreal root password.
   """
 
+  require Logger
+
   alias Isomer.Config
   alias SurrealDB.Auth
 
   @access "isomer_user"
+  # Surreal Cloud free tiers often pause; first WSS after idle can exceed the SDK default.
+  @connect_timeout 30_000
+  @auth_attempts 3
+  @auth_backoff_ms 400
 
   def start_link(opts \\ []) do
     surreal = Config.surreal!()
@@ -16,18 +22,29 @@ defmodule Isomer.Db.UserClient do
     SurrealDB.start_link(
       url: Keyword.get(opts, :url, surreal.url),
       namespace: Keyword.get(opts, :namespace, surreal.namespace),
-      database: Keyword.get(opts, :database, surreal.database)
+      database: Keyword.get(opts, :database, surreal.database),
+      connect_timeout: Keyword.get(opts, :connect_timeout, @connect_timeout)
     )
   end
 
   @doc "Open an anonymous connection and authenticate with an existing JWT."
   def connect_with_token(token) when is_binary(token) do
-    with {:ok, conn} <- start_link(),
-         {:ok, _} <- SurrealDB.authenticate(conn, token) do
-      {:ok, conn}
-    else
-      {:error, reason} -> {:error, reason}
-    end
+    with_connect_retry(fn ->
+      case start_link() do
+        {:ok, conn} ->
+          case SurrealDB.authenticate(conn, token) do
+            {:ok, _} ->
+              {:ok, conn}
+
+            {:error, reason} ->
+              SurrealDB.close(conn)
+              {:error, reason}
+          end
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end)
   end
 
   def signup!(attrs) when is_map(attrs) do
@@ -51,33 +68,81 @@ defmodule Isomer.Db.UserClient do
     SurrealDB.close(conn)
   end
 
-  defp auth_flow(kind, email, password, extra) do
-    case start_link() do
-      {:ok, conn} ->
-        auth = record_auth(email, password, extra)
+  @doc """
+  True when the failure is a transport/setup timeout (retryable), not bad credentials.
+  """
+  def transient_error?(reason), do: match_transient?(reason)
 
-        result =
-          case kind do
-            :signup -> SurrealDB.signup(conn, auth)
-            :signin -> SurrealDB.signin(conn, auth)
+  defp auth_flow(kind, email, password, extra) do
+    with_connect_retry(fn ->
+      case start_link() do
+        {:ok, conn} ->
+          auth = record_auth(email, password, extra)
+
+          result =
+            case kind do
+              :signup -> SurrealDB.signup(conn, auth)
+              :signin -> SurrealDB.signin(conn, auth)
+            end
+
+          case result do
+            {:ok, token} when is_binary(token) ->
+              {:ok, %{conn: conn, token: token, email: email}}
+
+            {:ok, %{"token" => token}} when is_binary(token) ->
+              {:ok, %{conn: conn, token: token, email: email}}
+
+            {:error, reason} ->
+              SurrealDB.close(conn)
+              {:error, reason}
           end
 
-        case result do
-          {:ok, token} when is_binary(token) ->
-            {:ok, %{conn: conn, token: token, email: email}}
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end)
+  end
 
-          {:ok, %{"token" => token}} when is_binary(token) ->
-            {:ok, %{conn: conn, token: token, email: email}}
+  defp with_connect_retry(fun), do: with_connect_retry(fun, 1)
 
-          {:error, reason} ->
-            SurrealDB.close(conn)
-            {:error, reason}
+  defp with_connect_retry(fun, attempt) when attempt < @auth_attempts do
+    case fun.() do
+      {:error, reason} = err ->
+        if match_transient?(reason) do
+          Logger.warning(
+            "surreal connect transient failure attempt=#{attempt}/#{@auth_attempts} reason=#{inspect_reason(reason)}"
+          )
+
+          Process.sleep(@auth_backoff_ms * attempt)
+          with_connect_retry(fun, attempt + 1)
+        else
+          err
         end
 
-      {:error, reason} ->
-        {:error, reason}
+      other ->
+        other
     end
   end
+
+  defp with_connect_retry(fun, _attempt), do: fun.()
+
+  defp match_transient?(%{kind: kind}) when kind in [:connection, :timeout], do: true
+
+  defp match_transient?(%{message: msg}) when is_binary(msg) do
+    msg = String.downcase(msg)
+
+    String.contains?(msg, "timed out") or
+      String.contains?(msg, "timeout") or
+      String.contains?(msg, "could not connect") or
+      String.contains?(msg, "transport")
+  end
+
+  defp match_transient?(%Mint.TransportError{}), do: true
+  defp match_transient?({:error, reason}), do: match_transient?(reason)
+  defp match_transient?(_), do: false
+
+  defp inspect_reason(%{message: msg}) when is_binary(msg), do: msg
+  defp inspect_reason(reason), do: inspect(reason)
 
   defp record_auth(email, password, extra) do
     surreal = Config.surreal!()

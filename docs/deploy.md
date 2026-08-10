@@ -27,6 +27,24 @@ Signup/signin use Surreal record access and do **not** need the Vault password
 on the web process. Keep Vault on a one-off release command or CI for schema
 sync.
 
+### Surreal connect timeouts on sign-in
+
+If Fly logs show `auth signin failed … reason=could not connect:
+%Mint.TransportError{reason: :timeout}` (or `RPC use timed out during setup`),
+the password was never checked — the dyno failed to open / set up the Surreal
+WSS session. Common causes:
+
+1. **Surreal Cloud idle pause** (free / low tiers) — wake the instance in the
+   Surreal console, wait ~30s, retry sign-in.
+2. **Wrong or stale `SURREAL_URL`** on the Fly app (`fly secrets list -a isomer-demo`).
+3. **Regional lag** — demo Fly region is `iad`; many Surreal Cloud hosts are
+   `aws-usw2`. Latency alone rarely hits 10–15s, but combined with a cold
+   instance it can.
+
+The web client retries transient connect failures a few times and keeps an
+existing session cookie when LiveView mount times out (so a pause does not
+force a logout loop).
+
 ## Fly.io
 
 The checked-in demo app is **`isomer-demo`** (`https://isomer-demo.fly.dev`).

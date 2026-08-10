@@ -10,17 +10,28 @@ defmodule IsomerWeb.SessionController do
     token = conn.assigns[:surreal_token]
 
     cond do
-      is_binary(token) and token != "" and UserAuth.valid_token?(token) ->
-        redirect(conn, to: ~p"/orgs")
-
-      is_binary(token) and token != "" ->
-        conn
-        |> UserAuth.log_out()
-        |> put_flash(:info, "Session expired — sign in again")
-        |> render(:new, error: nil, mode: "login")
+      not (is_binary(token) and token != "") ->
+        render(conn, :new, error: nil, mode: "login")
 
       true ->
-        render(conn, :new, error: nil, mode: "login")
+        case UserAuth.check_token(token) do
+          :valid ->
+            redirect(conn, to: ~p"/orgs")
+
+          :unavailable ->
+            conn
+            |> put_flash(
+              :error,
+              "Database unreachable right now (timeout). Wait a few seconds and retry — your session was kept."
+            )
+            |> render(:new, error: nil, mode: "login")
+
+          :invalid ->
+            conn
+            |> UserAuth.log_out()
+            |> put_flash(:info, "Session expired — sign in again")
+            |> render(:new, error: nil, mode: "login")
+        end
     end
   end
 
@@ -78,21 +89,42 @@ defmodule IsomerWeb.SessionController do
   defp format_error(%{message: msg}) when is_binary(msg) do
     msg
     |> String.replace_prefix("An error occurred: ", "")
-    |> then(fn
-      "The record access signup query failed" ->
+    |> then(&humanize_auth_message/1)
+  end
+
+  defp format_error(%Mint.TransportError{reason: :timeout}) do
+    db_unreachable_message()
+  end
+
+  defp format_error(other) do
+    if UserClient.transient_error?(other) do
+      db_unreachable_message()
+    else
+      inspect(other)
+    end
+  end
+
+  defp humanize_auth_message(msg) do
+    cond do
+      msg == "The record access signup query failed" ->
         "Could not create account. If you already signed up, use Sign in."
 
-      "The record access signin query failed" ->
+      msg == "The record access signin query failed" ->
         "Invalid email or password."
 
       # Surreal SIGNIN when email exists but argon2 compare fails (or no row).
-      "No record was returned" ->
+      msg == "No record was returned" ->
         "Invalid email or password."
 
-      other ->
-        other
-    end)
+      UserClient.transient_error?(%{message: msg}) ->
+        db_unreachable_message()
+
+      true ->
+        msg
+    end
   end
 
-  defp format_error(other), do: inspect(other)
+  defp db_unreachable_message do
+    "Could not reach the database (timeout). SurrealDB may be waking from idle — wait a few seconds and try again."
+  end
 end
