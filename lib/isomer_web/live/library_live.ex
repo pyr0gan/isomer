@@ -81,7 +81,9 @@ defmodule IsomerWeb.LibraryLive do
         <section class="isomer-library__section">
           <h2 class="isomer-library__heading">Templates</h2>
           <.p class="text-base text-slate-600 dark:text-slate-400">
-            Published from the corpus. Generate a filled draft from any assessment’s Artifacts page.
+            Published from the corpus. Open an assessment and use
+            <span class="font-medium">{GuideCopy.artifacts_nav_label()}</span>
+            to fill a draft.
           </.p>
 
           <%= if @templates == [] do %>
@@ -103,13 +105,15 @@ defmodule IsomerWeb.LibraryLive do
         </section>
 
         <section class="isomer-library__section">
-          <h2 class="isomer-library__heading">Generated artifacts</h2>
+          <h2 class="isomer-library__heading">Generated documents</h2>
           <.p class="text-base text-slate-600 dark:text-slate-400">
-            Drafts stored for your organizations. Open an assessment to create new ones.
+            Drafts created from an assessment’s
+            <span class="font-medium">{GuideCopy.artifacts_nav_label()}</span>
+            page. Download or delete them here.
           </.p>
 
           <%= if @artifacts == [] do %>
-            <.p class="text-slate-500">No artifacts yet — open an assessment and choose Artifacts from the menu.</.p>
+            <.p class="text-slate-500">{GuideCopy.library_empty_artifacts(@guide_prefs)}</.p>
           <% else %>
             <ul class="isomer-library__list">
               <li :for={art <- @artifacts} class="isomer-library__row">

@@ -151,7 +151,7 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
          {:ok, artifacts} <- Tenant.list_artifacts_for_assessment(surreal, assessment_id) do
       {:ok,
        %{
-         page_title: "Artifacts · #{assessment["title"]}",
+         page_title: "Generate documents · #{assessment["title"]}",
          assessment: assessment,
          assessment_id: assessment_id,
          org: org,
@@ -181,12 +181,20 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
     <section class="isomer-page">
       <div class="isomer-page-header">
         <div>
-          <.h1>Artifacts</.h1>
+          <.h1>Generate documents</.h1>
           <.p class="isomer-lede">
             {@assessment["title"]} — {GuideCopy.artifacts_intro(@guide_prefs)}
           </.p>
         </div>
         <div class="flex flex-wrap gap-2">
+          <.button
+            link_type="live_redirect"
+            to={~p"/assessments/#{@assessment_id}"}
+            color="gray"
+            variant="outline"
+            label="Details"
+            icon="hero-information-circle"
+          />
           <.button
             link_type="live_redirect"
             to={~p"/assessments/#{@assessment_id}/q"}

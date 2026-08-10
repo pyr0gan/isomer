@@ -49,10 +49,10 @@
             :if={assigns[:nav_assessment_id]}
             link_type="live_redirect"
             to={~p"/assessments/#{@nav_assessment_id}/artifacts"}
-            label="Artifacts"
+            label={Isomer.GuideCopy.artifacts_nav_label()}
           >
             <.icon name="hero-document-text" class="w-5 h-5 text-slate-500" />
-            Artifacts
+            {Isomer.GuideCopy.artifacts_nav_label()}
           </.dropdown_menu_item>
 
           <.dropdown_menu_separator :if={assigns[:nav_org_id] || assigns[:nav_assessment_id]} />

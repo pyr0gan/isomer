@@ -374,9 +374,9 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           <.button
             link_type="live_redirect"
             to={~p"/assessments/#{@assessment_id}/artifacts"}
-            color="gray"
+            color="primary"
             variant="outline"
-            label="Artifacts"
+            label={GuideCopy.artifacts_nav_label()}
             icon="hero-document-text"
           />
         </div>
@@ -389,9 +389,18 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         color="warning"
         variant="soft"
         with_icon
-        label="This assessment is finalized. Reopen it from Details to edit answers."
         class="mb-4"
-      />
+      >
+        This assessment is finalized. Reopen it from Details to edit answers.
+        Or
+        <.link
+          navigate={~p"/assessments/#{@assessment_id}/artifacts"}
+          class="font-medium underline underline-offset-2"
+        >
+          {GuideCopy.artifacts_nav_label() |> String.downcase()}
+        </.link>
+        for this run.
+      </.alert>
 
       <.alert
         :if={not @finalized and prefs_unset?(@guide_prefs)}
