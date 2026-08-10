@@ -29,6 +29,7 @@ defmodule IsomerWeb.Router do
     get("/logout", SessionController, :delete)
 
     get("/artifacts/:id/download", ArtifactController, :download)
+    post("/settings", SettingsController, :update)
 
     live_session :authenticated,
       on_mount: [{IsomerWeb.UserAuth, :ensure_authenticated}] do

@@ -1,19 +1,19 @@
 defmodule IsomerWeb.SettingsLive do
   use IsomerWeb.SurrealLive
 
-  alias Isomer.Db.Tenant
   alias Isomer.GuideCopy
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     user = socket.assigns[:current_user] || %{}
-    prefs = GuideCopy.normalize(user)
+    prefs = socket.assigns[:guide_prefs] || GuideCopy.normalize(user)
+    name = session["guide_name"] || user["name"] || ""
 
     {:ok,
      assign(socket,
        page_title: "Settings",
        form: %{
-         "name" => user["name"] || "",
+         "name" => name,
          "self_role" => prefs["self_role"] || "",
          "experience_level" => prefs["experience_level"] || "",
          "comfort_level" => prefs["comfort_level"] || ""
@@ -21,59 +21,6 @@ defmodule IsomerWeb.SettingsLive do
        error: nil,
        saved: false
      )}
-  end
-
-  @impl true
-  def handle_event("save", params, socket) do
-    attrs = %{
-      "name" => Map.get(params, "name", ""),
-      "self_role" => Map.get(params, "self_role", ""),
-      "experience_level" => Map.get(params, "experience_level", ""),
-      "comfort_level" => Map.get(params, "comfort_level", "")
-    }
-
-    case Tenant.update_user_prefs(socket.assigns.surreal, attrs) do
-      {:ok, user} ->
-        prefs = GuideCopy.normalize(user)
-
-        {:noreply,
-         socket
-         |> assign(:current_user, user)
-         |> assign(:guide_prefs, prefs)
-         |> assign(:current_email, user["email"] || socket.assigns.current_email)
-         |> assign(:form, %{
-           "name" => user["name"] || "",
-           "self_role" => prefs["self_role"] || "",
-           "experience_level" => prefs["experience_level"] || "",
-           "comfort_level" => prefs["comfort_level"] || ""
-         })
-         |> assign(:error, nil)
-         |> assign(:saved, true)
-         |> put_flash(
-           :info,
-           "Preferences saved — guidance copy will adapt on the next pages you open."
-         )}
-
-      {:error, reason} ->
-        {:noreply, assign(socket, error: format_error(reason), saved: false)}
-    end
-  end
-
-  defp format_error(%{message: msg}) when is_binary(msg), do: humanize_error(msg)
-  defp format_error(reason) when is_binary(reason), do: humanize_error(reason)
-  defp format_error(reason), do: inspect(reason)
-
-  defp humanize_error(msg) when is_binary(msg) do
-    pref_fields? =
-      String.contains?(msg, "comfort_level") or String.contains?(msg, "self_role") or
-        String.contains?(msg, "experience_level") or String.contains?(msg, "updated_at")
-
-    if String.contains?(msg, "no such field") and pref_fields? do
-      "Guidance prefs are not on the database yet. An admin needs to run " <>
-        "`mix isomer.db.ensure_runtime` (also runs after corpus sync on main)."
-    else
-      msg
-    end
   end
 
   @impl true
@@ -89,7 +36,8 @@ defmodule IsomerWeb.SettingsLive do
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
-      <form phx-submit="save" class="isomer-settings space-y-6">
+      <form action={~p"/settings"} method="post" class="isomer-settings space-y-6">
+        <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
         <.field
           type="text"
           name="name"

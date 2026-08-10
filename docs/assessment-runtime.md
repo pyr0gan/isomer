@@ -53,7 +53,8 @@ user ──member──▶ org
 
 | Table | Purpose |
 |---|---|
-| `user` | Record-auth subject (`$auth`). email + argon2 password. Optional guidance prefs: `self_role`, `experience_level`, `comfort_level` (adaptive copy only — same UI). |
+| `user` | Record-auth subject (`$auth`). email + argon2 password. Optional guidance prefs: `self_role`, `experience_level`, `comfort_level` when the Surreal compute node has those columns; otherwise prefs also live in the Phoenix session. |
+
 | `org` | Tenant (the organization being assessed). |
 | `member` | `TYPE RELATION IN user OUT org` + `role`. |
 | `assessment` | One questionnaire run for an org. |
@@ -127,7 +128,7 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `question_set`; upsert `answer`; adaptive help from user prefs; domain metric opt-in |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE artifact`; download links |
 | `LibraryLive` | `/library` | All templates + artifacts visible to the user |
-| `SettingsLive` | `/settings` | `UPDATE $auth` prefs (`self_role`, `experience_level`, `comfort_level`, `name`) |
+| `SettingsLive` / `SettingsController` | `/settings` | Session-backed guidance prefs + best-effort `UPDATE $auth` name/prefs |
 | `ArtifactController` | `/artifacts/:id/download` | Fetch `artifact` with user JWT; Markdown or print-ready HTML (Save as PDF) |
 
 ### Planned (not yet routed)

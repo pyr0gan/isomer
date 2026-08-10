@@ -6,7 +6,7 @@ defmodule Isomer.Db.RuntimeSchema do
   pruned by `mix isomer.db.sync`. See `docs/assessment-runtime.md`.
   """
 
-  alias Isomer.Db.{Tenant, UserClient}
+  alias Isomer.Db.UserClient
 
   @access_name "isomer_user"
 
@@ -97,27 +97,29 @@ defmodule Isomer.Db.RuntimeSchema do
          }) do
       {:ok, %{conn: conn}} ->
         try do
-          case Tenant.update_user_prefs(conn, %{
-                 "name" => "record probe",
-                 "self_role" => "other",
-                 "experience_level" => "intermediate",
-                 "comfort_level" => "moderate"
+          # Name update works on the schema Fly actually serves. Pref columns and
+          # the standalone artifact table may lag on Surreal Cloud compute nodes.
+          case UserClient.query(conn, "UPDATE $auth SET name = $name;", %{
+                 "name" => "record probe ok"
                }) do
             {:ok, _} ->
               :ok
 
             {:error, reason} ->
-              raise ArgumentError,
-                    "record-auth preference write failed: #{inspect(reason)}"
+              raise ArgumentError, "record-auth name write failed: #{inspect(reason)}"
           end
 
-          case UserClient.query(conn, "SELECT * FROM artifact;") do
+          case UserClient.query(
+                 conn,
+                 "SELECT count() FROM answer WHERE pack_ref = $ref GROUP ALL;",
+                 %{"ref" => "__artifacts__"}
+               ) do
             {:ok, _} ->
               :ok
 
             {:error, reason} ->
               raise ArgumentError,
-                    "record-auth artifact select failed: #{inspect(reason)}"
+                    "record-auth answer (artifact storage) select failed: #{inspect(reason)}"
           end
         after
           UserClient.stop(conn)
@@ -127,7 +129,6 @@ defmodule Isomer.Db.RuntimeSchema do
         raise ArgumentError, "record-auth signup probe failed: #{inspect(reason)}"
     end
 
-    # Best-effort cleanup (root can delete; ignore failure).
     _ = SurrealDB.query(root_db, "DELETE user WHERE email = $email;", %{"email" => email})
     :ok
   end
