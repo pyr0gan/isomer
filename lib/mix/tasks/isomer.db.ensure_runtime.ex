@@ -7,6 +7,11 @@ defmodule Mix.Tasks.Isomer.Db.EnsureRuntime do
   See `docs/assessment-runtime.md`. Does not sync corpus content — run
   `mix isomer.db.sync` separately (usually first).
 
+  After DEFINE, verifies `user` has guidance-pref fields (`self_role`,
+  `experience_level`, `comfort_level`) so CI cannot report success when the
+  schema change was a no-op. Prints a non-secret Surreal host fingerprint so
+  Fly vs Actions target mismatches are obvious.
+
       mix isomer.db.ensure_runtime
   """
 
@@ -17,10 +22,15 @@ defmodule Mix.Tasks.Isomer.Db.EnsureRuntime do
     Mix.Task.run("app.start")
 
     try do
+      surreal = Isomer.Config.surreal!()
+      target = Isomer.Config.surreal_target_fingerprint(surreal)
+      Mix.shell().info("db:ensure_runtime target #{target}")
+
       db = Isomer.Db.Connect.connect!()
 
       try do
         :ok = Isomer.Db.RuntimeSchema.ensure!(db)
+        user_fields = Isomer.Db.RuntimeSchema.user_field_names!(db)
 
         Mix.shell().info("db:ensure_runtime OK")
 
@@ -28,7 +38,9 @@ defmodule Mix.Tasks.Isomer.Db.EnsureRuntime do
           Isomer.JSON.encode!(
             %{
               ok: true,
+              target: target,
               access: Isomer.Db.RuntimeSchema.access_name(),
+              user_fields: user_fields,
               tables: [
                 "user",
                 "org",

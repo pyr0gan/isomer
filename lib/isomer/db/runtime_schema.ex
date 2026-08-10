@@ -8,6 +8,8 @@ defmodule Isomer.Db.RuntimeSchema do
 
   @access_name "isomer_user"
 
+  @required_user_fields ~w(email name password self_role experience_level comfort_level created_at updated_at)
+
   @doc "Idempotent DEFINE for auth, tenant tables, and corpus read grants."
   def ensure!(db) do
     # Functions before tables that reference them in PERMISSIONS; function bodies
@@ -16,10 +18,59 @@ defmodule Isomer.Db.RuntimeSchema do
     :ok = ensure_user_and_access!(db)
     :ok = ensure_tenant_tables!(db)
     :ok = ensure_corpus_read_grants!(db)
+    :ok = assert_user_fields!(db)
     :ok
   end
 
   def access_name, do: @access_name
+
+  @doc "User table fields that Settings / auth expect (for CI verification)."
+  def required_user_fields, do: @required_user_fields
+
+  @doc """
+  Returns sorted field names defined on `user`, or raises if INFO fails.
+  Used after ensure so CI cannot report success when DEFINE FIELD was a no-op.
+  """
+  def user_field_names!(db) do
+    case SurrealDB.query(db, "INFO FOR TABLE user;") do
+      {:ok, results} ->
+        results
+        |> List.wrap()
+        |> List.last()
+        |> extract_field_names()
+        |> case do
+          {:ok, names} -> Enum.sort(names)
+          {:error, reason} -> raise "INFO FOR TABLE user: #{reason}"
+        end
+
+      {:error, reason} ->
+        raise "INFO FOR TABLE user failed: #{inspect(reason)}"
+    end
+  end
+
+  defp assert_user_fields!(db) do
+    names = user_field_names!(db)
+    missing = Enum.reject(@required_user_fields, &(&1 in names))
+
+    if missing == [] do
+      :ok
+    else
+      raise ArgumentError,
+            "runtime ensure left user table missing fields #{inspect(missing)}; " <>
+              "present=#{inspect(names)}. Check Surreal version / DEFINE FIELD errors."
+    end
+  end
+
+  defp extract_field_names(%{"fields" => fields}) when is_map(fields),
+    do: {:ok, Map.keys(fields) |> Enum.map(&to_string/1)}
+
+  defp extract_field_names(%{fields: fields}) when is_map(fields),
+    do: {:ok, Map.keys(fields) |> Enum.map(&to_string/1)}
+
+  defp extract_field_names([row | _]) when is_map(row), do: extract_field_names(row)
+
+  defp extract_field_names(other),
+    do: {:error, "unexpected INFO shape: #{inspect(other)}"}
 
   defp ensure_runtime_functions!(db) do
     {:ok, _} =
@@ -51,30 +102,35 @@ defmodule Isomer.Db.RuntimeSchema do
   end
 
   defp ensure_user_and_access!(db) do
-    {:ok, _} =
-      SurrealDB.query(db, """
+    # Table first (OVERWRITE can clear field defs on some Surreal builds), then
+    # each field in its own query so a bad ASSERT cannot be swallowed in a batch.
+    :ok =
+      exec!(db, """
       DEFINE TABLE OVERWRITE user SCHEMAFULL
         PERMISSIONS
           FOR select, update WHERE id = $auth.id
           FOR create, delete NONE
         COMMENT "Record-auth subjects for assessment LiveViews";
+      """)
 
-      DEFINE FIELD OVERWRITE email ON user TYPE string ASSERT string::is_email($value);
-      DEFINE FIELD OVERWRITE name ON user TYPE option<string>;
-      DEFINE FIELD OVERWRITE password ON user TYPE string;
-      DEFINE FIELD OVERWRITE self_role ON user TYPE option<string>
-        ASSERT $value = NONE OR $value IN ["executive", "product", "engineering", "compliance", "security", "operations", "other"]
-        COMMENT "Self-identified organizational role for adaptive guidance copy";
-      DEFINE FIELD OVERWRITE experience_level ON user TYPE option<string>
-        ASSERT $value = NONE OR $value IN ["beginner", "intermediate", "practitioner", "expert"]
-        COMMENT "Self-identified familiarity with governance material";
-      DEFINE FIELD OVERWRITE comfort_level ON user TYPE option<string>
-        ASSERT $value = NONE OR $value IN ["low", "moderate", "high"]
-        COMMENT "Preferred amount of plain-language help in the UI";
-      DEFINE FIELD OVERWRITE created_at ON user TYPE datetime DEFAULT time::now();
-      DEFINE FIELD OVERWRITE updated_at ON user TYPE option<datetime>;
-      DEFINE INDEX OVERWRITE user_email ON user FIELDS email UNIQUE;
+    # Literal unions (| NONE) are the supported option/enum form; avoid
+    # `ASSERT $value = NONE OR …` which some Surreal Cloud builds reject.
+    field_ddl = [
+      ~S[DEFINE FIELD OVERWRITE email ON TABLE user TYPE string ASSERT string::is_email($value);],
+      ~S[DEFINE FIELD OVERWRITE name ON TABLE user TYPE option<string>;],
+      ~S[DEFINE FIELD OVERWRITE password ON TABLE user TYPE string;],
+      ~S[DEFINE FIELD OVERWRITE self_role ON TABLE user TYPE "executive" | "product" | "engineering" | "compliance" | "security" | "operations" | "other" | NONE COMMENT "Self-identified organizational role for adaptive guidance copy";],
+      ~S[DEFINE FIELD OVERWRITE experience_level ON TABLE user TYPE "beginner" | "intermediate" | "practitioner" | "expert" | NONE COMMENT "Self-identified familiarity with governance material";],
+      ~S[DEFINE FIELD OVERWRITE comfort_level ON TABLE user TYPE "low" | "moderate" | "high" | NONE COMMENT "Preferred amount of plain-language help in the UI";],
+      ~S[DEFINE FIELD OVERWRITE created_at ON TABLE user TYPE datetime DEFAULT time::now();],
+      ~S[DEFINE FIELD OVERWRITE updated_at ON TABLE user TYPE option<datetime>;],
+      ~S[DEFINE INDEX OVERWRITE user_email ON TABLE user FIELDS email UNIQUE;]
+    ]
 
+    Enum.each(field_ddl, &exec!(db, &1))
+
+    :ok =
+      exec!(db, """
       DEFINE ACCESS OVERWRITE #{@access_name} ON DATABASE TYPE RECORD
         SIGNUP (
           IF !string::is_email($email) {
@@ -100,6 +156,16 @@ defmodule Isomer.Db.RuntimeSchema do
       """)
 
     :ok
+  end
+
+  defp exec!(db, surql) do
+    case SurrealDB.query(db, surql) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        raise "Surreal DDL failed: #{inspect(reason)} — for SQL: #{String.slice(surql, 0, 160)}"
+    end
   end
 
   defp ensure_tenant_tables!(db) do

@@ -63,6 +63,16 @@ jobs:
           fi
           echo "All required secrets are present (values not printed)."
 
+      - name: Print Surreal target fingerprint
+        env:
+          SURREAL_URL: ${{ secrets.SURREAL_URL }}
+          SURREAL_NAMESPACE: ${{ secrets.SURREAL_NAMESPACE }}
+          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
+          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
+        run: |
+          # Host + ns/db only — compare with `fly ssh console -a isomer-demo` fingerprint.
+          mix run -e 'IO.puts(Isomer.Config.surreal_target_fingerprint())'
+
       - name: Sync corpus to SurrealDB
         env:
           SURREAL_URL: ${{ secrets.SURREAL_URL }}
@@ -78,6 +88,7 @@ jobs:
 
       # Tenant/auth DDL (user prefs, artifact table, corpus read grants). Safe to
       # re-run; schema changes after a content PR are otherwise invisible to the demo.
+      # Fails the job if INFO FOR TABLE user is missing comfort_level / etc.
       - name: Ensure assessment runtime schema
         env:
           SURREAL_URL: ${{ secrets.SURREAL_URL }}

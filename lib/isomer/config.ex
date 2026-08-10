@@ -50,6 +50,17 @@ defmodule Isomer.Config do
     |> assert_resolved([:url, :namespace, :database, :username])
   end
 
+  @doc """
+  Non-secret fingerprint for logs/CI: hostname + ns/db (never password/token).
+
+  Use to confirm Fly `SURREAL_URL` matches GitHub Actions `SURREAL_URL`.
+  """
+  def surreal_target_fingerprint(surreal \\ nil) do
+    surreal = surreal || surreal!()
+    host = surreal.url |> URI.parse() |> Map.get(:host) || "(no-host)"
+    "host=#{host} ns=#{surreal.namespace} db=#{surreal.database}"
+  end
+
   def vault! do
     load_dotenv!()
     token = optional("VAULT_TOKEN")
