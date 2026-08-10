@@ -14,7 +14,9 @@ mix isomer.db.ensure_runtime
 touches tenant data.) CI also runs this after `mix isomer.db.sync` in
 `.github/workflows/sync-corpus.yml`, so schema additions (e.g. `user.self_role` /
 `experience_level` / `comfort_level`, tenant `artifact`) reach the demo DB on
-merge to `main` without a manual Mix step.
+merge to `main` without a manual Mix step. Ensure fails closed if `INFO FOR DB`
+lacks `artifact` (or other tenant tables) or a **record-auth** signup cannot
+write prefs / `SELECT` artifacts — root INFO alone has been a false green.
 
 ## Design
 

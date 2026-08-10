@@ -6,9 +6,13 @@ defmodule Isomer.Db.RuntimeSchema do
   pruned by `mix isomer.db.sync`. See `docs/assessment-runtime.md`.
   """
 
+  alias Isomer.Db.{Tenant, UserClient}
+
   @access_name "isomer_user"
 
   @required_user_fields ~w(email name password self_role experience_level comfort_level created_at updated_at)
+
+  @required_tenant_tables ~w(user org member assessment answer evidence artifact)
 
   @doc "Idempotent DEFINE for auth, tenant tables, and corpus read grants."
   def ensure!(db) do
@@ -19,6 +23,7 @@ defmodule Isomer.Db.RuntimeSchema do
     :ok = ensure_tenant_tables!(db)
     :ok = ensure_corpus_read_grants!(db)
     :ok = assert_user_fields!(db)
+    :ok = assert_tenant_tables!(db)
     :ok
   end
 
@@ -26,6 +31,9 @@ defmodule Isomer.Db.RuntimeSchema do
 
   @doc "User table fields that Settings / auth expect (for CI verification)."
   def required_user_fields, do: @required_user_fields
+
+  @doc "Tenant tables the LiveViews expect (for CI verification)."
+  def required_tenant_tables, do: @required_tenant_tables
 
   @doc """
   Returns sorted field names defined on `user`, or raises if INFO fails.
@@ -48,6 +56,82 @@ defmodule Isomer.Db.RuntimeSchema do
     end
   end
 
+  @doc """
+  Returns sorted table names from `INFO FOR DB`, or raises.
+  """
+  def table_names!(db) do
+    case SurrealDB.query(db, "INFO FOR DB;") do
+      {:ok, results} ->
+        results
+        |> List.wrap()
+        |> List.last()
+        |> extract_table_names()
+        |> case do
+          {:ok, names} -> Enum.sort(names)
+          {:error, reason} -> raise "INFO FOR DB: #{reason}"
+        end
+
+      {:error, reason} ->
+        raise "INFO FOR DB failed: #{inspect(reason)}"
+    end
+  end
+
+  @doc """
+  Proves guidance prefs + `artifact` are usable under **record** auth (not just root).
+
+  Root INFO / root CREATE can look green while LiveView JWT sessions still fail
+  with "no such field" or "table does not exist". Called from the Mix task after
+  `ensure!/1`.
+  """
+  def assert_record_runtime!(root_db) do
+    email =
+      "isomer-record-probe-" <>
+        Integer.to_string(System.unique_integer([:positive])) <> "@example.invalid"
+
+    password = "probe-password-99"
+
+    case UserClient.signup!(%{
+           "email" => email,
+           "password" => password,
+           "name" => "record probe"
+         }) do
+      {:ok, %{conn: conn}} ->
+        try do
+          case Tenant.update_user_prefs(conn, %{
+                 "name" => "record probe",
+                 "self_role" => "other",
+                 "experience_level" => "intermediate",
+                 "comfort_level" => "moderate"
+               }) do
+            {:ok, _} ->
+              :ok
+
+            {:error, reason} ->
+              raise ArgumentError,
+                    "record-auth preference write failed: #{inspect(reason)}"
+          end
+
+          case UserClient.query(conn, "SELECT * FROM artifact;") do
+            {:ok, _} ->
+              :ok
+
+            {:error, reason} ->
+              raise ArgumentError,
+                    "record-auth artifact select failed: #{inspect(reason)}"
+          end
+        after
+          UserClient.stop(conn)
+        end
+
+      {:error, reason} ->
+        raise ArgumentError, "record-auth signup probe failed: #{inspect(reason)}"
+    end
+
+    # Best-effort cleanup (root can delete; ignore failure).
+    _ = SurrealDB.query(root_db, "DELETE user WHERE email = $email;", %{"email" => email})
+    :ok
+  end
+
   defp assert_user_fields!(db) do
     names = user_field_names!(db)
     missing = Enum.reject(@required_user_fields, &(&1 in names))
@@ -61,6 +145,19 @@ defmodule Isomer.Db.RuntimeSchema do
     # INFO alone is not enough on Surreal Cloud — fields can appear in INFO FOR TABLE
     # while SCHEMAFULL writes still fail with "Found field … but no such field exists".
     probe_user_pref_write!(db)
+    :ok
+  end
+
+  defp assert_tenant_tables!(db) do
+    names = table_names!(db)
+    missing = Enum.reject(@required_tenant_tables, &(&1 in names))
+
+    if missing != [] do
+      raise ArgumentError,
+            "runtime ensure left tenant tables missing #{inspect(missing)}; " <>
+              "present=#{inspect(names)}"
+    end
+
     :ok
   end
 
@@ -99,6 +196,17 @@ defmodule Isomer.Db.RuntimeSchema do
   defp extract_field_names(other),
     do: {:error, "unexpected INFO shape: #{inspect(other)}"}
 
+  defp extract_table_names(%{"tables" => tables}) when is_map(tables),
+    do: {:ok, Map.keys(tables) |> Enum.map(&to_string/1)}
+
+  defp extract_table_names(%{tables: tables}) when is_map(tables),
+    do: {:ok, Map.keys(tables) |> Enum.map(&to_string/1)}
+
+  defp extract_table_names([row | _]) when is_map(row), do: extract_table_names(row)
+
+  defp extract_table_names(other),
+    do: {:error, "unexpected INFO FOR DB shape: #{inspect(other)}"}
+
   defp ensure_runtime_functions!(db) do
     {:ok, _} =
       SurrealDB.query(db, """
@@ -130,7 +238,7 @@ defmodule Isomer.Db.RuntimeSchema do
 
   defp ensure_user_and_access!(db) do
     # Table first (OVERWRITE can clear field defs on some Surreal builds), then
-    # each field in its own query so a bad ASSERT cannot be swallowed in a batch.
+    # each field in its own query so a bad DEFINE cannot be swallowed in a batch.
     :ok =
       exec!(db, """
       DEFINE TABLE OVERWRITE user SCHEMAFULL
@@ -140,13 +248,18 @@ defmodule Isomer.Db.RuntimeSchema do
         COMMENT "Record-auth subjects for assessment LiveViews";
       """)
 
-    # Core auth columns first (required for SIGNUP/SIGNIN).
+    # All columns BEFORE DEFINE ACCESS. Pref fields added after ACCESS left root
+    # INFO/CREATE green while record-auth UPDATE still hit "no such field".
     Enum.each(
       [
         ~S[DEFINE FIELD OVERWRITE email ON user TYPE string ASSERT string::is_email($value);],
         ~S[DEFINE FIELD OVERWRITE name ON user TYPE option<string>;],
         ~S[DEFINE FIELD OVERWRITE password ON user TYPE string;],
+        ~S[DEFINE FIELD OVERWRITE self_role ON user TYPE option<string> COMMENT "Self-identified organizational role for adaptive guidance copy";],
+        ~S[DEFINE FIELD OVERWRITE experience_level ON user TYPE option<string> COMMENT "Self-identified familiarity with governance material";],
+        ~S[DEFINE FIELD OVERWRITE comfort_level ON user TYPE option<string> COMMENT "Preferred amount of plain-language help in the UI";],
         ~S[DEFINE FIELD OVERWRITE created_at ON user TYPE datetime DEFAULT time::now();],
+        ~S[DEFINE FIELD OVERWRITE updated_at ON user TYPE datetime VALUE time::now() DEFAULT time::now();],
         ~S[DEFINE INDEX OVERWRITE user_email ON user FIELDS email UNIQUE;]
       ],
       &exec!(db, &1)
@@ -178,20 +291,6 @@ defmodule Isomer.Db.RuntimeSchema do
         COMMENT "Surreal-native auth for Phoenix LiveView sessions";
       """)
 
-    # Guidance prefs AFTER access — plain option<string> (Elixir validates enums).
-    # Literal unions / ASSERT forms have left Surreal Cloud INFO green while
-    # SCHEMAFULL writes still failed with "no such field".
-    Enum.each(
-      [
-        ~S[DEFINE FIELD OVERWRITE self_role ON user TYPE option<string> COMMENT "Self-identified organizational role for adaptive guidance copy";],
-        ~S[DEFINE FIELD OVERWRITE experience_level ON user TYPE option<string> COMMENT "Self-identified familiarity with governance material";],
-        ~S[DEFINE FIELD OVERWRITE comfort_level ON user TYPE option<string> COMMENT "Preferred amount of plain-language help in the UI";],
-        # VALUE refreshes on every write so clients need not SET updated_at.
-        ~S[DEFINE FIELD OVERWRITE updated_at ON user TYPE datetime VALUE time::now() DEFAULT time::now();]
-      ],
-      &exec!(db, &1)
-    )
-
     :ok
   end
 
@@ -205,9 +304,16 @@ defmodule Isomer.Db.RuntimeSchema do
     end
   end
 
+  # One table (or small group) per query — large multi-DEFINE batches have left
+  # later tables (e.g. artifact) missing on Surreal Cloud while earlier ones exist.
   defp ensure_tenant_tables!(db) do
-    {:ok, _} =
-      SurrealDB.query(db, """
+    Enum.each(tenant_table_ddl(), &exec!(db, &1))
+    :ok
+  end
+
+  defp tenant_table_ddl do
+    [
+      """
       DEFINE TABLE OVERWRITE org SCHEMAFULL
         PERMISSIONS
           FOR select WHERE id IN fn::isomer::member_org_ids() OR created_by = $auth.id
@@ -220,7 +326,8 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE FIELD OVERWRITE slug ON org TYPE option<string>;
       DEFINE FIELD OVERWRITE created_by ON org TYPE record<user>;
       DEFINE FIELD OVERWRITE created_at ON org TYPE datetime DEFAULT time::now();
-
+      """,
+      """
       DEFINE TABLE OVERWRITE member
         TYPE RELATION IN user OUT org ENFORCED
         SCHEMAFULL
@@ -234,7 +341,8 @@ defmodule Isomer.Db.RuntimeSchema do
         ASSERT $value IN ["owner", "admin", "assessor", "viewer"];
       DEFINE FIELD OVERWRITE created_at ON member TYPE datetime DEFAULT time::now();
       DEFINE INDEX OVERWRITE member_unique ON member FIELDS in, out UNIQUE;
-
+      """,
+      """
       DEFINE TABLE OVERWRITE assessment SCHEMAFULL
         PERMISSIONS
           FOR select WHERE org IN fn::isomer::member_org_ids()
@@ -263,8 +371,8 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE FIELD OVERWRITE created_at ON assessment TYPE datetime DEFAULT time::now();
       DEFINE FIELD OVERWRITE updated_at ON assessment TYPE datetime DEFAULT time::now();
       DEFINE INDEX OVERWRITE assessment_org ON assessment FIELDS org;
-
-      -- org is denormalized onto answer/evidence so PERMISSIONS stay simple
+      """,
+      """
       DEFINE TABLE OVERWRITE answer SCHEMAFULL
         PERMISSIONS
           FOR select WHERE org IN fn::isomer::member_org_ids()
@@ -284,7 +392,8 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE FIELD OVERWRITE answered_at ON answer TYPE datetime DEFAULT time::now();
       DEFINE INDEX OVERWRITE answer_unique ON answer FIELDS assessment, pack, pack_ref, question_id UNIQUE;
       DEFINE INDEX OVERWRITE answer_org ON answer FIELDS org;
-
+      """,
+      """
       DEFINE TABLE OVERWRITE evidence SCHEMAFULL
         PERMISSIONS
           FOR select WHERE org IN fn::isomer::member_org_ids()
@@ -301,8 +410,8 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE FIELD OVERWRITE uploaded_at ON evidence TYPE datetime DEFAULT time::now();
       DEFINE INDEX OVERWRITE evidence_answer ON evidence FIELDS answer;
       DEFINE INDEX OVERWRITE evidence_org ON evidence FIELDS org;
-
-      -- Generated documents from corpus templates (tenant data; never pruned by sync)
+      """,
+      """
       DEFINE TABLE OVERWRITE artifact SCHEMAFULL
         PERMISSIONS
           FOR select WHERE org IN fn::isomer::member_org_ids()
@@ -328,50 +437,50 @@ defmodule Isomer.Db.RuntimeSchema do
       DEFINE INDEX OVERWRITE artifact_assessment ON artifact FIELDS assessment;
       DEFINE INDEX OVERWRITE artifact_org ON artifact FIELDS org;
       DEFINE INDEX OVERWRITE artifact_template ON artifact FIELDS template_id;
-      """)
-
-    :ok
+      """
+    ]
   end
 
   defp ensure_corpus_read_grants!(db) do
     # Record users default to PERMISSIONS NONE. Grant select on published corpus
     # so LiveView can project questionnaires with the user JWT.
-    {:ok, _} =
-      SurrealDB.query(db, """
-      DEFINE TABLE OVERWRITE domain SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE framework SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE requirement SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE mapping_set SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE ruleset SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE rubric SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE question_set SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE template SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
-      DEFINE TABLE OVERWRITE sync_run SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;
+    # Split per table so a late failure cannot leave earlier grants applied while
+    # CI still reports a single opaque batch OK.
+    Enum.each(
+      [
+        ~S[DEFINE TABLE OVERWRITE domain SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE framework SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE requirement SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE mapping_set SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE ruleset SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE rubric SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE question_set SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE template SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        ~S[DEFINE TABLE OVERWRITE sync_run SCHEMALESS PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE;],
+        """
+        DEFINE TABLE OVERWRITE maps_to
+          TYPE RELATION IN requirement OUT requirement ENFORCED
+          SCHEMALESS
+          PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE
+          COMMENT "Corpus mapping edges (relation/strength/note/reviewed on the edge)";
+        """
+      ],
+      &exec!(db, &1)
+    )
 
-      DEFINE TABLE OVERWRITE maps_to
-        TYPE RELATION IN requirement OUT requirement ENFORCED
-        SCHEMALESS
-        PERMISSIONS FOR select WHERE $auth != NONE FOR create, update, delete NONE
-        COMMENT "Corpus mapping edges (relation/strength/note/reviewed on the edge)";
-
-      DEFINE INDEX IF NOT EXISTS requirement_corpus_id ON requirement FIELDS corpus_id UNIQUE;
-      DEFINE INDEX IF NOT EXISTS framework_corpus_key ON framework FIELDS corpus_key UNIQUE;
-      DEFINE INDEX IF NOT EXISTS mapping_set_corpus_id ON mapping_set FIELDS corpus_id UNIQUE;
-      DEFINE INDEX IF NOT EXISTS ruleset_corpus_id ON ruleset FIELDS corpus_id UNIQUE;
-      DEFINE INDEX IF NOT EXISTS rubric_domain ON rubric FIELDS domain UNIQUE;
-      DEFINE INDEX IF NOT EXISTS question_set_domain ON question_set FIELDS domain UNIQUE;
-      DEFINE INDEX IF NOT EXISTS template_corpus_id ON template FIELDS corpus_id UNIQUE;
-      DEFINE INDEX IF NOT EXISTS maps_to_edge_key ON maps_to FIELDS edge_key UNIQUE;
-      """)
+    Enum.each(
+      [
+        ~S[DEFINE INDEX IF NOT EXISTS requirement_corpus_id ON requirement FIELDS corpus_id UNIQUE;],
+        ~S[DEFINE INDEX IF NOT EXISTS framework_corpus_key ON framework FIELDS corpus_key UNIQUE;],
+        ~S[DEFINE INDEX IF NOT EXISTS mapping_set_corpus_id ON mapping_set FIELDS corpus_id UNIQUE;],
+        ~S[DEFINE INDEX IF NOT EXISTS ruleset_corpus_id ON ruleset FIELDS corpus_id UNIQUE;],
+        ~S[DEFINE INDEX IF NOT EXISTS rubric_domain ON rubric FIELDS domain UNIQUE;],
+        ~S[DEFINE INDEX IF NOT EXISTS question_set_domain ON question_set FIELDS domain UNIQUE;],
+        ~S[DEFINE INDEX IF NOT EXISTS template_corpus_id ON template FIELDS corpus_id UNIQUE;],
+        ~S[DEFINE INDEX IF NOT EXISTS maps_to_edge_key ON maps_to FIELDS edge_key UNIQUE;]
+      ],
+      &exec!(db, &1)
+    )
 
     :ok
   end
