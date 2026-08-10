@@ -112,36 +112,41 @@ defmodule Isomer.Db.Tenant do
   def delete_org(conn, org_id) when is_binary(org_id) do
     org_id = canonicalize_record_id(org_id)
     {table, key} = split_record_id!(org_id)
+    vars = %{"table" => table, "key" => key}
 
     # Delete the org while membership still exists — org FOR delete checks
     # member_org_ids_with_roles(["owner"]). Removing members first would deny
     # the org delete. Clean up member edges afterward.
-    sql = """
-    LET $org = type::record($table, $key);
-    DELETE artifact WHERE org = $org;
-    DELETE evidence WHERE org = $org;
-    DELETE answer WHERE org = $org;
-    DELETE assessment WHERE org = $org;
-    DELETE $org;
-    DELETE member WHERE out = $org;
-    RETURN SELECT * FROM ONLY $org;
-    """
+    #
+    # artifact is deleted in its own query so a missing table (Surreal Cloud LB
+    # lag after ensure) cannot block org teardown.
+    with :ok <- delete_artifacts_for(conn, "org", vars),
+         {:ok, results} <-
+           UserClient.query(
+             conn,
+             """
+             LET $org = type::record($table, $key);
+             DELETE evidence WHERE org = $org;
+             DELETE answer WHERE org = $org;
+             DELETE assessment WHERE org = $org;
+             DELETE $org;
+             DELETE member WHERE out = $org;
+             RETURN SELECT * FROM ONLY $org;
+             """,
+             vars
+           ) do
+      case useful_result(results) do
+        row when is_map(row) and not is_struct(row) ->
+          {:error, "Organization could not be deleted (still present). Are you the owner?"}
 
-    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
-      {:ok, results} ->
-        case useful_result(results) do
-          row when is_map(row) and not is_struct(row) ->
-            {:error, "Organization could not be deleted (still present). Are you the owner?"}
+        [row | _] when is_map(row) and not is_struct(row) ->
+          {:error, "Organization could not be deleted (still present). Are you the owner?"}
 
-          [row | _] when is_map(row) and not is_struct(row) ->
-            {:error, "Organization could not be deleted (still present). Are you the owner?"}
-
-          _ ->
-            :ok
-        end
-
-      {:error, reason} ->
-        {:error, reason}
+        _ ->
+          :ok
+      end
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -267,32 +272,34 @@ defmodule Isomer.Db.Tenant do
   def delete_assessment(conn, assessment_id) when is_binary(assessment_id) do
     assessment_id = canonicalize_record_id(assessment_id)
     {table, key} = split_record_id!(assessment_id)
+    vars = %{"table" => table, "key" => key}
 
-    sql = """
-    LET $aid = type::record($table, $key);
-    LET $answer_ids = (SELECT VALUE id FROM answer WHERE assessment = $aid);
-    DELETE artifact WHERE assessment = $aid;
-    DELETE evidence WHERE answer IN $answer_ids;
-    DELETE answer WHERE assessment = $aid;
-    DELETE $aid;
-    RETURN SELECT * FROM ONLY $aid;
-    """
+    with :ok <- delete_artifacts_for(conn, "assessment", vars),
+         {:ok, results} <-
+           UserClient.query(
+             conn,
+             """
+             LET $aid = type::record($table, $key);
+             LET $answer_ids = (SELECT VALUE id FROM answer WHERE assessment = $aid);
+             DELETE evidence WHERE answer IN $answer_ids;
+             DELETE answer WHERE assessment = $aid;
+             DELETE $aid;
+             RETURN SELECT * FROM ONLY $aid;
+             """,
+             vars
+           ) do
+      case useful_result(results) do
+        row when is_map(row) and not is_struct(row) ->
+          {:error, "Assessment could not be deleted (still present)."}
 
-    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
-      {:ok, results} ->
-        case useful_result(results) do
-          row when is_map(row) and not is_struct(row) ->
-            {:error, "Assessment could not be deleted (still present)."}
+        [row | _] when is_map(row) and not is_struct(row) ->
+          {:error, "Assessment could not be deleted (still present)."}
 
-          [row | _] when is_map(row) and not is_struct(row) ->
-            {:error, "Assessment could not be deleted (still present)."}
-
-          _ ->
-            :ok
-        end
-
-      {:error, reason} ->
-        {:error, reason}
+        _ ->
+          :ok
+      end
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -603,8 +610,11 @@ defmodule Isomer.Db.Tenant do
            SELECT * FROM artifact ORDER BY created_at DESC;
            """
          ) do
-      {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        {:ok, Enum.map(rows_of(results), &normalize_record/1)}
+
+      {:error, reason} ->
+        if table_missing?(reason, "artifact"), do: {:ok, []}, else: {:error, reason}
     end
   end
 
@@ -618,8 +628,11 @@ defmodule Isomer.Db.Tenant do
     """
 
     case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
-      {:ok, results} -> {:ok, Enum.map(rows_of(results), &normalize_record/1)}
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        {:ok, Enum.map(rows_of(results), &normalize_record/1)}
+
+      {:error, reason} ->
+        if table_missing?(reason, "artifact"), do: {:ok, []}, else: {:error, reason}
     end
   end
 
@@ -708,6 +721,45 @@ defmodule Isomer.Db.Tenant do
   defp blank_to_nil(""), do: nil
   defp blank_to_nil(value) when is_binary(value), do: String.trim(value)
   defp blank_to_nil(value), do: value
+
+  defp delete_artifacts_for(conn, "org", vars) do
+    case UserClient.query(
+           conn,
+           """
+           LET $org = type::record($table, $key);
+           DELETE artifact WHERE org = $org;
+           """,
+           vars
+         ) do
+      {:ok, _} -> :ok
+      {:error, reason} -> if table_missing?(reason, "artifact"), do: :ok, else: {:error, reason}
+    end
+  end
+
+  defp delete_artifacts_for(conn, "assessment", vars) do
+    case UserClient.query(
+           conn,
+           """
+           LET $aid = type::record($table, $key);
+           DELETE artifact WHERE assessment = $aid;
+           """,
+           vars
+         ) do
+      {:ok, _} -> :ok
+      {:error, reason} -> if table_missing?(reason, "artifact"), do: :ok, else: {:error, reason}
+    end
+  end
+
+  defp table_missing?(reason, table) when is_binary(table) do
+    msg =
+      case reason do
+        %{message: m} when is_binary(m) -> m
+        m when is_binary(m) -> m
+        other -> inspect(other)
+      end
+
+    String.contains?(msg, "does not exist") and String.contains?(msg, table)
+  end
 
   def list_answers(conn, assessment_id) when is_binary(assessment_id) do
     {table, key} = split_record_id!(assessment_id)

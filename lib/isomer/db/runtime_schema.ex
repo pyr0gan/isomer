@@ -158,7 +158,14 @@ defmodule Isomer.Db.RuntimeSchema do
               "present=#{inspect(names)}"
     end
 
-    :ok
+    case SurrealDB.query(db, "SELECT count() FROM artifact GROUP ALL;") do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        raise ArgumentError,
+              "artifact listed in INFO FOR DB but SELECT failed: #{inspect(reason)}"
+    end
   end
 
   defp probe_user_pref_write!(db) do
