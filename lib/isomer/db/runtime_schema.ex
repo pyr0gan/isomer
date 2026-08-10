@@ -52,12 +52,39 @@ defmodule Isomer.Db.RuntimeSchema do
     names = user_field_names!(db)
     missing = Enum.reject(@required_user_fields, &(&1 in names))
 
-    if missing == [] do
-      :ok
-    else
+    if missing != [] do
       raise ArgumentError,
             "runtime ensure left user table missing fields #{inspect(missing)}; " <>
               "present=#{inspect(names)}. Check Surreal version / DEFINE FIELD errors."
+    end
+
+    # INFO alone is not enough on Surreal Cloud — fields can appear in INFO FOR TABLE
+    # while SCHEMAFULL writes still fail with "Found field … but no such field exists".
+    probe_user_pref_write!(db)
+    :ok
+  end
+
+  defp probe_user_pref_write!(db) do
+    case SurrealDB.query(db, """
+         DELETE user:isomer_schema_probe;
+         CREATE user:isomer_schema_probe CONTENT {
+           email: "isomer-schema-probe@example.invalid",
+           password: "probe-not-a-login",
+           name: "schema probe",
+           self_role: "other",
+           experience_level: "intermediate",
+           comfort_level: "moderate",
+           updated_at: time::now()
+         };
+         DELETE user:isomer_schema_probe;
+         """) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        raise ArgumentError,
+              "user preference fields are listed in INFO but SCHEMAFULL write failed: " <>
+                inspect(reason)
     end
   end
 
@@ -113,21 +140,17 @@ defmodule Isomer.Db.RuntimeSchema do
         COMMENT "Record-auth subjects for assessment LiveViews";
       """)
 
-    # Literal unions (| NONE) are the supported option/enum form; avoid
-    # `ASSERT $value = NONE OR …` which some Surreal Cloud builds reject.
-    field_ddl = [
-      ~S[DEFINE FIELD OVERWRITE email ON TABLE user TYPE string ASSERT string::is_email($value);],
-      ~S[DEFINE FIELD OVERWRITE name ON TABLE user TYPE option<string>;],
-      ~S[DEFINE FIELD OVERWRITE password ON TABLE user TYPE string;],
-      ~S[DEFINE FIELD OVERWRITE self_role ON TABLE user TYPE "executive" | "product" | "engineering" | "compliance" | "security" | "operations" | "other" | NONE COMMENT "Self-identified organizational role for adaptive guidance copy";],
-      ~S[DEFINE FIELD OVERWRITE experience_level ON TABLE user TYPE "beginner" | "intermediate" | "practitioner" | "expert" | NONE COMMENT "Self-identified familiarity with governance material";],
-      ~S[DEFINE FIELD OVERWRITE comfort_level ON TABLE user TYPE "low" | "moderate" | "high" | NONE COMMENT "Preferred amount of plain-language help in the UI";],
-      ~S[DEFINE FIELD OVERWRITE created_at ON TABLE user TYPE datetime DEFAULT time::now();],
-      ~S[DEFINE FIELD OVERWRITE updated_at ON TABLE user TYPE option<datetime>;],
-      ~S[DEFINE INDEX OVERWRITE user_email ON TABLE user FIELDS email UNIQUE;]
-    ]
-
-    Enum.each(field_ddl, &exec!(db, &1))
+    # Core auth columns first (required for SIGNUP/SIGNIN).
+    Enum.each(
+      [
+        ~S[DEFINE FIELD OVERWRITE email ON user TYPE string ASSERT string::is_email($value);],
+        ~S[DEFINE FIELD OVERWRITE name ON user TYPE option<string>;],
+        ~S[DEFINE FIELD OVERWRITE password ON user TYPE string;],
+        ~S[DEFINE FIELD OVERWRITE created_at ON user TYPE datetime DEFAULT time::now();],
+        ~S[DEFINE INDEX OVERWRITE user_email ON user FIELDS email UNIQUE;]
+      ],
+      &exec!(db, &1)
+    )
 
     :ok =
       exec!(db, """
@@ -154,6 +177,20 @@ defmodule Isomer.Db.RuntimeSchema do
         DURATION FOR TOKEN 1h, FOR SESSION 12h
         COMMENT "Surreal-native auth for Phoenix LiveView sessions";
       """)
+
+    # Guidance prefs AFTER access — plain option<string> (Elixir validates enums).
+    # Literal unions / ASSERT forms have left Surreal Cloud INFO green while
+    # SCHEMAFULL writes still failed with "no such field".
+    Enum.each(
+      [
+        ~S[DEFINE FIELD OVERWRITE self_role ON user TYPE option<string> COMMENT "Self-identified organizational role for adaptive guidance copy";],
+        ~S[DEFINE FIELD OVERWRITE experience_level ON user TYPE option<string> COMMENT "Self-identified familiarity with governance material";],
+        ~S[DEFINE FIELD OVERWRITE comfort_level ON user TYPE option<string> COMMENT "Preferred amount of plain-language help in the UI";],
+        # VALUE refreshes on every write so clients need not SET updated_at.
+        ~S[DEFINE FIELD OVERWRITE updated_at ON user TYPE datetime VALUE time::now() DEFAULT time::now();]
+      ],
+      &exec!(db, &1)
+    )
 
     :ok
   end

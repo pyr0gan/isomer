@@ -45,6 +45,10 @@ even when CI `ensure_runtime` is green — the schema was applied to the other D
 Fix: `fly secrets set SURREAL_URL=… SURREAL_NAMESPACE=… SURREAL_DATABASE=…`
 to match Actions, then re-run **Sync corpus to SurrealDB** (`workflow_dispatch`).
 
+`ensure_runtime` also runs a root write probe (`user:isomer_schema_probe`) for
+pref columns. If that probe fails, CI fails — do not treat INFO-only success as
+enough after schema changes to `user`.
+
 ### Surreal connect timeouts on sign-in
 
 If Fly logs show `auth signin failed … reason=could not connect:
