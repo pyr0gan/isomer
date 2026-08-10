@@ -7,6 +7,7 @@ defmodule IsomerWeb.SessionController do
   alias IsomerWeb.UserAuth
 
   def new(conn, _params) do
+    conn = prevent_auth_caching(conn)
     token = conn.assigns[:surreal_token]
 
     cond do
@@ -36,40 +37,58 @@ defmodule IsomerWeb.SessionController do
   end
 
   def create(conn, %{"email" => email, "password" => password}) do
-    case UserClient.signin!(email, password) do
-      {:ok, %{token: token, email: email, conn: db}} ->
-        UserClient.stop(db)
+    conn = prevent_auth_caching(conn)
 
-        conn
-        |> UserAuth.log_in(token, email)
-        |> put_flash(:info, "Signed in")
-        |> redirect(to: ~p"/orgs")
+    # Idempotent: a racing POST after a successful renew may still reach here
+    # with a valid session if CSRF happened to match.
+    if already_signed_in?(conn) do
+      conn
+      |> put_flash(:info, "Signed in")
+      |> redirect(to: ~p"/orgs")
+    else
+      case UserClient.signin!(email, password) do
+        {:ok, %{token: token, email: email, conn: db}} ->
+          UserClient.stop(db)
 
-      {:error, reason} ->
-        log_auth_failure("signin", email, reason)
-        render(conn, :new, error: format_error(reason), mode: "login")
+          conn
+          |> UserAuth.log_in(token, email)
+          |> put_flash(:info, "Signed in")
+          |> redirect(to: ~p"/orgs")
+
+        {:error, reason} ->
+          log_auth_failure("signin", email, reason)
+          render(conn, :new, error: format_error(reason), mode: "login")
+      end
     end
   end
 
   def signup(conn, params) do
-    attrs = %{
-      "email" => params["email"],
-      "password" => params["password"],
-      "name" => params["name"] || params["email"]
-    }
+    conn = prevent_auth_caching(conn)
 
-    case UserClient.signup!(attrs) do
-      {:ok, %{token: token, email: email, conn: db}} ->
-        UserClient.stop(db)
+    if already_signed_in?(conn) do
+      conn
+      |> put_flash(:info, "Signed in")
+      |> redirect(to: ~p"/orgs")
+    else
+      attrs = %{
+        "email" => params["email"],
+        "password" => params["password"],
+        "name" => params["name"] || params["email"]
+      }
 
-        conn
-        |> UserAuth.log_in(token, email)
-        |> put_flash(:info, "Account created")
-        |> redirect(to: ~p"/orgs")
+      case UserClient.signup!(attrs) do
+        {:ok, %{token: token, email: email, conn: db}} ->
+          UserClient.stop(db)
 
-      {:error, reason} ->
-        log_auth_failure("signup", attrs["email"], reason)
-        render(conn, :new, error: format_error(reason), mode: "signup")
+          conn
+          |> UserAuth.log_in(token, email)
+          |> put_flash(:info, "Account created")
+          |> redirect(to: ~p"/orgs")
+
+        {:error, reason} ->
+          log_auth_failure("signup", attrs["email"], reason)
+          render(conn, :new, error: format_error(reason), mode: "signup")
+      end
     end
   end
 
@@ -126,5 +145,23 @@ defmodule IsomerWeb.SessionController do
 
   defp db_unreachable_message do
     "Could not reach the database (timeout). SurrealDB may be waking from idle — wait a few seconds and try again."
+  end
+
+  defp already_signed_in?(conn) do
+    case conn.assigns[:surreal_token] do
+      token when is_binary(token) and token != "" ->
+        UserAuth.check_token(token) == :valid
+
+      _ ->
+        false
+    end
+  end
+
+  # Login HTML embeds a session-bound CSRF token; caching it across sessions
+  # produces exactly the /session → Forbidden race users hit after sign-in.
+  defp prevent_auth_caching(conn) do
+    conn
+    |> put_resp_header("cache-control", "no-store, no-cache, must-revalidate, max-age=0")
+    |> put_resp_header("pragma", "no-cache")
   end
 end
