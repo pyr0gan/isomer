@@ -71,7 +71,8 @@ jobs:
           SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
         run: |
           # Host + ns/db only — compare with `fly ssh console -a isomer-demo` fingerprint.
-          mix run -e 'IO.puts(Isomer.Config.surreal_target_fingerprint())'
+          # --no-start: fingerprint is env-only; avoid booting Phoenix (live_reload/inotify).
+          mix run --no-start -e 'IO.puts(Isomer.Config.surreal_target_fingerprint())'
 
       - name: Sync corpus to SurrealDB
         env:
