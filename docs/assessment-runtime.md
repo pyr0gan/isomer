@@ -123,9 +123,9 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `OrgLive.Index` | `/orgs` | `SELECT` orgs via `member` where `in = $auth` |
 | `OrgLive.New` | `/orgs/new` | `CREATE org` + `RELATE $auth->member->$org` (role `owner`) |
 | `OrgLive.Show` | `/orgs/:org_id` | Org header; maturity + objective-metrics panels; list assessments for org |
-| `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `domains[]` from corpus; `CREATE assessment` |
-| `AssessmentLive.Show` | `/assessments/:id` | Status, domains, finalize/reopen/delete; links to wizard + artifacts |
-| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `question_set`; upsert `answer`; adaptive help from user prefs; domain metric opt-in |
+| `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `kind` (`domains` / `ruleset` / `combined`), optional ruleset, `domains[]`; `CREATE assessment` |
+| `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + artifacts |
+| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer` (`pack` ruleset or question_set); re-eval classification; adaptive help; domain metric opt-in |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE answer` (`pack_ref=__artifacts__`); download links |
 | `LibraryLive` | `/library` | All templates + generated docs (answer-backed) visible to the user |
 | `SettingsLive` / `SettingsController` | `/settings` | Session-backed guidance prefs + best-effort `UPDATE $auth` name/prefs |
@@ -177,8 +177,8 @@ dyno still reaches a node without the table.
 1. Read `assessment` → `ruleset_id` / `domains`
 2. `SELECT` corpus `ruleset` / `question_set` (content)
 3. Render controls from `kind` (`boolean` / `single` / `multi` / `evidence`)
-4. On change: `UPSERT answer` with user token
-5. When ruleset answers change: run first-match eval (Elixir port now; later `fn::isomer::evaluate_ruleset`) and `UPDATE assessment SET classification=…, activates=…`
+4. On change: `UPSERT answer` with user token (`pack` = `ruleset` or `question_set`)
+5. When ruleset answers change: run first-match eval (Elixir `Isomer.Ruleset.Evaluate`; later `fn::isomer::evaluate_ruleset`) and `UPDATE assessment SET classification=…, activates=…`
 
 Evidence prompts on domain questions open `EvidenceLive.Upload` without leaving the wizard.
 

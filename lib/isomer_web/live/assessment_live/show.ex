@@ -168,6 +168,12 @@ defmodule IsomerWeb.AssessmentLive.Show do
               label={status_label(@assessment["status"])}
             />
             <.badge color="gray" variant="soft" label={@assessment["kind"] || "domains"} />
+            <.badge
+              :if={classification_label(@assessment["classification"])}
+              color="info"
+              variant="soft"
+              label={classification_label(@assessment["classification"])}
+            />
           </.p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -241,6 +247,38 @@ defmodule IsomerWeb.AssessmentLive.Show do
         </.link>
       </.alert>
 
+      <.card :if={@assessment["ruleset_id"] not in [nil, ""]}>
+        <.card_header title="Classification" />
+        <.card_content class="space-y-2">
+          <.p no_margin class="text-slate-700 dark:text-slate-300">
+            Ruleset: <code class="text-sm">{@assessment["ruleset_id"]}</code>
+          </.p>
+          <.p
+            :if={classification_label(@assessment["classification"])}
+            no_margin
+            class="text-slate-700 dark:text-slate-300"
+          >
+            Outcome:
+            <span class="font-medium">{classification_label(@assessment["classification"])}</span>
+          </.p>
+          <.p
+            :if={is_list(@assessment["activates"]) and @assessment["activates"] != []}
+            no_margin
+            class="text-slate-600 dark:text-slate-400"
+          >
+            {length(@assessment["activates"])} activated obligation(s). Full residual coverage
+            arrives with the Results view (roadmap Theme 2.2).
+          </.p>
+          <.p
+            :if={@assessment["classification"] in [nil, %{}]}
+            no_margin
+            class="text-slate-500"
+          >
+            Answer the classification questions in the wizard to compute an outcome.
+          </.p>
+        </.card_content>
+      </.card>
+
       <.card>
         <.card_header title="Domains in this assessment" />
         <.card_content class="space-y-4">
@@ -301,4 +339,12 @@ defmodule IsomerWeb.AssessmentLive.Show do
   defp status_badge_color(status) when status in ["complete", "archived"], do: "success"
   defp status_badge_color("in_progress"), do: "primary"
   defp status_badge_color(_), do: "info"
+
+  defp classification_label(%{"label" => label}) when is_binary(label) and label != "", do: label
+
+  defp classification_label(%{"classification" => label})
+       when is_binary(label) and label != "",
+       do: label
+
+  defp classification_label(_), do: nil
 end

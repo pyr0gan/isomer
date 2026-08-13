@@ -488,6 +488,77 @@ defmodule Isomer.Db.Tenant do
     end
   end
 
+  @doc """
+  Published classification rulesets (`corpus_id`, questions, outcomes, …).
+
+  Record users may SELECT corpus tables after `ensure_runtime`.
+  """
+  def list_rulesets(conn) do
+    case UserClient.query(
+           conn,
+           """
+           SELECT corpus_id, ruleset, framework, status, questions, outcomes, default_outcome
+           FROM ruleset
+           ORDER BY corpus_id ASC;
+           """
+         ) do
+      {:ok, results} -> {:ok, rows_of(results)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc "Fetch one ruleset by corpus id string."
+  def get_ruleset(conn, corpus_id) when is_binary(corpus_id) do
+    case UserClient.query(
+           conn,
+           """
+           SELECT * FROM ruleset WHERE corpus_id = $id LIMIT 1;
+           """,
+           %{"id" => corpus_id}
+         ) do
+      {:ok, results} ->
+        case rows_of(results) do
+          [row | _] -> {:ok, row}
+          [] -> {:error, :not_found}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Persist ruleset evaluation onto an assessment.
+
+  `classification` is an object; `activates` is an array of requirement corpus
+  id strings. Omits neither field (both are written together).
+  """
+  def update_assessment_classification(conn, assessment_id, classification, activates)
+      when is_binary(assessment_id) and is_map(classification) and is_list(activates) do
+    assessment_id = canonicalize_record_id(assessment_id)
+    {table, key} = split_record_id!(assessment_id)
+
+    case UserClient.query(
+           conn,
+           """
+           UPDATE type::record($table, $key) SET
+             classification = $classification,
+             activates = $activates,
+             updated_at = time::now();
+           RETURN SELECT * FROM ONLY type::record($table, $key);
+           """,
+           %{
+             "table" => table,
+             "key" => key,
+             "classification" => classification,
+             "activates" => activates
+           }
+         ) do
+      {:ok, results} -> unwrap_one(results)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   @doc "Current auth user profile (prefs + identity). Never returns password."
   def get_current_user(conn) do
     # Project fields from $auth — do not SELECT * (password hash).

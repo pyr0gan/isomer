@@ -40,16 +40,14 @@ holds root/Vault credentials.
 |---|---|
 | Governance corpus | Annex SL core, ISO/IEC 42001:2023, ISO/IEC 27001:2022, EU AI Act (`2024+2026-1744`), with evidence expectations on requirements |
 | Crosswalks | ISMS↔AIMS and AIMS↔AI Act mapping sets, synced as `maps_to` graph edges |
-| Classification | EU AI Act ruleset with first-match evaluation (`Isomer.Ruleset.Evaluate`) |
+| Classification | EU AI Act ruleset with first-match evaluation (`Isomer.Ruleset.Evaluate`); **UI create + wizard persist** `classification` / `activates` (Theme 2.1) |
 | Maturity model | 13 domain rubrics (L0–L4) and aligned question packs |
-| Assessment UX | Org tenancy, domain assessments, wizard, finalize/reopen, adaptive guidance copy |
+| Assessment UX | Org tenancy; domain / ruleset / combined assessments; wizard; finalize/reopen; adaptive guidance copy |
 | Documents | Template render → Library downloads (Markdown / print-ready HTML); stored as `answer` rows (`pack_ref=__artifacts__`) |
-| Delivery | Corpus sync + runtime schema in CI; Fly demo deploy on `main` |
+| Tooling SBoM | CycloneDX published to Surreal `sbom:isomer_tooling` on sync (`mix isomer.db.sync_sbom`) |
+| Delivery | Corpus sync + runtime schema + SBoM sync in CI; Fly demo deploy on `main`; `mix test` in CI |
 
-Runtime schema already anticipates the next product slices (ruleset fields on
-`assessment`, `evidence`, member roles, `classification` / `activates`). The
-work below is primarily **completing the product surface** on that foundation,
-then deepening content and enterprise access.
+Remaining Theme 2 work is Results and evidence (2.2–2.3), then collaboration and content depth.
 
 ---
 
@@ -79,10 +77,9 @@ exists to exercise mappings.
 Foundation → Assessment completeness → Collaboration → Content depth → Platform
 ```
 
-### 1. Foundation integrity
+### 1. Foundation integrity — shipped
 
-**Intent:** Make storage semantics and automated verification unambiguous so
-feature work does not fork behavior or ship untested regressions.
+**Status:** Complete (merged PR #64).
 
 | Deliverable | Acceptance |
 |---|---|
@@ -95,15 +92,15 @@ feature work does not fork behavior or ship untested regressions.
 **Intent:** Complete classify → answer → evidence → residual work → documents
 without leaving the product.
 
-#### 2.1 Regulatory classification in the assessment UI
+#### 2.1 Regulatory classification in the assessment UI — shipped
 
-Today classification runs from Mix; assessments are created as domain-only.
-Wire the existing ruleset into create + wizard:
+**Status:** Complete in this iteration (create + wizard + Details summary).
 
 - Assessment create supports `domains`, `ruleset`, and `combined`.
-- Wizard presents ruleset questions when `ruleset_id` is set.
+- Wizard presents ruleset questions when `ruleset_id` is set (`pack: "ruleset"`).
 - Answers trigger `Isomer.Ruleset.Evaluate` and persist `classification` and
   `activates` on the assessment.
+- Details shows ruleset id, outcome label, and activated obligation count.
 
 **Acceptance:** A combined assessment can determine applicable AI Act obligations
 and retain that outcome for later views and artifact context.
@@ -184,16 +181,16 @@ After the loop and collaboration paths are solid:
 
 Prefer vertical, reviewable changes. Suggested order:
 
-| Slice | Scope |
-|---|---|
-| A | Artifact model clarity + test harness + CI `mix test` |
-| B | Ruleset / combined assessment create + wizard persistence of classification |
-| C | Results LiveView + navigation |
-| D | Evidence metadata in wizard + metrics |
-| E | Org member administration + role-aware UI |
-| F | Evidence object storage |
-| G | Content batches (questions, templates, mappings) |
-| H | Password recovery and/or SSO |
+| Slice | Scope | Status |
+|---|---|---|
+| A | Artifact model clarity + test harness + CI `mix test` (+ SBoM→Surreal) | Shipped (#64) |
+| B | Ruleset / combined assessment create + wizard persistence of classification | Shipped (this work) |
+| C | Results LiveView + navigation | Next |
+| D | Evidence metadata in wizard + metrics | Pending |
+| E | Org member administration + role-aware UI | Pending |
+| F | Evidence object storage | Pending |
+| G | Content batches (questions, templates, mappings) | Pending |
+| H | Password recovery and/or SSO | Pending |
 
 Do not combine large corpus edits with runtime/LiveView changes in the same
 change set.

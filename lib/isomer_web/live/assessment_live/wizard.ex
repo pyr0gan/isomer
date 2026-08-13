@@ -5,6 +5,9 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   alias Isomer.Db.Tenant
   alias Isomer.GuideCopy
   alias Isomer.Maturity
+  alias Isomer.Ruleset.Evaluate
+
+  @classification_section_id "__classification__"
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -16,7 +19,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           state.domain_sections
           |> List.first()
           |> case do
-            %{id: id} -> MapSet.new([id])
+            %{id: section_id} -> MapSet.new([section_id])
             _ -> MapSet.new()
           end
 
@@ -152,8 +155,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     attrs = %{
       "assessment_id" => socket.assigns.assessment_id,
       "question_id" => qid,
-      "pack" => "question_set",
-      "pack_ref" => question.domain
+      "pack" => question.pack,
+      "pack_ref" => question.pack_ref
     }
 
     case Tenant.delete_answer(socket.assigns.surreal, attrs) do
@@ -161,15 +164,17 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         answers = Map.delete(socket.assigns.answers, qid)
         notes = Map.delete(socket.assigns.evidence_notes, qid)
 
-        {:noreply,
-         socket
-         |> assign(:answers, answers)
-         |> assign(:evidence_notes, notes)
-         |> assign(
-           :domain_sections,
-           refresh_section_progress(socket.assigns.domain_sections, answers)
-         )
-         |> assign(:error, nil)}
+        socket =
+          socket
+          |> assign(:answers, answers)
+          |> assign(:evidence_notes, notes)
+          |> assign(
+            :domain_sections,
+            refresh_section_progress(socket.assigns.domain_sections, answers)
+          )
+          |> assign(:error, nil)
+
+        {:noreply, maybe_reevaluate_classification(socket)}
 
       {:error, reason} ->
         {:noreply, assign(socket, error: format_error(reason))}
@@ -181,8 +186,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       "org_id" => socket.assigns.org_id,
       "assessment_id" => socket.assigns.assessment_id,
       "question_id" => qid,
-      "pack" => "question_set",
-      "pack_ref" => question.domain,
+      "pack" => question.pack,
+      "pack_ref" => question.pack_ref,
       "value" => pack_stored_value(coerced, evidence_note)
     }
 
@@ -200,8 +205,10 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
             refresh_section_progress(socket.assigns.domain_sections, answers)
           )
           |> assign(:error, nil)
+          |> maybe_mark_in_progress()
+          |> maybe_reevaluate_classification()
 
-        {:noreply, maybe_mark_in_progress(socket)}
+        {:noreply, socket}
 
       {:error, reason} ->
         {:noreply, assign(socket, error: format_error(reason))}
@@ -223,6 +230,67 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     else
       socket
     end
+  end
+
+  defp maybe_reevaluate_classification(socket) do
+    ruleset = socket.assigns[:ruleset]
+
+    if is_nil(ruleset) do
+      socket
+    else
+      ruleset_answers =
+        socket.assigns.questions
+        |> Enum.filter(&(&1.pack == "ruleset"))
+        |> Enum.reduce(%{}, fn q, acc ->
+          case Map.fetch(socket.assigns.answers, q.id) do
+            {:ok, value} -> Map.put(acc, q.id, value)
+            :error -> acc
+          end
+        end)
+
+      result = Evaluate.evaluate(ruleset_doc(ruleset), ruleset_answers, %{})
+
+      classification = %{
+        "label" => result["classification"],
+        "matched" => result["matched"],
+        "outcome_index" => result["outcome_index"],
+        "note" => result["note"],
+        "ruleset" => result["ruleset"],
+        "framework" => result["framework"]
+      }
+
+      activates =
+        result["activates"]
+        |> Enum.map(& &1["id"])
+        |> Enum.reject(&is_nil/1)
+
+      case Tenant.update_assessment_classification(
+             socket.assigns.surreal,
+             socket.assigns.assessment_id,
+             classification,
+             activates
+           ) do
+        {:ok, assessment} ->
+          assign(socket,
+            assessment: assessment,
+            classification: classification,
+            activates: activates
+          )
+
+        {:error, _} ->
+          socket
+      end
+    end
+  end
+
+  defp ruleset_doc(row) when is_map(row) do
+    %{
+      "ruleset" => row["ruleset"] || row["corpus_id"],
+      "framework" => row["framework"],
+      "outcomes" => row["outcomes"] || [],
+      "default_outcome" => row["default_outcome"],
+      "questions" => row["questions"] || []
+    }
   end
 
   defp persist_domain_metric(socket, domain_id, attrs) do
@@ -254,9 +322,12 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   defp load_state(surreal, id) do
     with {:ok, assessment} <- Tenant.get_assessment(surreal, id),
          {:ok, sets} <- Tenant.list_question_sets(surreal),
-         {:ok, answers} <- Tenant.list_answers(surreal, id) do
+         {:ok, answers} <- Tenant.list_answers(surreal, id),
+         {:ok, ruleset} <- maybe_load_ruleset(surreal, assessment) do
       domains = assessment["domains"] || []
-      questions = project_questions(sets, domains)
+      domain_questions = project_domain_questions(sets, domains)
+      ruleset_questions = project_ruleset_questions(ruleset)
+      questions = ruleset_questions ++ domain_questions
       domain_metrics = normalize_domain_metrics(assessment["domain_metrics"])
 
       {answer_map, evidence_notes} =
@@ -270,7 +341,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
       domain_sections =
         questions
-        |> group_by_domain(answer_map)
+        |> group_sections(answer_map)
         |> attach_metric_flags(domain_metrics)
 
       set_domains =
@@ -289,6 +360,9 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          assessment: assessment,
          assessment_id: id,
          org_id: org_id,
+         ruleset: ruleset,
+         classification: assessment["classification"],
+         activates: assessment["activates"] || [],
          questions: questions,
          domain_sections: domain_sections,
          domain_metrics: domain_metrics,
@@ -302,6 +376,20 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
        }}
     end
   end
+
+  defp maybe_load_ruleset(_surreal, %{"ruleset_id" => id})
+       when not is_binary(id) or id == "",
+       do: {:ok, nil}
+
+  defp maybe_load_ruleset(surreal, %{"ruleset_id" => id}) when is_binary(id) do
+    case Tenant.get_ruleset(surreal, id) do
+      {:ok, row} -> {:ok, row}
+      {:error, :not_found} -> {:ok, nil}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp maybe_load_ruleset(_surreal, _), do: {:ok, nil}
 
   defp normalize_domain_metrics(metrics) when is_map(metrics) and not is_struct(metrics),
     do: metrics
@@ -385,6 +473,19 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
       <.alert
+        :if={classification_label(@classification)}
+        color="info"
+        variant="soft"
+        with_icon
+        class="mb-4"
+      >
+        Classification: <span class="font-medium">{classification_label(@classification)}</span>
+        <%= if is_list(@activates) and @activates != [] do %>
+          · {length(@activates)} activated obligation(s)
+        <% end %>
+      </.alert>
+
+      <.alert
         :if={@finalized}
         color="warning"
         variant="soft"
@@ -451,7 +552,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         <.card variant="muted">
           <.card_content>
             <.p no_margin class="text-slate-600 dark:text-slate-400">
-              No questions for the selected domains.
+              No questions for the selected domains or ruleset.
             </.p>
           </.card_content>
         </.card>
@@ -492,7 +593,11 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                 />
               </button>
 
-              <label class="wizard-domain-collect" title="Include this domain in org objective metrics">
+              <label
+                :if={section.collectable}
+                class="wizard-domain-collect"
+                title="Include this domain in org objective metrics"
+              >
                 <input
                   type="checkbox"
                   class="wizard-domain-collect__input"
@@ -642,6 +747,22 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                                 )}
                               </select>
                             </div>
+                          <% "single" -> %>
+                            <div class="answer-select">
+                              <label class="answer-select__label" for={"answer-select-#{q.id}"}>
+                                Answer
+                              </label>
+                              <select
+                                id={"answer-select-#{q.id}-#{to_string(@answers[q.id] || "")}"}
+                                name="value"
+                                class="answer-select__control"
+                              >
+                                {Phoenix.HTML.Form.options_for_select(
+                                  [{"—", ""} | Enum.map(q.options || [], &{&1, &1})],
+                                  to_string(@answers[q.id] || "")
+                                )}
+                              </select>
+                            </div>
                           <% "multi" -> %>
                             <.field
                               type="text"
@@ -709,7 +830,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     """
   end
 
-  defp project_questions(sets, domains) do
+  defp project_domain_questions(sets, domains) do
     domain_set = MapSet.new(domains)
 
     sets
@@ -725,35 +846,74 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           evidence_prompt: q["evidence_prompt"],
           level: q["level"],
           kind: q["kind"] || "text",
-          domain: domain
+          options: q["options"] || [],
+          domain: domain,
+          pack: "question_set",
+          pack_ref: domain,
+          collectable: true
         }
       end)
     end)
   end
 
-  defp group_by_domain(questions, answers) do
+  defp project_ruleset_questions(nil), do: []
+
+  defp project_ruleset_questions(ruleset) when is_map(ruleset) do
+    pack_ref = ruleset["corpus_id"] || ruleset["ruleset"]
+
+    (ruleset["questions"] || [])
+    |> Enum.map(fn q ->
+      %{
+        id: q["id"],
+        ask: question_ask(q),
+        evidence_prompt: q["evidence_prompt"] || q["help"],
+        level: nil,
+        kind: q["kind"] || "text",
+        options: q["options"] || [],
+        domain: @classification_section_id,
+        pack: "ruleset",
+        pack_ref: pack_ref,
+        collectable: false
+      }
+    end)
+  end
+
+  defp group_sections(questions, answers) do
     catalog = Map.new(Domains.catalog(), &{&1["id"], &1})
 
     questions
     |> Enum.group_by(& &1.domain)
     |> Enum.map(fn {domain_id, qs} ->
-      meta = Map.get(catalog, domain_id, %{})
       counts = progress_counts(qs, answers)
+      collectable? = Enum.any?(qs, & &1.collectable)
+
+      {label, description} =
+        if domain_id == @classification_section_id do
+          {"Classification", "Regulatory classification questions for this assessment."}
+        else
+          meta = Map.get(catalog, domain_id, %{})
+
+          {meta["label"] || Domains.sentence_case(domain_id), meta["description"] || ""}
+        end
 
       %{
         id: domain_id,
-        label: meta["label"] || Domains.sentence_case(domain_id),
-        description: meta["description"] || "",
+        label: label,
+        description: description,
         questions: qs,
         total: counts.total,
         answered: counts.answered,
         yes: counts.yes,
         no: counts.no,
-        unanswered: counts.unanswered
+        unanswered: counts.unanswered,
+        collectable: collectable?
       }
     end)
     |> Enum.sort_by(fn section ->
-      Enum.find_index(Domains.catalog(), &(&1["id"] == section.id)) || 999
+      cond do
+        section.id == @classification_section_id -> -1
+        true -> Enum.find_index(Domains.catalog(), &(&1["id"] == section.id)) || 999
+      end
     end)
   end
 
@@ -864,6 +1024,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     normalize_loaded_value("boolean", value)
   end
 
+  defp coerce_value("single", value, _params) do
+    case unwrap_param(value) do
+      nil -> nil
+      "" -> nil
+      other -> to_string(other)
+    end
+  end
+
   defp coerce_value("multi", value, _params) do
     value
     |> unwrap_param()
@@ -874,6 +1042,13 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   defp coerce_value(_kind, value, _params), do: unwrap_param(value)
+
+  defp classification_label(%{"label" => label}) when is_binary(label) and label != "", do: label
+
+  defp classification_label(%{"classification" => label}) when is_binary(label) and label != "",
+    do: label
+
+  defp classification_label(_), do: nil
 
   # Prefer the last non-empty entry when duplicate form fields are submitted.
   defp unwrap_param(value) when is_list(value) do
