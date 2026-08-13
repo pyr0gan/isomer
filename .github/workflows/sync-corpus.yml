@@ -86,6 +86,19 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: mix isomer.db.sync
 
+      - name: Publish CycloneDX SBoM to SurrealDB
+        env:
+          SURREAL_URL: ${{ secrets.SURREAL_URL }}
+          SURREAL_NAMESPACE: ${{ secrets.SURREAL_NAMESPACE }}
+          SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
+          SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
+          VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: mix isomer.db.sync_sbom
+
       # Tenant/auth DDL (user prefs, artifact table, corpus read grants). Safe to
       # re-run; schema changes after a content PR are otherwise invisible to the demo.
       # Fails the job if INFO FOR TABLE user is missing comfort_level / etc.

@@ -1,13 +1,38 @@
 defmodule Isomer.Db.Tenant do
-  @moduledoc "Surreal queries for orgs, assessments, and wizard answers (user JWT)."
+  @moduledoc """
+  Surreal queries for orgs, assessments, answers, and generated documents (user JWT).
+
+  ## Generated documents (supported storage)
+
+  Rendered templates are **not** written to the standalone `artifact` table.
+  They are stored as `answer` rows with:
+
+  - `pack` = `"question_set"`
+  - `pack_ref` = `"__artifacts__"`
+  - `value` = `%{template_id, title, body, format, merge_values}`
+
+  `Isomer.Db.RuntimeSchema` still `DEFINE`s table `artifact` for forward
+  schema readiness and root probes, but LiveView / Library / downloads only
+  use this answer-backed path. That avoids Surreal Cloud multi-IP lag where
+  Actions can apply `DEFINE TABLE artifact` while the Fly dyno still hits a
+  compute node without the table ("table does not exist").
+
+  Org and assessment deletes remove these rows via `DELETE answer …` (same as
+  questionnaire answers). A best-effort `DELETE artifact …` may run afterward
+  for any leftover standalone-table rows and must never fail the teardown.
+  """
 
   alias Isomer.Db.UserClient
   alias Isomer.GuideCopy
 
-  # Generated docs live as answer rows (pack_ref below) so they work when Surreal
-  # Cloud has not applied a standalone `artifact` table on the dyno's compute node.
   @artifact_pack "question_set"
   @artifact_pack_ref "__artifacts__"
+
+  @doc "Answer `pack_ref` used for generated documents (Library / downloads)."
+  def artifact_pack_ref, do: @artifact_pack_ref
+
+  @doc "Answer `pack` used for generated documents."
+  def artifact_pack, do: @artifact_pack
 
   def list_orgs(conn) do
     case UserClient.query(conn, "SELECT * FROM org ORDER BY name ASC;") do
@@ -123,35 +148,37 @@ defmodule Isomer.Db.Tenant do
     # member_org_ids_with_roles(["owner"]). Removing members first would deny
     # the org delete. Clean up member edges afterward.
     #
-    # artifact is deleted in its own query so a missing table (Surreal Cloud LB
-    # lag after ensure) cannot block org teardown.
-    with :ok <- delete_artifacts_for(conn, "org", vars),
-         {:ok, results} <-
-           UserClient.query(
-             conn,
-             """
-             LET $org = type::record($table, $key);
-             DELETE evidence WHERE org = $org;
-             DELETE answer WHERE org = $org;
-             DELETE assessment WHERE org = $org;
-             DELETE $org;
-             DELETE member WHERE out = $org;
-             RETURN SELECT * FROM ONLY $org;
-             """,
-             vars
-           ) do
-      case useful_result(results) do
-        row when is_map(row) and not is_struct(row) ->
-          {:error, "Organization could not be deleted (still present). Are you the owner?"}
+    # Generated docs are answer rows (`pack_ref=__artifacts__`) and go away with
+    # DELETE answer. Best-effort standalone `artifact` cleanup must not block.
+    case UserClient.query(
+           conn,
+           """
+           LET $org = type::record($table, $key);
+           DELETE evidence WHERE org = $org;
+           DELETE answer WHERE org = $org;
+           DELETE assessment WHERE org = $org;
+           DELETE $org;
+           DELETE member WHERE out = $org;
+           RETURN SELECT * FROM ONLY $org;
+           """,
+           vars
+         ) do
+      {:ok, results} ->
+        _ = best_effort_delete_standalone_artifacts(conn, "org", vars)
 
-        [row | _] when is_map(row) and not is_struct(row) ->
-          {:error, "Organization could not be deleted (still present). Are you the owner?"}
+        case useful_result(results) do
+          row when is_map(row) and not is_struct(row) ->
+            {:error, "Organization could not be deleted (still present). Are you the owner?"}
 
-        _ ->
-          :ok
-      end
-    else
-      {:error, reason} -> {:error, reason}
+          [row | _] when is_map(row) and not is_struct(row) ->
+            {:error, "Organization could not be deleted (still present). Are you the owner?"}
+
+          _ ->
+            :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -279,32 +306,34 @@ defmodule Isomer.Db.Tenant do
     {table, key} = split_record_id!(assessment_id)
     vars = %{"table" => table, "key" => key}
 
-    with :ok <- delete_artifacts_for(conn, "assessment", vars),
-         {:ok, results} <-
-           UserClient.query(
-             conn,
-             """
-             LET $aid = type::record($table, $key);
-             LET $answer_ids = (SELECT VALUE id FROM answer WHERE assessment = $aid);
-             DELETE evidence WHERE answer IN $answer_ids;
-             DELETE answer WHERE assessment = $aid;
-             DELETE $aid;
-             RETURN SELECT * FROM ONLY $aid;
-             """,
-             vars
-           ) do
-      case useful_result(results) do
-        row when is_map(row) and not is_struct(row) ->
-          {:error, "Assessment could not be deleted (still present)."}
+    case UserClient.query(
+           conn,
+           """
+           LET $aid = type::record($table, $key);
+           LET $answer_ids = (SELECT VALUE id FROM answer WHERE assessment = $aid);
+           DELETE evidence WHERE answer IN $answer_ids;
+           DELETE answer WHERE assessment = $aid;
+           DELETE $aid;
+           RETURN SELECT * FROM ONLY $aid;
+           """,
+           vars
+         ) do
+      {:ok, results} ->
+        _ = best_effort_delete_standalone_artifacts(conn, "assessment", vars)
 
-        [row | _] when is_map(row) and not is_struct(row) ->
-          {:error, "Assessment could not be deleted (still present)."}
+        case useful_result(results) do
+          row when is_map(row) and not is_struct(row) ->
+            {:error, "Assessment could not be deleted (still present)."}
 
-        _ ->
-          :ok
-      end
-    else
-      {:error, reason} -> {:error, reason}
+          [row | _] when is_map(row) and not is_struct(row) ->
+            {:error, "Assessment could not be deleted (still present)."}
+
+          _ ->
+            :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -608,11 +637,6 @@ defmodule Isomer.Db.Tenant do
     end
   end
 
-  # Generated docs are stored as answer rows so Library/delete work even when
-  # Surreal Cloud has not applied the standalone `artifact` table DDL on the
-  # compute node the dyno reaches (DEFINE can pass in Actions while Fly still
-  # sees "table does not exist").
-
   def list_artifacts(conn) do
     case UserClient.query(
            conn,
@@ -797,7 +821,35 @@ defmodule Isomer.Db.Tenant do
   defp blank_to_nil(value) when is_binary(value), do: String.trim(value)
   defp blank_to_nil(value), do: value
 
-  defp delete_artifacts_for(_conn, _scope, _vars), do: :ok
+  # Optional cleanup if a compute node has the standalone `artifact` table and
+  # leftover rows; ignore "table does not exist" and similar.
+  defp best_effort_delete_standalone_artifacts(conn, "org", vars) do
+    case UserClient.query(
+           conn,
+           """
+           LET $org = type::record($table, $key);
+           DELETE artifact WHERE org = $org;
+           """,
+           vars
+         ) do
+      {:ok, _} -> :ok
+      {:error, _} -> :ok
+    end
+  end
+
+  defp best_effort_delete_standalone_artifacts(conn, "assessment", vars) do
+    case UserClient.query(
+           conn,
+           """
+           LET $aid = type::record($table, $key);
+           DELETE artifact WHERE assessment = $aid;
+           """,
+           vars
+         ) do
+      {:ok, _} -> :ok
+      {:error, _} -> :ok
+    end
+  end
 
   def list_answers(conn, assessment_id) when is_binary(assessment_id) do
     {table, key} = split_record_id!(assessment_id)

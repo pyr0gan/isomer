@@ -43,7 +43,7 @@ holds root/Vault credentials.
 | Classification | EU AI Act ruleset with first-match evaluation (`Isomer.Ruleset.Evaluate`) |
 | Maturity model | 13 domain rubrics (L0–L4) and aligned question packs |
 | Assessment UX | Org tenancy, domain assessments, wizard, finalize/reopen, adaptive guidance copy |
-| Documents | Template render → Library downloads (Markdown / print-ready HTML) |
+| Documents | Template render → Library downloads (Markdown / print-ready HTML); stored as `answer` rows (`pack_ref=__artifacts__`) |
 | Delivery | Corpus sync + runtime schema in CI; Fly demo deploy on `main` |
 
 Runtime schema already anticipates the next product slices (ruleset fields on
@@ -86,7 +86,7 @@ feature work does not fork behavior or ship untested regressions.
 
 | Deliverable | Acceptance |
 |---|---|
-| Single supported artifact persistence model | Library and assessment document flows use one documented store; any Surreal Cloud workaround is explicit in `AGENTS.md` and runtime docs |
+| Single supported artifact persistence model | Library and assessment document flows use answer-backed storage (`pack_ref=__artifacts__`); standalone `artifact` table is DEFINE/forward-only; documented in AGENTS + assessment-runtime |
 | Test harness + CI execution | `mix test` runs in CI after lint; `test/support` matches `mix.exs`; default suite does not require a live Surreal instance |
 | Core pure-logic coverage | Ruleset evaluation, org metrics, and template render have fixture-based unit tests |
 

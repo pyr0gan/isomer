@@ -4,7 +4,7 @@ defmodule Isomer.MixProject do
   def project do
     [
       app: :isomer,
-      version: "0.1.1",
+      version: "0.1.2",
       elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -31,6 +31,7 @@ defmodule Isomer.MixProject do
         "isomer.ruleset.eval": :dev,
         "isomer.db.ping": :dev,
         "isomer.db.sync": :dev,
+        "isomer.db.sync_sbom": :dev,
         "isomer.db.ingest_sample": :dev,
         "isomer.db.ensure_runtime": :dev,
         "isomer.db.reset_password": :dev,

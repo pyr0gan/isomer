@@ -77,11 +77,14 @@ defmodule Isomer.Db.RuntimeSchema do
   end
 
   @doc """
-  Proves guidance prefs + `artifact` are usable under **record** auth (not just root).
+  Proves guidance prefs and **answer-backed artifact storage** are usable under
+  **record** auth (not just root).
 
   Root INFO / root CREATE can look green while LiveView JWT sessions still fail
-  with "no such field" or "table does not exist". Called from the Mix task after
-  `ensure!/1`.
+  with "no such field" or "table does not exist". The record-auth probe
+  `SELECT`s `answer` with `pack_ref=__artifacts__` — the supported generated-doc
+  path — rather than requiring writes to the standalone `artifact` table.
+  Called from the Mix task after `ensure!/1`.
   """
   def assert_record_runtime!(root_db) do
     email =

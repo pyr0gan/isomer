@@ -40,12 +40,9 @@ jobs:
       - name: Lint corpus
         run: mix lint
 
+      - name: Unit tests
+        run: mix test
+
       - name: Generate CycloneDX SBoM
         run: mix isomer.sbom --pretty
-
-      - name: Upload CycloneDX SBoM
-        uses: actions/upload-artifact@v6
-        with:
-          name: isomer-cyclonedx-sbom
-          path: bom.cdx.json
 

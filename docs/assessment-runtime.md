@@ -58,9 +58,9 @@ user ──member──▶ org
 | `org` | Tenant (the organization being assessed). |
 | `member` | `TYPE RELATION IN user OUT org` + `role`. |
 | `assessment` | One questionnaire run for an org. |
-| `answer` | One answer inside an assessment (audit row). |
+| `answer` | Questionnaire answers **and** generated documents (`pack_ref = "__artifacts__"`; see Artifacts below). |
 | `evidence` | File/note metadata attached to an answer (upload path; separate from generated docs). |
-| `artifact` | Rendered document from a corpus `template` for an assessment (Markdown body + merge values). |
+| `artifact` | **Schema only (forward readiness).** `RuntimeSchema` defines this table and root probes may `SELECT` it, but the app does **not** write here yet. |
 
 Corpus tables (`question_set`, `ruleset`, `requirement`, `maps_to`, …) stay
 owned by sync. Runtime ensure grants **select** to authenticated record users;
@@ -126,10 +126,10 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `domains[]` from corpus; `CREATE assessment` |
 | `AssessmentLive.Show` | `/assessments/:id` | Status, domains, finalize/reopen/delete; links to wizard + artifacts |
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `question_set`; upsert `answer`; adaptive help from user prefs; domain metric opt-in |
-| `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE artifact`; download links |
-| `LibraryLive` | `/library` | All templates + artifacts visible to the user |
+| `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE answer` (`pack_ref=__artifacts__`); download links |
+| `LibraryLive` | `/library` | All templates + generated docs (answer-backed) visible to the user |
 | `SettingsLive` / `SettingsController` | `/settings` | Session-backed guidance prefs + best-effort `UPDATE $auth` name/prefs |
-| `ArtifactController` | `/artifacts/:id/download` | Fetch `artifact` with user JWT; Markdown or print-ready HTML (Save as PDF) |
+| `ArtifactController` | `/artifacts/:id/download` | Fetch generated doc (`answer` id) with user JWT; Markdown or print-ready HTML (Save as PDF) |
 
 ### Planned (not yet routed)
 
@@ -149,11 +149,24 @@ changes. Prefs can be updated any time as comfort grows.
 
 ### Artifacts (template → document)
 
+**Supported persistence:** generated documents are `answer` rows with
+`pack = "question_set"` and `pack_ref = "__artifacts__"`. Document fields live
+in `value` (`template_id`, `title`, `body`, `format`, `merge_values`).
+`Isomer.Db.Tenant` create/list/get/delete APIs are the only write path used by
+LiveView and downloads.
+
+The standalone Surreal table `artifact` is still defined by
+`mix isomer.db.ensure_runtime` so schema can converge across Surreal Cloud
+compute nodes, but the application does not depend on it for Library or
+downloads. That split exists because DEFINE can succeed in Actions while a Fly
+dyno still reaches a node without the table.
+
 1. Corpus `template` rows (from `templates/*.md` via sync) declare `merge_fields`.
 2. Assessment Artifacts page collects values (org name prefilled) and runs
    `Isomer.Artifacts.Render`.
-3. Result stored on tenant `artifact` (`body` Markdown, `merge_values`, links to
-   `org` + `assessment`). Cascades on assessment/org delete.
+3. Result stored via `Tenant.create_artifact/2` as an `answer` row (shape above).
+   Org/assessment delete removes these with other answers; optional best-effort
+   cleanup may also `DELETE` leftover standalone-table rows.
 4. Downloads: `.md` attachment; `format=pdf` serves print-ready HTML for browser
    Print → Save as PDF (no headless Chrome on the dyno).
 

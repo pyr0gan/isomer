@@ -61,6 +61,56 @@ defmodule Isomer.OrgMetrics do
   def sparkline_ready?(_), do: false
 
   @doc """
+  Scores questions against answer and evidence-note maps.
+
+  Each question is a map with `:id`, `:kind`, and optional `:evidence_prompt`.
+  `answers` and `notes` are keyed by question id. Returns
+  `%{yes_pct, unanswered, evidence_pct}` (`yes_pct` / `evidence_pct` may be nil
+  when there is nothing to score).
+  """
+  def score_questions(questions, answers, notes)
+      when is_list(questions) and is_map(answers) and is_map(notes) do
+    total = length(questions)
+
+    {yes, unanswered, evidence_needed, evidence_have} =
+      Enum.reduce(questions, {0, 0, 0, 0}, fn q, {y, u, en, eh} ->
+        bucket = answer_bucket(q.kind, Map.get(answers, q.id, :missing))
+        y = if bucket == :yes, do: y + 1, else: y
+        u = if bucket == :unanswered, do: u + 1, else: u
+
+        {en, eh} =
+          if present?(q.evidence_prompt) do
+            note = Map.get(notes, q.id, "")
+            {en + 1, if(present?(note), do: eh + 1, else: eh)}
+          else
+            {en, eh}
+          end
+
+        {y, u, en, eh}
+      end)
+
+    yes_pct =
+      if total > 0 do
+        round(100 * yes / total)
+      else
+        nil
+      end
+
+    evidence_pct =
+      if evidence_needed > 0 do
+        round(100 * evidence_have / evidence_needed)
+      else
+        nil
+      end
+
+    %{
+      yes_pct: yes_pct,
+      unanswered: unanswered,
+      evidence_pct: evidence_pct
+    }
+  end
+
+  @doc """
   SVG polyline points for a numeric series (nil skipped). Returns `nil` when
   fewer than two finite values.
   """
@@ -196,47 +246,6 @@ defmodule Isomer.OrgMetrics do
   end
 
   defp unpack_value(value), do: {value, ""}
-
-  defp score_questions(questions, answers, notes) do
-    total = length(questions)
-
-    {yes, unanswered, evidence_needed, evidence_have} =
-      Enum.reduce(questions, {0, 0, 0, 0}, fn q, {y, u, en, eh} ->
-        bucket = answer_bucket(q.kind, Map.get(answers, q.id, :missing))
-        y = if bucket == :yes, do: y + 1, else: y
-        u = if bucket == :unanswered, do: u + 1, else: u
-
-        {en, eh} =
-          if present?(q.evidence_prompt) do
-            note = Map.get(notes, q.id, "")
-            {en + 1, if(present?(note), do: eh + 1, else: eh)}
-          else
-            {en, eh}
-          end
-
-        {y, u, en, eh}
-      end)
-
-    yes_pct =
-      if total > 0 do
-        round(100 * yes / total)
-      else
-        nil
-      end
-
-    evidence_pct =
-      if evidence_needed > 0 do
-        round(100 * evidence_have / evidence_needed)
-      else
-        nil
-      end
-
-    %{
-      yes_pct: yes_pct,
-      unanswered: unanswered,
-      evidence_pct: evidence_pct
-    }
-  end
 
   defp domain_time_rows(domains, metrics, catalog) do
     label_index = Map.new(catalog, &{&1["id"], &1["label"] || Domains.sentence_case(&1["id"])})
