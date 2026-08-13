@@ -40,6 +40,9 @@ jobs:
       - name: Lint corpus
         run: mix lint
 
+      - name: Unit tests
+        run: mix test
+
       - name: Generate CycloneDX SBoM
         run: mix isomer.sbom --pretty
 

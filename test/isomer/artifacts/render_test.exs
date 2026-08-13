@@ -35,4 +35,9 @@ defmodule Isomer.Artifacts.RenderTest do
     assert html =~ "&lt;script&gt;"
     refute html =~ "<script>"
   end
+
+  test "filename_stem sanitizes titles" do
+    assert Render.filename_stem("AI Policy (v1)") == "ai-policy-v1"
+    assert Render.filename_stem("@@@") == "artifact"
+  end
 end
