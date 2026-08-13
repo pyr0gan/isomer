@@ -31,6 +31,7 @@ defmodule Isomer.MixProject do
         "isomer.ruleset.eval": :dev,
         "isomer.db.ping": :dev,
         "isomer.db.sync": :dev,
+        "isomer.db.sync_sbom": :dev,
         "isomer.db.ingest_sample": :dev,
         "isomer.db.ensure_runtime": :dev,
         "isomer.db.reset_password": :dev,

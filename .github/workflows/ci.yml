@@ -46,9 +46,6 @@ jobs:
       - name: Generate CycloneDX SBoM
         run: mix isomer.sbom --pretty
 
-      - name: Upload CycloneDX SBoM
-        uses: actions/upload-artifact@v6
-        with:
-          name: isomer-cyclonedx-sbom
-          path: bom.cdx.json
+      # SBoM is published to SurrealDB on main via sync-corpus.yml
+      # (`mix isomer.db.sync_sbom`), not as a GitHub Actions artifact.
 

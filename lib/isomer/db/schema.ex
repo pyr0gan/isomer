@@ -15,6 +15,8 @@ defmodule Isomer.Db.Schema do
       DEFINE TABLE IF NOT EXISTS question_set SCHEMALESS;
       DEFINE TABLE IF NOT EXISTS template SCHEMALESS;
       DEFINE TABLE IF NOT EXISTS sync_run SCHEMALESS;
+      DEFINE TABLE IF NOT EXISTS sbom SCHEMALESS
+        COMMENT "CycloneDX SBoM for Mix tooling; current record sbom:isomer_tooling";
 
       DEFINE TABLE OVERWRITE maps_to
         TYPE RELATION IN requirement OUT requirement ENFORCED

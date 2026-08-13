@@ -161,6 +161,7 @@ mix isomer.ruleset.eval \
 | `mix isomer.db.ping` | Check Vault + Surreal connectivity |
 | `mix isomer.db.sync` | Load corpus into Surreal; remove stale repo-managed rows |
 | `mix isomer.db.sync --dry-run` | Show counts without writing |
+| `mix isomer.db.sync_sbom` | Upsert CycloneDX SBoM when deps changed |
 | `mix isomer.db.ingest_sample` | Write one sample requirement (sanity check) |
 | `mix isomer.db.ensure_runtime` | Auth + org/assessment tables for the questionnaire |
 
@@ -174,9 +175,14 @@ CycloneDX JSON (dev dependency; do not run with `MIX_ENV=prod`):
 ```bash
 mix isomer.sbom --pretty
 # writes bom.cdx.json
+
+# Publish to Surreal (skips write when unchanged):
+mix isomer.db.sync_sbom
 ```
 
-CI also generates this file and uploads it as an artifact.
+On `main`, `sync-corpus.yml` runs `mix isomer.db.sync_sbom` after corpus sync.
+The current bill of materials lives at Surreal record `sbom:isomer_tooling`
+(not a GitHub Actions artifact).
 
 </details>
 

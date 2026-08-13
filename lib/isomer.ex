@@ -12,6 +12,7 @@ defmodule Isomer do
     mix isomer.db.sync [--dry-run] [--no-prune]
     mix isomer.db.ensure_runtime
     mix isomer.sbom [--pretty]
+    mix isomer.db.sync_sbom [--dry-run] [--file PATH]
     mix phx.server
   """
 
