@@ -133,7 +133,7 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 
 ### Planned (not yet routed)
 
-Sequencing and acceptance criteria: [`roadmap.md`](roadmap.md) (Phase 1).
+Product sequencing: [`roadmap.md`](roadmap.md) (Theme 2 — assessment completeness).
 
 | LiveView | Route | Notes |
 |---|---|---|
