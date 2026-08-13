@@ -2,7 +2,7 @@ defmodule Isomer.Config do
   @moduledoc "Environment configuration for SurrealDB + Vault."
 
   def load_dotenv! do
-    path = Path.join(Isomer.root(), ".env")
+    path = Isomer.Paths.join!(Isomer.root(), ".env")
 
     if File.exists?(path) do
       path

@@ -22,12 +22,12 @@ defmodule Isomer.Domains do
     candidates =
       case :code.priv_dir(:isomer) do
         dir when is_list(dir) ->
-          [Path.join(dir, "vocab/domains.yaml")]
+          [Isomer.Paths.join!(List.to_string(dir), "vocab/domains.yaml")]
 
         _ ->
           []
       end ++
-        [Path.join(Isomer.root(), "vocab/domains.yaml")]
+        [Isomer.Paths.join!(Isomer.root(), "vocab/domains.yaml")]
 
     Enum.find(candidates, &File.exists?/1)
   end

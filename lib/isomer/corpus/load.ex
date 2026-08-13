@@ -1,9 +1,11 @@
 defmodule Isomer.Corpus.Load do
   @moduledoc "Load on-disk corpus into maps for sync / evaluation."
 
+  alias Isomer.Paths
   alias Isomer.YAML
 
   def load(root \\ Isomer.root()) do
+    root = Paths.expand_root!(root)
     domains = load_domains(root)
     frameworks = load_frameworks(root)
     requirements = load_requirements(root)
@@ -96,11 +98,11 @@ defmodule Isomer.Corpus.Load do
   def framework_version_from_id(_), do: nil
 
   defp load_domains(root) do
-    path = Path.join(root, "vocab/domains.yaml")
+    path = Paths.join!(root, "vocab/domains.yaml")
 
     if File.exists?(path) do
       for d <- YAML.read!(path)["domains"] || [] do
-        Map.put(d, "source_path", Path.relative_to(path, root))
+        Map.put(d, "source_path", Paths.relative!(path, root))
       end
     else
       []
@@ -108,44 +110,44 @@ defmodule Isomer.Corpus.Load do
   end
 
   defp load_frameworks(root) do
-    for path <- sorted(Path.join(root, "frameworks/*/*/framework.yaml")) do
-      path |> YAML.read!() |> Map.put("source_path", Path.relative_to(path, root))
+    for path <- Paths.wildcard!(root, "frameworks/*/*/framework.yaml") do
+      path |> YAML.read!() |> Map.put("source_path", Paths.relative!(path, root))
     end
   end
 
   defp load_requirements(root) do
-    for path <- sorted(Path.join(root, "frameworks/*/*/requirements/*.yaml")) do
-      path |> YAML.read!() |> Map.put("source_path", Path.relative_to(path, root))
+    for path <- Paths.wildcard!(root, "frameworks/*/*/requirements/*.yaml") do
+      path |> YAML.read!() |> Map.put("source_path", Paths.relative!(path, root))
     end
   end
 
   defp load_mapping_sets(root) do
-    for path <- sorted(Path.join(root, "mappings/*.yaml")) do
-      path |> YAML.read!() |> Map.put("source_path", Path.relative_to(path, root))
+    for path <- Paths.wildcard!(root, "mappings/*.yaml") do
+      path |> YAML.read!() |> Map.put("source_path", Paths.relative!(path, root))
     end
   end
 
   defp load_rulesets(root) do
-    for path <- sorted(Path.join(root, "rulesets/*.yaml")) do
-      path |> YAML.read!() |> Map.put("source_path", Path.relative_to(path, root))
+    for path <- Paths.wildcard!(root, "rulesets/*.yaml") do
+      path |> YAML.read!() |> Map.put("source_path", Paths.relative!(path, root))
     end
   end
 
   defp load_rubrics(root) do
-    for path <- sorted(Path.join(root, "rubrics/*.yaml")) do
-      path |> YAML.read!() |> Map.put("source_path", Path.relative_to(path, root))
+    for path <- Paths.wildcard!(root, "rubrics/*.yaml") do
+      path |> YAML.read!() |> Map.put("source_path", Paths.relative!(path, root))
     end
   end
 
   defp load_question_sets(root) do
-    for path <- sorted(Path.join(root, "questions/*.yaml")) do
-      path |> YAML.read!() |> Map.put("source_path", Path.relative_to(path, root))
+    for path <- Paths.wildcard!(root, "questions/*.yaml") do
+      path |> YAML.read!() |> Map.put("source_path", Paths.relative!(path, root))
     end
   end
 
   defp load_templates(root) do
-    for path <- sorted(Path.join(root, "templates/*.md")) do
-      rel = Path.relative_to(path, root)
+    for path <- Paths.wildcard!(root, "templates/*.md") do
+      rel = Paths.relative!(path, root)
       text = File.read!(path)
 
       unless String.starts_with?(text, "---\n") do
@@ -168,6 +170,4 @@ defmodule Isomer.Corpus.Load do
       end
     end
   end
-
-  defp sorted(glob), do: glob |> Path.wildcard() |> Enum.sort()
 end

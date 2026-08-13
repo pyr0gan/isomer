@@ -1,16 +1,20 @@
 defmodule Isomer.Charset do
   @moduledoc "Reject non-Latin letters in content files (port of tools/check_content_charset.py)."
 
+  alias Isomer.Paths
+
   @scan_dirs ~w(frameworks mappings rulesets rubrics questions templates vocab schemas)
   @suffixes ~w(.yaml .yml .md .json)
   @allowed_non_ascii MapSet.new(["—", "–", "…", "→", "←", "⟨", "⟩", "‘", "’", "“", "”", "•", "×"])
 
   def run(root \\ Isomer.root()) do
+    root = Paths.expand_root!(root)
+
     errors =
       for dir <- @scan_dirs,
-          base = Path.join(root, dir),
+          base = Paths.join!(root, dir),
           File.dir?(base),
-          path <- sorted_files(base),
+          path <- sorted_files(base, root),
           error <- scan_file(path, root),
           do: error
 
@@ -19,16 +23,13 @@ defmodule Isomer.Charset do
     if errors == [], do: :ok, else: :error
   end
 
-  defp sorted_files(base) do
-    base
-    |> Path.join("**/*")
-    |> Path.wildcard()
+  defp sorted_files(base, root) do
+    Paths.wildcard!(root, Paths.relative!(base, root) <> "/**/*")
     |> Enum.filter(&(File.regular?(&1) and Path.extname(&1) in @suffixes))
-    |> Enum.sort()
   end
 
   defp scan_file(path, root) do
-    rel = Path.relative_to(path, root)
+    rel = Paths.relative!(path, root)
 
     path
     |> File.read!()
