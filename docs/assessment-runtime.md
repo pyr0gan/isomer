@@ -133,6 +133,8 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 
 ### Planned (not yet routed)
 
+Product sequencing: [`roadmap.md`](roadmap.md) (Theme 2 — assessment completeness).
+
 | LiveView | Route | Notes |
 |---|---|---|
 | `AssessmentLive.Results` | `/assessments/:id/results` | `classification` / `activates` + `fn::isomer::satisfiers` |
