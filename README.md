@@ -246,7 +246,6 @@ Keep these in mind when editing YAML:
 
 - Product roadmap: [`docs/roadmap.md`](docs/roadmap.md)
 - Versioning (tooling vs content): [`docs/versioning.md`](docs/versioning.md)
-- Assessment runtime + LiveViews: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
+- Assessment runtime + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Deploy (Fly.io / Railway): [`docs/deploy.md`](docs/deploy.md)
-- Questionnaire + Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Agent/contributor notes: [`AGENTS.md`](AGENTS.md)
