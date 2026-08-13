@@ -193,6 +193,14 @@ defmodule IsomerWeb.AssessmentLive.Show do
           />
           <.button
             link_type="live_redirect"
+            to={~p"/assessments/#{@assessment_id}/results"}
+            color="primary"
+            variant="outline"
+            label="Results"
+            icon="hero-chart-bar"
+          />
+          <.button
+            link_type="live_redirect"
             to={~p"/assessments/#{@assessment_id}/artifacts"}
             color="primary"
             variant="outline"
@@ -266,8 +274,14 @@ defmodule IsomerWeb.AssessmentLive.Show do
             no_margin
             class="text-slate-600 dark:text-slate-400"
           >
-            {length(@assessment["activates"])} activated obligation(s). Full residual coverage
-            arrives with the Results view (roadmap Theme 2.2).
+            {length(@assessment["activates"])} activated obligation(s). See
+            <.link
+              navigate={~p"/assessments/#{@assessment_id}/results"}
+              class="font-medium underline underline-offset-2"
+            >
+              Results
+            </.link>
+            for residual coverage.
           </.p>
           <.p
             :if={@assessment["classification"] in [nil, %{}]}
