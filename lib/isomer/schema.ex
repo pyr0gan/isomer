@@ -10,7 +10,8 @@ defmodule Isomer.Schema do
   @draft7 "http://json-schema.org/draft-07/schema#"
 
   def load!(name) do
-    path = Path.join([Isomer.root(), "schemas", name])
+    name = Isomer.Paths.schema_name!(name)
+    path = Isomer.Paths.join!(Isomer.root(), ["schemas", name])
 
     path
     |> File.read!()

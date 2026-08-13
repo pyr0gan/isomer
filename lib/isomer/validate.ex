@@ -1,6 +1,7 @@
 defmodule Isomer.Validate do
   @moduledoc "Corpus validator (port of tools/validate.py)."
 
+  alias Isomer.Paths
   alias Isomer.Schema
   alias Isomer.YAML
 
@@ -12,6 +13,7 @@ defmodule Isomer.Validate do
             seen_q: %{}
 
   def run(root \\ Isomer.root()) do
+    root = Paths.expand_root!(root)
     {state, domain_ids} = load_domain_ids(%__MODULE__{}, root)
 
     state =
@@ -29,7 +31,7 @@ defmodule Isomer.Validate do
   end
 
   defp load_domain_ids(state, root) do
-    path = Path.join(root, "vocab/domains.yaml")
+    path = Paths.join!(root, "vocab/domains.yaml")
 
     if File.exists?(path) do
       ids =
@@ -49,11 +51,9 @@ defmodule Isomer.Validate do
     schema = Schema.load!("framework.schema.json")
 
     root
-    |> Path.join("frameworks/*/*/framework.yaml")
-    |> Path.wildcard()
-    |> Enum.sort()
+    |> Paths.wildcard!("frameworks/*/*/framework.yaml")
     |> Enum.reduce(state, fn path, st ->
-      rel = Path.relative_to(path, root)
+      rel = Paths.relative!(path, root)
       doc = YAML.read!(path)
       st = schema_errors(st, schema, doc, rel)
       [_, fw, ver | _] = Path.split(rel)
@@ -70,11 +70,9 @@ defmodule Isomer.Validate do
     schema = Schema.load!("requirement.schema.json")
 
     root
-    |> Path.join("frameworks/*/*/requirements/*.yaml")
-    |> Path.wildcard()
-    |> Enum.sort()
+    |> Paths.wildcard!("frameworks/*/*/requirements/*.yaml")
     |> Enum.reduce(state, fn path, st ->
-      rel = Path.relative_to(path, root)
+      rel = Paths.relative!(path, root)
       doc = YAML.read!(path)
       st = schema_errors(st, schema, doc, rel)
       rid = doc["id"] || ""
@@ -135,11 +133,9 @@ defmodule Isomer.Validate do
     schema = Schema.load!("mapping.schema.json")
 
     root
-    |> Path.join("mappings/*.yaml")
-    |> Path.wildcard()
-    |> Enum.sort()
+    |> Paths.wildcard!("mappings/*.yaml")
     |> Enum.reduce(state, fn path, st ->
-      rel = Path.relative_to(path, root)
+      rel = Paths.relative!(path, root)
       doc = YAML.read!(path)
       st = schema_errors(st, schema, doc, rel)
 
@@ -169,11 +165,9 @@ defmodule Isomer.Validate do
     schema = Schema.load!("ruleset.schema.json")
 
     root
-    |> Path.join("rulesets/*.yaml")
-    |> Path.wildcard()
-    |> Enum.sort()
+    |> Paths.wildcard!("rulesets/*.yaml")
     |> Enum.reduce(state, fn path, st ->
-      rel = Path.relative_to(path, root)
+      rel = Paths.relative!(path, root)
       doc = YAML.read!(path)
       st = schema_errors(st, schema, doc, rel)
       fw = doc["framework"] || ""
@@ -208,11 +202,9 @@ defmodule Isomer.Validate do
 
     {state, rubric_domains} =
       root
-      |> Path.join("rubrics/*.yaml")
-      |> Path.wildcard()
-      |> Enum.sort()
+      |> Paths.wildcard!("rubrics/*.yaml")
       |> Enum.reduce({state, MapSet.new()}, fn path, {st, seen} ->
-        rel = Path.relative_to(path, root)
+        rel = Paths.relative!(path, root)
         doc = YAML.read!(path)
         st = schema_errors(st, schema, doc, rel)
         dom = doc["domain"] || ""
@@ -263,11 +255,9 @@ defmodule Isomer.Validate do
     schema = Schema.load!("question.schema.json")
 
     root
-    |> Path.join("questions/*.yaml")
-    |> Path.wildcard()
-    |> Enum.sort()
+    |> Paths.wildcard!("questions/*.yaml")
     |> Enum.reduce(%{state | question_count: 0}, fn path, st ->
-      rel = Path.relative_to(path, root)
+      rel = Paths.relative!(path, root)
       doc = YAML.read!(path)
       st = schema_errors(st, schema, doc, rel)
       dom = doc["domain"] || ""
@@ -314,11 +304,9 @@ defmodule Isomer.Validate do
     schema = Schema.load!("template.schema.json")
 
     root
-    |> Path.join("templates/*.md")
-    |> Path.wildcard()
-    |> Enum.sort()
+    |> Paths.wildcard!("templates/*.md")
     |> Enum.reduce(%{state | template_count: 0}, fn path, st ->
-      rel = Path.relative_to(path, root)
+      rel = Paths.relative!(path, root)
       st = %{st | template_count: st.template_count + 1}
       text = File.read!(path)
 

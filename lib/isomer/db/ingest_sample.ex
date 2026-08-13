@@ -7,7 +7,7 @@ defmodule Isomer.Db.IngestSample do
   @default_path "frameworks/annex-sl-core/1.0/requirements/4.1-context.yaml"
 
   def run!(path \\ @default_path) do
-    abs = Path.expand(path, Isomer.root())
+    abs = Isomer.Paths.expand_under!(Isomer.root(), path)
     doc = YAML.read!(abs)
 
     unless is_binary(doc["id"]) and doc["id"] != "" do

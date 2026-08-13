@@ -1,6 +1,7 @@
 defmodule Isomer.DeltaReport do
   @moduledoc "Integration delta report (port of tools/delta_report.py)."
 
+  alias Isomer.Paths
   alias Isomer.YAML
 
   @rank %{
@@ -13,15 +14,17 @@ defmodule Isomer.DeltaReport do
   @label %{3 => :covered, 2 => :partial, 1 => :adjacent, 0 => :net_new}
 
   def run(map_path, root \\ Isomer.root()) do
+    root = Paths.expand_root!(root)
+    map_path = Paths.expand_under!(root, map_path)
     ms = YAML.read!(map_path)
     from_fw = ms["from_framework"]
     [fw, ver] = String.split(from_fw, "/", parts: 2)
+    fw = Paths.segment!(fw)
+    ver = Paths.segment!(ver)
 
     reqs =
       root
-      |> Path.join("frameworks/#{fw}/#{ver}/requirements/*.yaml")
-      |> Path.wildcard()
-      |> Enum.sort()
+      |> Paths.wildcard!("frameworks/#{fw}/#{ver}/requirements/*.yaml")
       |> Map.new(fn p ->
         d = YAML.read!(p)
         {d["id"], d["title"]}
