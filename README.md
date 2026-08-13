@@ -238,6 +238,7 @@ Keep these in mind when editing YAML:
 
 ## Learn more
 
+- Roadmap (gaps → phases → PR sequence): [`docs/roadmap.md`](docs/roadmap.md)
 - Versioning (tooling vs content): [`docs/versioning.md`](docs/versioning.md)
 - Assessment runtime + LiveViews: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Deploy (Fly.io / Railway): [`docs/deploy.md`](docs/deploy.md)

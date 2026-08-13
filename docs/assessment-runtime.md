@@ -133,6 +133,8 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 
 ### Planned (not yet routed)
 
+Sequencing and acceptance criteria: [`roadmap.md`](roadmap.md) (Phase 1).
+
 | LiveView | Route | Notes |
 |---|---|---|
 | `AssessmentLive.Results` | `/assessments/:id/results` | `classification` / `activates` + `fn::isomer::satisfiers` |
