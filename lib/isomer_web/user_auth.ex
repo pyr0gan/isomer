@@ -78,6 +78,7 @@ defmodule IsomerWeb.UserAuth do
               |> Phoenix.Component.assign(:current_user, maybe_overlay_name(user, session))
               |> Phoenix.Component.assign(:guide_prefs, prefs)
               |> Phoenix.Component.assign(:nav_org_id, nil)
+              |> Phoenix.Component.assign(:nav_show_members, false)
               |> Phoenix.Component.assign(:nav_assessment_id, nil)
               |> Phoenix.Component.assign(:nav_assessment_title, nil)
 

@@ -47,7 +47,8 @@ defmodule IsomerWeb.AssessmentLive.New do
            selected_ruleset_id: default_ruleset_id(rulesets),
            current_role: role,
            error: nil,
-           nav_org_id: org_id
+           nav_org_id: org_id,
+           nav_show_members: Roles.can_manage_members?(role)
          )}
       else
         {:ok,

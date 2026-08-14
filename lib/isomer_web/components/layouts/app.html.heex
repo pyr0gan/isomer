@@ -28,6 +28,15 @@
             Org dashboard
           </.dropdown_menu_item>
           <.dropdown_menu_item
+            :if={assigns[:nav_show_members] && assigns[:nav_org_id]}
+            link_type="live_redirect"
+            to={~p"/orgs/#{@nav_org_id}/members"}
+            label="Members"
+          >
+            <.icon name="hero-user-group" class="w-5 h-5 text-slate-500" />
+            Members
+          </.dropdown_menu_item>
+          <.dropdown_menu_item
             :if={assigns[:nav_assessment_id]}
             link_type="live_redirect"
             to={~p"/assessments/#{@nav_assessment_id}"}

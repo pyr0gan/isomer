@@ -165,6 +165,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
          can_write: Roles.can_write?(role),
          can_delete: Roles.can_delete_assessment?(role),
          nav_org_id: org_id,
+         nav_show_members: Roles.can_manage_members?(role),
          nav_assessment_id: id,
          nav_assessment_title: assessment["title"]
        }}
