@@ -15,7 +15,7 @@ Web runtime env (minimum):
 
 | Variable | Purpose |
 |---|---|
-| `SECRET_KEY_BASE` | Cookie / LiveView signing |
+| `SECRET_KEY_BASE` | Cookie / LiveView signing (`_isomer_key` is `Secure` + `HttpOnly` + `SameSite=Lax` in prod) |
 | `PHX_HOST` | Public hostname (no scheme) |
 | `PORT` | HTTP listen port (platform usually sets this) |
 | `PHX_SERVER` | `true` so the endpoint accepts connections |
