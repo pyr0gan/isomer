@@ -17,7 +17,7 @@ defmodule Mix.Tasks.Isomer.Db.ResetPassword do
 
   @impl Mix.Task
   def run(args) do
-    Mix.Task.run("app.start")
+    Isomer.Mix.Boot.start_for_db!()
 
     {opts, _, _} = OptionParser.parse(args, switches: @switches, aliases: @aliases)
     email = opts[:email] || System.get_env("RESET_EMAIL")

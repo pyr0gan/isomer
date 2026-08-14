@@ -85,6 +85,7 @@ jobs:
           VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
           VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
           GITHUB_SHA: ${{ github.sha }}
+        # Isomer.Mix.Boot.start_for_db!/0 — no Phoenix Endpoint / live_reload / inotify.
         run: mix isomer.db.sync
 
       - name: Publish CycloneDX SBoM to SurrealDB

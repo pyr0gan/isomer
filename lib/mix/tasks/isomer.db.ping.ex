@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Isomer.Db.Ping do
 
   @impl Mix.Task
   def run(_args) do
-    Mix.Task.run("app.start")
+    Isomer.Mix.Boot.start_for_db!()
 
     try do
       result = Isomer.Db.Connect.ping!()
