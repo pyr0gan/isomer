@@ -1479,12 +1479,88 @@ defmodule Isomer.Db.Tenant do
     {table, key} = split_record_id!(evidence_id)
 
     sql = """
-    DELETE type::record($table, $key);
+    LET $eid = type::record($table, $key);
+    LET $row = (SELECT id, storage_key FROM ONLY $eid);
+    DELETE $eid;
+    RETURN $row;
     """
 
     case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
-      {:ok, _} -> :ok
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} when is_map(row) ->
+            {:ok, %{"storage_key" => row["storage_key"] || row[:storage_key]}}
+
+          {:error, :not_found} ->
+            :ok
+
+          _ ->
+            :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc "Fetch one evidence row by id (membership enforced by Surreal PERMISSIONS)."
+  def get_evidence(conn, evidence_id) when is_binary(evidence_id) do
+    evidence_id = canonicalize_record_id(evidence_id)
+    {table, key} = split_record_id!(evidence_id)
+
+    sql = """
+    SELECT
+      id, org, answer, label, storage_key, content_type, uploaded_by, uploaded_at,
+      answer.question_id AS question_id
+    FROM ONLY type::record($table, $key);
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} -> {:ok, normalize_evidence(row)}
+          other -> other
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc "Sets `storage_key` on an evidence row after the object is written."
+  def update_evidence_storage_key(conn, evidence_id, storage_key)
+      when is_binary(evidence_id) and is_binary(storage_key) do
+    evidence_id = canonicalize_record_id(evidence_id)
+    storage_key = String.trim(storage_key)
+
+    if storage_key == "" do
+      {:error, "storage_key is required"}
+    else
+      {table, key} = split_record_id!(evidence_id)
+
+      sql = """
+      LET $eid = type::record($table, $key);
+      UPDATE $eid SET storage_key = $storage_key;
+      RETURN SELECT
+        id, org, answer, label, storage_key, content_type, uploaded_by, uploaded_at,
+        answer.question_id AS question_id
+      FROM ONLY $eid;
+      """
+
+      case UserClient.query(conn, sql, %{
+             "table" => table,
+             "key" => key,
+             "storage_key" => storage_key
+           }) do
+        {:ok, results} ->
+          case unwrap_one(results) do
+            {:ok, row} -> {:ok, normalize_evidence(row)}
+            other -> other
+          end
+
+        {:error, reason} ->
+          {:error, reason}
+      end
     end
   end
 

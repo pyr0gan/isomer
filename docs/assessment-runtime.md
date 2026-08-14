@@ -139,12 +139,27 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 
 ### Planned (not yet routed)
 
-Product sequencing: [`roadmap.md`](roadmap.md) (evidence object storage; password recovery / SSO).
+Product sequencing: [`roadmap.md`](roadmap.md) (password recovery / SSO; content depth).
 
 | LiveView | Route | Notes |
 |---|---|---|
-| Evidence object download | `/evidence/:id/download` | Binary bytes behind `storage_key` (slice F) |
 | Password recovery | `/password/…` | Token + email without Vault on the web path (slice H) |
+
+### Evidence object storage
+
+Surreal remains the metadata SoR (`evidence.label`, `content_type`, `storage_key`).
+Binary bytes live in `Isomer.Evidence.Storage` backends:
+
+| Backend | When |
+|---|---|
+| `memory` | Tests / ephemeral default |
+| `local` | `EVIDENCE_BACKEND=local` + `EVIDENCE_LOCAL_ROOT` |
+| `s3` | `EVIDENCE_BACKEND=s3` + `EVIDENCE_S3_*` (R2 / MinIO / AWS) |
+
+Wizard: stage a file (shared upload), then **Attach evidence** on a saved answer;
+URL/note metadata still works without a file. Download: `GET /evidence/:id/download`
+(auth session required). Object GC on remove deletes the backend object when
+`storage_key` is not an `http(s)` URL.
 
 ### Guidance prefs (adaptive copy)
 
@@ -185,7 +200,9 @@ dyno still reaches a node without the table.
 3. Render controls from `kind` (`boolean` / `single` / `multi` / `evidence`)
 4. On change: upsert `answer` in place (stable id for evidence links)
 5. When ruleset answers change: run first-match eval (Elixir `Isomer.Ruleset.Evaluate`; later `fn::isomer::evaluate_ruleset`) and `UPDATE assessment SET classification=…, activates=…`
-6. Evidence metadata: `CREATE evidence` under the answer (`label`, `content_type`, `storage_key` as URL/reference); list + remove in-wizard
+6. Evidence: `CREATE evidence` under the answer (`label`, `content_type`,
+   `storage_key` as URL/note or object key); optional file upload to object
+   storage; list + download + remove in-wizard
 
 Evidence prompts on domain questions show the attach panel once an answer exists.
 
@@ -202,7 +219,7 @@ Root connection remains Mix-only (`isomer.db.sync`, `isomer.db.ensure_runtime`).
 
 ## Out of scope for this minimum
 
-- Object storage implementation for evidence bytes (schema stores metadata only)
+- Presigned browser→S3 uploads, virus scanning, or cascade orphan GC on org delete
 - Multi-system register / per-AI-system scoping (add `system` table later)
 - Porting ruleset evaluation into SurQL functions
 - Full Phoenix umbrella / UI chrome
