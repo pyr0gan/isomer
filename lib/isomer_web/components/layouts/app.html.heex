@@ -48,6 +48,15 @@
           <.dropdown_menu_item
             :if={assigns[:nav_assessment_id]}
             link_type="live_redirect"
+            to={~p"/assessments/#{@nav_assessment_id}/results"}
+            label="Results"
+          >
+            <.icon name="hero-chart-bar" class="w-5 h-5 text-slate-500" />
+            Results
+          </.dropdown_menu_item>
+          <.dropdown_menu_item
+            :if={assigns[:nav_assessment_id]}
+            link_type="live_redirect"
             to={~p"/assessments/#{@nav_assessment_id}/artifacts"}
             label={Isomer.GuideCopy.artifacts_nav_label()}
           >

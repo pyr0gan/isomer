@@ -528,6 +528,90 @@ defmodule Isomer.Db.Tenant do
   end
 
   @doc """
+  Requirement titles/frameworks keyed by corpus id.
+
+  Used by Results to label activated obligations and satisfier targets.
+  """
+  def list_requirements_by_ids(conn, corpus_ids) when is_list(corpus_ids) do
+    ids =
+      corpus_ids
+      |> Enum.map(&to_string/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.uniq()
+
+    if ids == [] do
+      {:ok, %{}}
+    else
+      case UserClient.query(
+             conn,
+             """
+             SELECT corpus_id, title, framework
+             FROM requirement
+             WHERE corpus_id INSIDE $ids;
+             """,
+             %{"ids" => ids}
+           ) do
+        {:ok, results} ->
+          index =
+            results
+            |> rows_of()
+            |> Map.new(fn row ->
+              {row["corpus_id"], %{"title" => row["title"], "framework" => row["framework"]}}
+            end)
+
+          {:ok, index}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Satisfaction edges (`satisfied_by` / `partially_satisfied_by`) for the given
+  requirement corpus ids — same relations as `fn::isomer::satisfiers`.
+  """
+  def list_satisfier_edges(conn, corpus_ids) when is_list(corpus_ids) do
+    ids =
+      corpus_ids
+      |> Enum.map(&to_string/1)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.uniq()
+
+    if ids == [] do
+      {:ok, []}
+    else
+      case UserClient.query(
+             conn,
+             """
+             SELECT
+               in.corpus_id AS from_corpus_id,
+               in.title AS from_title,
+               relation,
+               strength,
+               note,
+               out.corpus_id AS target_corpus_id,
+               out.title AS target_title,
+               out.framework AS target_framework
+             FROM maps_to
+             WHERE in.corpus_id INSIDE $ids
+               AND relation IN $relations
+               AND content_source = $content_source
+             ORDER BY edge_key ASC;
+             """,
+             %{
+               "ids" => ids,
+               "relations" => ["satisfied_by", "partially_satisfied_by"],
+               "content_source" => Isomer.Db.Params.content_source()
+             }
+           ) do
+        {:ok, results} -> {:ok, rows_of(results)}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
   Persist ruleset evaluation onto an assessment.
 
   `classification` is an object; `activates` is an array of requirement corpus

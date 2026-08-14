@@ -205,6 +205,14 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
           />
           <.button
             link_type="live_redirect"
+            to={~p"/assessments/#{@assessment_id}/results"}
+            color="gray"
+            variant="outline"
+            label="Results"
+            icon="hero-chart-bar"
+          />
+          <.button
+            link_type="live_redirect"
             to={~p"/orgs/#{@org_id}"}
             color="gray"
             variant="ghost"

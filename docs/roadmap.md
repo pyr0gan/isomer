@@ -40,14 +40,14 @@ holds root/Vault credentials.
 |---|---|
 | Governance corpus | Annex SL core, ISO/IEC 42001:2023, ISO/IEC 27001:2022, EU AI Act (`2024+2026-1744`), with evidence expectations on requirements |
 | Crosswalks | ISMS↔AIMS and AIMS↔AI Act mapping sets, synced as `maps_to` graph edges |
-| Classification | EU AI Act ruleset with first-match evaluation (`Isomer.Ruleset.Evaluate`); **UI create + wizard persist** `classification` / `activates` (Theme 2.1) |
+| Classification | EU AI Act ruleset with first-match evaluation; UI create + wizard persist; Results shows residual coverage via `maps_to` satisfiers (Themes 2.1–2.2) |
 | Maturity model | 13 domain rubrics (L0–L4) and aligned question packs |
-| Assessment UX | Org tenancy; domain / ruleset / combined assessments; wizard; finalize/reopen; adaptive guidance copy |
+| Assessment UX | Org tenancy; domain / ruleset / combined assessments; wizard; Results (classification + residual coverage + domain completion); finalize/reopen; adaptive guidance copy |
 | Documents | Template render → Library downloads (Markdown / print-ready HTML); stored as `answer` rows (`pack_ref=__artifacts__`) |
 | Tooling SBoM | CycloneDX published to Surreal `sbom:isomer_tooling` on sync (`mix isomer.db.sync_sbom`) |
 | Delivery | Corpus sync + runtime schema + SBoM sync in CI; Fly demo deploy on `main`; `mix test` in CI |
 
-Remaining Theme 2 work is Results and evidence (2.2–2.3), then collaboration and content depth.
+Remaining Theme 2 work is evidence (2.3), then collaboration and content depth.
 
 ---
 
@@ -105,7 +105,9 @@ without leaving the product.
 **Acceptance:** A combined assessment can determine applicable AI Act obligations
 and retain that outcome for later views and artifact context.
 
-#### 2.2 Results and residual work
+#### 2.2 Results and residual work — shipped
+
+**Status:** Complete in this iteration (`AssessmentLive.Results` + chrome links).
 
 Add `AssessmentLive.Results` (`/assessments/:id/results`):
 
@@ -184,9 +186,9 @@ Prefer vertical, reviewable changes. Suggested order:
 | Slice | Scope | Status |
 |---|---|---|
 | A | Artifact model clarity + test harness + CI `mix test` (+ SBoM→Surreal) | Shipped (#64) |
-| B | Ruleset / combined assessment create + wizard persistence of classification | Shipped (this work) |
-| C | Results LiveView + navigation | Next |
-| D | Evidence metadata in wizard + metrics | Pending |
+| B | Ruleset / combined assessment create + wizard persistence of classification | Shipped (#66) |
+| C | Results LiveView + navigation | Shipped (this work) |
+| D | Evidence metadata in wizard + metrics | Next |
 | E | Org member administration + role-aware UI | Pending |
 | F | Evidence object storage | Pending |
 | G | Content batches (questions, templates, mappings) | Pending |

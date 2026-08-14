@@ -39,6 +39,7 @@ defmodule IsomerWeb.Router do
       live("/orgs/:org_id/assessments/new", AssessmentLive.New, :new)
       live("/assessments/:id", AssessmentLive.Show, :show)
       live("/assessments/:id/q", AssessmentLive.Wizard, :wizard)
+      live("/assessments/:id/results", AssessmentLive.Results, :results)
       live("/assessments/:id/artifacts", AssessmentLive.Artifacts, :index)
       live("/library", LibraryLive, :index)
       live("/settings", SettingsLive, :index)

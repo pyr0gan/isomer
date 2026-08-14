@@ -124,8 +124,9 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `OrgLive.New` | `/orgs/new` | `CREATE org` + `RELATE $auth->member->$org` (role `owner`) |
 | `OrgLive.Show` | `/orgs/:org_id` | Org header; maturity + objective-metrics panels; list assessments for org |
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `kind` (`domains` / `ruleset` / `combined`), optional ruleset, `domains[]`; `CREATE assessment` |
-| `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + artifacts |
+| `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + results + artifacts |
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer` (`pack` ruleset or question_set); re-eval classification; adaptive help; domain metric opt-in |
+| `AssessmentLive.Results` | `/assessments/:id/results` | Classification / `activates` + satisfier residual coverage + domain completion |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE answer` (`pack_ref=__artifacts__`); download links |
 | `LibraryLive` | `/library` | All templates + generated docs (answer-backed) visible to the user |
 | `SettingsLive` / `SettingsController` | `/settings` | Session-backed guidance prefs + best-effort `UPDATE $auth` name/prefs |
@@ -133,11 +134,10 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 
 ### Planned (not yet routed)
 
-Product sequencing: [`roadmap.md`](roadmap.md) (Theme 2 — assessment completeness).
+Product sequencing: [`roadmap.md`](roadmap.md) (Theme 2.3 evidence, Theme 3 collaboration).
 
 | LiveView | Route | Notes |
 |---|---|---|
-| `AssessmentLive.Results` | `/assessments/:id/results` | `classification` / `activates` + `fn::isomer::satisfiers` |
 | `EvidenceLive.Upload` | modal / `/answers/:id/evidence` | Binary evidence on answers (schema exists) |
 
 ### Guidance prefs (adaptive copy)
