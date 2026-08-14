@@ -776,9 +776,12 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
               </.p>
 
               <div :if={section.collect_metrics} class="wizard-domain-time">
+                <p class="wizard-domain-time__help" id={"time-scale-help-#{section.id}"}>
+                  {GuideCopy.time_scale_help(@guide_prefs)}
+                </p>
                 <%= if @finalized do %>
                   <p class="wizard-domain-time__readonly">
-                    Time spent: {time_scale_label(section.time_scale)}
+                    Time scale: {time_scale_label(section.time_scale)}
                     <%= if section.time_hours != "" do %>
                       · {section.time_hours}h
                     <% end %>
@@ -798,6 +801,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                         id={"time-scale-#{section.id}"}
                         name="time_scale"
                         class="wizard-domain-time__control"
+                        aria-describedby={"time-scale-help-#{section.id}"}
+                        title="Relative effort for this domain, not a calendar period"
                       >
                         {Phoenix.HTML.Form.options_for_select(
                           [{"—", ""}, {"Low", "low"}, {"Medium", "medium"}, {"High", "high"}],
@@ -807,7 +812,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     </div>
                     <div class="wizard-domain-time__field">
                       <label class="wizard-domain-time__label" for={"time-hours-#{section.id}"}>
-                        Hours
+                        Hours (optional)
                       </label>
                       <input
                         id={"time-hours-#{section.id}"}
@@ -818,6 +823,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                         value={section.time_hours}
                         placeholder="0"
                         class="wizard-domain-time__control wizard-domain-time__hours"
+                        aria-describedby={"time-scale-help-#{section.id}"}
+                        title="Optional clocked hours for this domain; feeds the org Time logged chart"
                       />
                     </div>
                     <.button type="submit" size="sm" label="Save time" color="gray" variant="outline" />

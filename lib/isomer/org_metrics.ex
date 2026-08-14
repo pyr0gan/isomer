@@ -5,8 +5,10 @@ defmodule Isomer.OrgMetrics do
   An assessment contributes once at least one domain is opted in via
   `assessment.domain_metrics[domain].collect`. Yes %, unanswered, and evidence
   coverage are scored across **all** domains on that assessment; time scale /
-  hours are opt-in domains only. Sparklines need at least two assessment
-  points; otherwise the UI shows "data req'd".
+  hours are opt-in domains only. Time scale is a relative effort rating
+  (`low` / `medium` / `high`) for that domain on this assessment — not a
+  calendar period. Hours feed the Time logged sparkline. Sparklines need at
+  least two assessment points; otherwise the UI shows "data req'd".
   """
 
   alias Isomer.Domains

@@ -444,7 +444,7 @@ defmodule IsomerWeb.OrgLive.Show do
           <.card class="metrics-card">
             <.card_header
               title="Objective metrics"
-              description="Opted-in domains from assessment wizards (finalized and in progress)."
+              description="Opted-in domains from assessment wizards (finalized and in progress). Time scale is relative effort, not a calendar period."
             />
             <.card_content>
               <%= if @metrics["has_collection"] do %>
@@ -479,6 +479,7 @@ defmodule IsomerWeb.OrgLive.Show do
                   class="metrics-domains"
                 >
                   <p class="metrics-domains__title">Time by objective</p>
+                  <p class="metrics-domains__help">{GuideCopy.org_time_scale_help(@guide_prefs)}</p>
                   <ul class="metrics-domains__list">
                     <li
                       :for={row <- get_in(@metrics, ["current", "domains"]) || []}

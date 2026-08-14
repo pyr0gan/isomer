@@ -598,7 +598,8 @@ defmodule Isomer.Db.Tenant do
   Merges one domain's metric collection entry into `assessment.domain_metrics`.
 
   `attrs` keys (string): `collect` (bool), optional `time_scale`
-  (`low`|`medium`|`high`), optional `time_hours` (number). When `collect` is
+  (`low`|`medium`|`high` — relative effort for the domain on this assessment,
+  not a calendar period), optional `time_hours` (number). When `collect` is
   false the domain key is removed. Omits optional fields rather than binding
   `nil` (Surreal `option` rejects JSON null).
   """

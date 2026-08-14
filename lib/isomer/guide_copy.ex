@@ -203,6 +203,37 @@ defmodule Isomer.GuideCopy do
     end
   end
 
+  @doc """
+  Explains the wizard Time scale selector.
+
+  Time scale is a relative effort rating for the domain on this assessment
+  (not a calendar period). Hours are an optional clocked estimate. Neither
+  field affects scoring.
+  """
+  def time_scale_help(prefs) do
+    if concise?(prefs) do
+      "Relative effort for this domain on this assessment, not a calendar period. " <>
+        "Hours (optional) feed the org Time logged chart. Neither changes scores."
+    else
+      "Time scale is a relative effort rating for this domain on this assessment — " <>
+        "not a date range or reporting period. Choose Low for a light touch, " <>
+        "Medium for a meaningful block of work, or High if this domain was a major focus. " <>
+        "Hours is an optional clocked estimate; it feeds the organization Time logged sparkline. " <>
+        "Neither field affects maturity scores or questionnaire answers."
+    end
+  end
+
+  @doc "Short explanation of Time scale / hours on the org Objective metrics panel."
+  def org_time_scale_help(prefs) do
+    if concise?(prefs) do
+      "Low / Medium / High is relative effort per opted-in domain. Hours feed Time logged."
+    else
+      "Time scale (Low / Medium / High) is relative effort for each opted-in domain — " <>
+        "not a calendar period. Hours feed the Time logged sparkline. " <>
+        "Neither changes maturity scores."
+    end
+  end
+
   def merge_field_hint(prefs, field) when is_binary(field) do
     if guided?(prefs) do
       case field do

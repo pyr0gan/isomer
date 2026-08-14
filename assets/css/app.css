@@ -264,6 +264,10 @@
     @apply rounded-lg border border-slate-200 bg-white/80 px-3 py-3 dark:border-slate-700 dark:bg-slate-900/60;
   }
 
+  .wizard-domain-time__help {
+    @apply mb-3 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-400;
+  }
+
   .wizard-domain-time__form {
     @apply flex flex-wrap items-end gap-3;
   }
@@ -399,6 +403,10 @@
 
   .metrics-domains__title {
     @apply mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+  }
+
+  .metrics-domains__help {
+    @apply mb-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400;
   }
 
   .metrics-domains__list {

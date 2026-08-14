@@ -76,7 +76,7 @@ create/update/delete on corpus stay denied for them.
 | `kind` | `ruleset` \| `domains` \| `combined` |
 | `ruleset_id` | Corpus ruleset id string (e.g. `eu-ai-act/2024+2026-1744/classification`) |
 | `domains` | `array<string>` of question-set domain ids |
-| `domain_metrics` | Optional **flexible** object keyed by domain id: `{ collect, time_scale?, time_hours? }`. Opt-in only; drives the org **Objective metrics** panel (sparklines for Yes %, unanswered, evidence coverage %, time hours). `FLEXIBLE` is required so SCHEMAFULL `assessment` accepts dynamic domain-id keys. |
+| `domain_metrics` | Optional **flexible** object keyed by domain id: `{ collect, time_scale?, time_hours? }`. Opt-in only; drives the org **Objective metrics** panel (sparklines for Yes %, unanswered, evidence coverage %, time hours). **`time_scale`** is a relative effort rating for that domain on this assessment (`low` / `medium` / `high`) — not a calendar period or reporting window. **`time_hours`** is an optional clocked estimate that feeds the Time logged sparkline. Neither field affects maturity scores or answers. `FLEXIBLE` is required so SCHEMAFULL `assessment` accepts dynamic domain-id keys. |
 | `classification` | Derived object from ruleset eval (nullable until complete/live) |
 | `activates` | Derived list of requirement corpus ids |
 | `created_by` | `record user` |
