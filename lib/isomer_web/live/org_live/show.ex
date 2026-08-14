@@ -215,7 +215,7 @@ defmodule IsomerWeb.OrgLive.Show do
           <.p class="isomer-lede flex flex-wrap items-center gap-2">
             <.badge color="gray" variant="soft" label={Roles.label(@current_role)} />
             <span class="text-slate-500">
-              {length(@assessments)} assessment(s) · id …{Tenant.short_key(@org_id)}
+              {length(@assessments)} assessment(s)
             </span>
           </.p>
         </div>

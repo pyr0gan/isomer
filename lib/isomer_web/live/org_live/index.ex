@@ -75,9 +75,6 @@ defmodule IsomerWeb.OrgLive.Index do
                   <span class="block text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {org["name"]}
                   </span>
-                  <span class="text-base text-slate-500 dark:text-slate-400">
-                    id …{Tenant.short_key(org["id"])}
-                  </span>
                 </.link>
                 <.button
                   type="button"
@@ -88,7 +85,7 @@ defmodule IsomerWeb.OrgLive.Index do
                   icon="hero-trash"
                   phx-click="delete"
                   phx-value-id={org["id"]}
-                  data-confirm={"Delete “#{org["name"]}” (…#{Tenant.short_key(org["id"])}) and all its assessments?"}
+                  data-confirm={"Delete “#{org["name"]}” and all its assessments?"}
                 />
               </.card_content>
             </.card>
