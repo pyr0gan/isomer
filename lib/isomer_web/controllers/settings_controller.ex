@@ -2,10 +2,11 @@ defmodule IsomerWeb.SettingsController do
   @moduledoc """
   HTTP save for guidance prefs.
 
-  Surreal `user` is the system of record (`self_role` / `experience_level` /
-  `comfort_level` / `name`). The cookie session keeps a compact overlay so
-  LiveViews can adapt immediately and survive brief Surreal read lag. Session
-  nils never wipe Surreal values (`GuideCopy.overlay_prefs/2`).
+  Surreal `user` is the preferred system of record via FLEXIBLE `guide_prefs`
+  (and legacy flat columns when present). The cookie session keeps a compact
+  overlay so LiveViews can adapt immediately and survive Surreal Cloud schema
+  lag (`comfort_level` / other fields missing on a compute node). Session nils
+  never wipe Surreal values (`GuideCopy.overlay_prefs/2`).
   """
 
   use IsomerWeb, :controller
@@ -44,16 +45,41 @@ defmodule IsomerWeb.SettingsController do
         )
         |> redirect(to: ~p"/settings")
 
-      {:error, reason} ->
-        Logger.warning("settings prefs persist failed: #{inspect(reason)}")
+      {:error, :prefs_schema_missing} ->
+        # Session overlay already updated — usable across reload in this browser
+        # until ensure_runtime lands guide_prefs / flat columns on every node.
+        Logger.warning("settings prefs: Surreal user schema missing pref fields; session only")
 
         conn
         |> put_flash(
-          :error,
-          "Could not save preferences to your account (#{format_error(reason)}). " <>
-            "Check your connection and try again."
+          :info,
+          "Preferences saved for this browser. Account sync is catching up " <>
+            "(guidance fields not on every database node yet)."
         )
         |> redirect(to: ~p"/settings")
+
+      {:error, reason} ->
+        if Tenant.missing_user_field_error?(reason) do
+          Logger.warning("settings prefs schema lag: #{inspect(reason)}")
+
+          conn
+          |> put_flash(
+            :info,
+            "Preferences saved for this browser. Account sync is catching up " <>
+              "(guidance fields not on every database node yet)."
+          )
+          |> redirect(to: ~p"/settings")
+        else
+          Logger.warning("settings prefs persist failed: #{inspect(reason)}")
+
+          conn
+          |> put_flash(
+            :error,
+            "Could not save preferences to your account (#{format_error(reason)}). " <>
+              "Check your connection and try again."
+          )
+          |> redirect(to: ~p"/settings")
+        end
     end
   end
 
@@ -66,6 +92,8 @@ defmodule IsomerWeb.SettingsController do
           try do
             case Tenant.update_user_prefs(db, attrs) do
               {:ok, _row} -> :ok
+              {:error, :prefs_schema_missing} -> {:error, :prefs_schema_missing}
+              {:error, {:prefs_schema_missing, _}} -> {:error, :prefs_schema_missing}
               {:error, reason} -> {:error, reason}
             end
           after
