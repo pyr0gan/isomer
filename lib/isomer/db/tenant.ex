@@ -1023,21 +1023,37 @@ defmodule Isomer.Db.Tenant do
     {org_table, org_key} = split_record_id!(attrs["org_id"])
     {assessment_table, assessment_key} = split_record_id!(attrs["assessment_id"])
 
+    # Update in place when the unique key exists so linked `evidence.answer`
+    # record ids stay stable across answer edits.
     sql = """
-    DELETE answer WHERE
-      assessment = type::record($assessment_table, $assessment_key)
-      AND pack = $pack
-      AND pack_ref = $pack_ref
-      AND question_id = $question_id;
-    CREATE answer SET
-      org = type::record($org_table, $org_key),
-      assessment = type::record($assessment_table, $assessment_key),
-      question_id = $question_id,
-      pack = $pack,
-      pack_ref = $pack_ref,
-      value = $value,
-      answered_by = $auth.id,
-      answered_at = time::now();
+    LET $existing = (
+      SELECT VALUE id FROM answer WHERE
+        assessment = type::record($assessment_table, $assessment_key)
+        AND pack = $pack
+        AND pack_ref = $pack_ref
+        AND question_id = $question_id
+      LIMIT 1
+    )[0];
+    IF $existing = NONE {
+      LET $key = string::concat("a", rand::string(16));
+      LET $aid = type::record("answer", $key);
+      CREATE $aid SET
+        org = type::record($org_table, $org_key),
+        assessment = type::record($assessment_table, $assessment_key),
+        question_id = $question_id,
+        pack = $pack,
+        pack_ref = $pack_ref,
+        value = $value,
+        answered_by = $auth.id,
+        answered_at = time::now();
+      RETURN SELECT * FROM ONLY $aid;
+    } ELSE {
+      UPDATE $existing SET
+        value = $value,
+        answered_by = $auth.id,
+        answered_at = time::now();
+      RETURN SELECT * FROM ONLY $existing;
+    };
     """
 
     vars =
@@ -1051,9 +1067,173 @@ defmodule Isomer.Db.Tenant do
       })
 
     case UserClient.query(conn, sql, vars) do
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} -> {:ok, normalize_record(row)}
+          other -> other
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Evidence rows for an assessment, denormalized with `question_id` from the
+  linked answer. Used by the wizard and org metrics `evidence_pct`.
+  """
+  def list_evidence_for_assessment(conn, assessment_id) when is_binary(assessment_id) do
+    {table, key} = split_record_id!(assessment_id)
+
+    sql = """
+    LET $aids = (
+      SELECT VALUE id FROM answer
+      WHERE assessment = type::record($table, $key)
+        AND pack_ref != $artifact_ref
+    );
+    SELECT
+      id,
+      org,
+      answer,
+      label,
+      storage_key,
+      content_type,
+      uploaded_by,
+      uploaded_at,
+      answer.question_id AS question_id
+    FROM evidence
+    WHERE answer IN $aids
+    ORDER BY uploaded_at ASC;
+    """
+
+    case UserClient.query(
+           conn,
+           sql,
+           %{
+             "table" => table,
+             "key" => key,
+             "artifact_ref" => @artifact_pack_ref
+           }
+         ) do
+      {:ok, results} ->
+        rows =
+          results
+          |> rows_of()
+          |> Enum.map(&normalize_evidence/1)
+
+        {:ok, rows}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Attach metadata evidence to an answer.
+
+  `storage_key` holds an external URL in this slice (object-storage keys later).
+  Empty optional fields are omitted (Surreal `option<string>` rejects null).
+  """
+  def create_evidence(conn, attrs) when is_map(attrs) do
+    org_id = canonicalize_record_id(attrs["org_id"])
+    answer_id = canonicalize_record_id(attrs["answer_id"])
+    {org_table, org_key} = split_record_id!(org_id)
+    {answer_table, answer_key} = split_record_id!(answer_id)
+
+    label =
+      attrs
+      |> Map.get("label", "")
+      |> to_string()
+      |> String.trim()
+
+    if label == "" do
+      {:error, "Evidence label is required."}
+    else
+      content_type =
+        attrs
+        |> Map.get("content_type", "")
+        |> to_string()
+        |> String.trim()
+
+      storage_key =
+        attrs
+        |> Map.get("storage_key", Map.get(attrs, "url", ""))
+        |> to_string()
+        |> String.trim()
+
+      set_bits = [
+        "org = type::record($org_table, $org_key)",
+        "answer = type::record($answer_table, $answer_key)",
+        "label = $label",
+        "uploaded_by = $auth.id",
+        "uploaded_at = time::now()"
+      ]
+
+      vars = %{
+        "org_table" => org_table,
+        "org_key" => org_key,
+        "answer_table" => answer_table,
+        "answer_key" => answer_key,
+        "label" => label
+      }
+
+      {set_bits, vars} =
+        if content_type == "" do
+          {set_bits, vars}
+        else
+          {set_bits ++ ["content_type = $content_type"],
+           Map.put(vars, "content_type", content_type)}
+        end
+
+      {set_bits, vars} =
+        if storage_key == "" do
+          {set_bits, vars}
+        else
+          {set_bits ++ ["storage_key = $storage_key"], Map.put(vars, "storage_key", storage_key)}
+        end
+
+      sql = """
+      LET $key = string::concat("e", rand::string(16));
+      LET $eid = type::record("evidence", $key);
+      CREATE $eid SET #{Enum.join(set_bits, ", ")};
+      RETURN SELECT
+        id, org, answer, label, storage_key, content_type, uploaded_by, uploaded_at,
+        answer.question_id AS question_id
+      FROM ONLY $eid;
+      """
+
+      case UserClient.query(conn, sql, vars) do
+        {:ok, results} ->
+          case unwrap_one(results) do
+            {:ok, row} -> {:ok, normalize_evidence(row)}
+            other -> other
+          end
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+
+  @doc "Remove one evidence row. Assessors/owners/admins may delete."
+  def delete_evidence(conn, evidence_id) when is_binary(evidence_id) do
+    evidence_id = canonicalize_record_id(evidence_id)
+    {table, key} = split_record_id!(evidence_id)
+
+    sql = """
+    DELETE type::record($table, $key);
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
       {:ok, _} -> :ok
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp normalize_evidence(row) when is_map(row) do
+    row
+    |> normalize_record()
+    |> Map.update("answer", nil, &canonicalize_record_id/1)
   end
 
   @doc """

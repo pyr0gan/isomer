@@ -125,7 +125,7 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `OrgLive.Show` | `/orgs/:org_id` | Org header; maturity + objective-metrics panels; list assessments for org |
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `kind` (`domains` / `ruleset` / `combined`), optional ruleset, `domains[]`; `CREATE assessment` |
 | `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + results + artifacts |
-| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer` (`pack` ruleset or question_set); re-eval classification; adaptive help; domain metric opt-in |
+| `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer`; attach/list/remove `evidence` metadata; re-eval classification; adaptive help; domain metric opt-in |
 | `AssessmentLive.Results` | `/assessments/:id/results` | Classification / `activates` + satisfier residual coverage + domain completion |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE answer` (`pack_ref=__artifacts__`); download links |
 | `LibraryLive` | `/library` | All templates + generated docs (answer-backed) visible to the user |
@@ -134,11 +134,11 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 
 ### Planned (not yet routed)
 
-Product sequencing: [`roadmap.md`](roadmap.md) (Theme 2.3 evidence, Theme 3 collaboration).
+Product sequencing: [`roadmap.md`](roadmap.md) (Theme 3 collaboration; evidence object storage).
 
 | LiveView | Route | Notes |
 |---|---|---|
-| `EvidenceLive.Upload` | modal / `/answers/:id/evidence` | Binary evidence on answers (schema exists) |
+| Evidence object download | `/evidence/:id/download` | Binary bytes behind `storage_key` (slice F) |
 
 ### Guidance prefs (adaptive copy)
 
@@ -177,10 +177,11 @@ dyno still reaches a node without the table.
 1. Read `assessment` → `ruleset_id` / `domains`
 2. `SELECT` corpus `ruleset` / `question_set` (content)
 3. Render controls from `kind` (`boolean` / `single` / `multi` / `evidence`)
-4. On change: `UPSERT answer` with user token (`pack` = `ruleset` or `question_set`)
+4. On change: upsert `answer` in place (stable id for evidence links)
 5. When ruleset answers change: run first-match eval (Elixir `Isomer.Ruleset.Evaluate`; later `fn::isomer::evaluate_ruleset`) and `UPDATE assessment SET classification=…, activates=…`
+6. Evidence metadata: `CREATE evidence` under the answer (`label`, `content_type`, `storage_key` as URL/reference); list + remove in-wizard
 
-Evidence prompts on domain questions open `EvidenceLive.Upload` without leaving the wizard.
+Evidence prompts on domain questions show the attach panel once an answer exists.
 
 ### Session wiring (LiveView ↔ Surreal)
 

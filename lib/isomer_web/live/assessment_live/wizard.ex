@@ -136,14 +136,82 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           # hidden empty field is present; normalize before coerce.
           raw = Map.get(params, "value")
           coerced = coerce_value(question.kind, raw, params)
-          evidence_note = evidence_note_from_params(params)
 
           if blank_answer?(question.kind, coerced) do
             clear_answer(socket, question, qid)
           else
-            save_answer(socket, question, qid, coerced, evidence_note)
+            save_answer(socket, question, qid, coerced)
           end
         end
+    end
+  end
+
+  def handle_event("add_evidence", %{"question_id" => qid} = params, socket) do
+    cond do
+      socket.assigns.finalized ->
+        {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+
+      true ->
+        question = Enum.find(socket.assigns.questions, &(&1.id == qid))
+        answer_id = Map.get(socket.assigns.answer_ids, qid)
+
+        cond do
+          is_nil(question) ->
+            {:noreply, assign(socket, error: "Unknown question")}
+
+          is_nil(answer_id) ->
+            {:noreply, assign(socket, error: "Save an answer before attaching evidence.")}
+
+          true ->
+            attrs = %{
+              "org_id" => socket.assigns.org_id,
+              "answer_id" => answer_id,
+              "label" => Map.get(params, "label", ""),
+              "storage_key" => Map.get(params, "storage_key", ""),
+              "content_type" => normalize_content_type(Map.get(params, "content_type", ""))
+            }
+
+            case Tenant.create_evidence(socket.assigns.surreal, attrs) do
+              {:ok, row} ->
+                evidence_by_qid =
+                  Map.update(socket.assigns.evidence_by_qid, qid, [row], fn list ->
+                    list ++ [row]
+                  end)
+
+                {:noreply,
+                 socket
+                 |> assign(:evidence_by_qid, evidence_by_qid)
+                 |> assign(:evidence_form_n, socket.assigns.evidence_form_n + 1)
+                 |> assign(:error, nil)
+                 |> put_flash(:info, "Evidence attached")}
+
+              {:error, reason} ->
+                {:noreply, assign(socket, error: format_error(reason))}
+            end
+        end
+    end
+  end
+
+  def handle_event("remove_evidence", %{"id" => evidence_id, "question_id" => qid}, socket) do
+    if socket.assigns.finalized do
+      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    else
+      case Tenant.delete_evidence(socket.assigns.surreal, evidence_id) do
+        :ok ->
+          evidence_by_qid =
+            Map.update(socket.assigns.evidence_by_qid, qid, [], fn list ->
+              Enum.reject(list, &(canonicalize_id(&1["id"]) == canonicalize_id(evidence_id)))
+            end)
+
+          {:noreply,
+           socket
+           |> assign(:evidence_by_qid, evidence_by_qid)
+           |> assign(:error, nil)
+           |> put_flash(:info, "Evidence removed")}
+
+        {:error, reason} ->
+          {:noreply, assign(socket, error: format_error(reason))}
+      end
     end
   end
 
@@ -163,11 +231,15 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       :ok ->
         answers = Map.delete(socket.assigns.answers, qid)
         notes = Map.delete(socket.assigns.evidence_notes, qid)
+        answer_ids = Map.delete(socket.assigns.answer_ids, qid)
+        evidence_by_qid = Map.delete(socket.assigns.evidence_by_qid, qid)
 
         socket =
           socket
           |> assign(:answers, answers)
           |> assign(:evidence_notes, notes)
+          |> assign(:answer_ids, answer_ids)
+          |> assign(:evidence_by_qid, evidence_by_qid)
           |> assign(
             :domain_sections,
             refresh_section_progress(socket.assigns.domain_sections, answers)
@@ -181,25 +253,27 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     end
   end
 
-  defp save_answer(socket, question, qid, coerced, evidence_note) do
+  defp save_answer(socket, question, qid, coerced) do
     attrs = %{
       "org_id" => socket.assigns.org_id,
       "assessment_id" => socket.assigns.assessment_id,
       "question_id" => qid,
       "pack" => question.pack,
       "pack_ref" => question.pack_ref,
-      "value" => pack_stored_value(coerced, evidence_note)
+      "value" => coerced
     }
 
     case Tenant.upsert_answer(socket.assigns.surreal, attrs) do
-      :ok ->
+      {:ok, row} ->
         answers = Map.put(socket.assigns.answers, qid, coerced)
-        notes = Map.put(socket.assigns.evidence_notes, qid, evidence_note)
+
+        answer_ids =
+          Map.put(socket.assigns.answer_ids, qid, Tenant.canonicalize_record_id(row["id"]))
 
         socket =
           socket
           |> assign(:answers, answers)
-          |> assign(:evidence_notes, notes)
+          |> assign(:answer_ids, answer_ids)
           |> assign(
             :domain_sections,
             refresh_section_progress(socket.assigns.domain_sections, answers)
@@ -212,6 +286,17 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
       {:error, reason} ->
         {:noreply, assign(socket, error: format_error(reason))}
+    end
+  end
+
+  defp canonicalize_id(id), do: Tenant.canonicalize_record_id(id)
+
+  defp normalize_content_type(value) do
+    case value |> to_string() |> String.trim() do
+      "link" -> "text/uri-list"
+      "note" -> "text/plain"
+      "document" -> "application/octet-stream"
+      other -> other
     end
   end
 
@@ -330,14 +415,34 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       questions = ruleset_questions ++ domain_questions
       domain_metrics = normalize_domain_metrics(assessment["domain_metrics"])
 
-      {answer_map, evidence_notes} =
-        Enum.reduce(answers, {%{}, %{}}, fn a, {vals, notes} ->
+      questionnaire =
+        Enum.reject(answers, fn a -> a["pack_ref"] == Tenant.artifact_pack_ref() end)
+
+      {answer_map, evidence_notes, answer_ids} =
+        Enum.reduce(questionnaire, {%{}, %{}, %{}}, fn a, {vals, notes, ids} ->
           qid = a["question_id"]
           kind = Enum.find_value(questions, "text", fn q -> q.id == qid && q.kind end)
           {raw_value, note} = unpack_stored_value(a["value"])
           val = normalize_loaded_value(kind, raw_value)
-          {Map.put(vals, qid, val), Map.put(notes, qid, note)}
+
+          ids =
+            if is_binary(qid) and not is_nil(a["id"]) do
+              Map.put(ids, qid, Tenant.canonicalize_record_id(a["id"]))
+            else
+              ids
+            end
+
+          {Map.put(vals, qid, val), Map.put(notes, qid, note), ids}
         end)
+
+      evidence_by_qid =
+        case Tenant.list_evidence_for_assessment(surreal, id) do
+          {:ok, rows} ->
+            Enum.group_by(rows, & &1["question_id"])
+
+          {:error, _} ->
+            %{}
+        end
 
       domain_sections =
         questions
@@ -367,7 +472,10 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          domain_sections: domain_sections,
          domain_metrics: domain_metrics,
          answers: answer_map,
+         answer_ids: answer_ids,
          evidence_notes: evidence_notes,
+         evidence_by_qid: evidence_by_qid,
+         evidence_form_n: 0,
          addable_domains: addable,
          finalized: finalized?(assessment),
          nav_org_id: org_id,
@@ -727,13 +835,16 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     <div class="answer-readonly text-base text-slate-700 dark:text-slate-300">
                       <span class="font-medium">Answer:</span>
                       {format_answer_display(q.kind, @answers[q.id])}
-                      <span
-                        :if={Map.get(@evidence_notes, q.id, "") != ""}
-                        class="mt-1 block text-slate-500"
-                      >
-                        Evidence: {Map.get(@evidence_notes, q.id, "")}
-                      </span>
                     </div>
+                    <.evidence_panel
+                      question={q}
+                      evidence={Map.get(@evidence_by_qid, q.id, [])}
+                      legacy_note={Map.get(@evidence_notes, q.id, "")}
+                      answered={answered?(@answers, q.id)}
+                      finalized={true}
+                      guide_prefs={@guide_prefs}
+                      form_n={@evidence_form_n}
+                    />
                   <% else %>
                     <form id={"answer-form-#{q.id}"} phx-submit="answer" class="answer-form">
                       <input type="hidden" name="question_id" value={q.id} />
@@ -799,21 +910,17 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                           variant={if answered?(@answers, q.id), do: "outline", else: "solid"}
                         />
                       </div>
-
-                      <.field
-                        :if={
-                          q.evidence_prompt || GuideCopy.guided?(@guide_prefs)
-                        }
-                        type="textarea"
-                        rows="3"
-                        name="evidence"
-                        label="Evidence"
-                        help_text={GuideCopy.evidence_help_text(@guide_prefs, q.evidence_prompt)}
-                        value={Map.get(@evidence_notes, q.id, "")}
-                        placeholder="Short note or reference"
-                        class="answer-evidence"
-                      />
                     </form>
+
+                    <.evidence_panel
+                      question={q}
+                      evidence={Map.get(@evidence_by_qid, q.id, [])}
+                      legacy_note={Map.get(@evidence_notes, q.id, "")}
+                      answered={answered?(@answers, q.id)}
+                      finalized={false}
+                      guide_prefs={@guide_prefs}
+                      form_n={@evidence_form_n}
+                    />
                   <% end %>
                 </.card_content>
               </.card>
@@ -1067,27 +1174,149 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   defp unwrap_param(value), do: value
 
-  defp evidence_note_from_params(params) do
-    params
-    |> Map.get("evidence", "")
-    |> unwrap_param()
-    |> to_string()
-    |> String.trim()
-  end
-
-  # MVP: keep a short evidence note beside the answer value until file upload exists.
-  # Shape: %{"v" => <answer>, "evidence" => <note>} — plain values remain supported.
-  defp pack_stored_value(coerced, evidence_note) when evidence_note in [nil, ""], do: coerced
-
-  defp pack_stored_value(coerced, evidence_note) do
-    %{"v" => coerced, "evidence" => evidence_note}
-  end
-
+  # Legacy answer-value notes (`%{"v" => …, "evidence" => …}`) remain readable.
   defp unpack_stored_value(%{"v" => value} = map) when is_map(map) do
     {value, map |> Map.get("evidence", "") |> to_string()}
   end
 
   defp unpack_stored_value(value), do: {value, ""}
+
+  attr(:question, :map, required: true)
+  attr(:evidence, :list, default: [])
+  attr(:legacy_note, :string, default: "")
+  attr(:answered, :boolean, default: false)
+  attr(:finalized, :boolean, default: false)
+  attr(:guide_prefs, :map, default: %{})
+  attr(:form_n, :integer, default: 0)
+
+  def evidence_panel(assigns) do
+    show? =
+      assigns.question.evidence_prompt ||
+        GuideCopy.guided?(assigns.guide_prefs) ||
+        assigns.evidence != [] ||
+        (is_binary(assigns.legacy_note) and String.trim(assigns.legacy_note) != "")
+
+    assigns = assign(assigns, :show?, show?)
+
+    ~H"""
+    <div :if={@show?} class="mt-4 space-y-3 border-t border-slate-200 pt-4 dark:border-slate-700">
+      <div>
+        <p class="text-sm font-medium text-slate-800 dark:text-slate-200">Evidence</p>
+        <p
+          :if={help = GuideCopy.evidence_help_text(@guide_prefs, @question.evidence_prompt)}
+          class="mt-1 text-sm text-slate-500 dark:text-slate-400"
+        >
+          {help}
+        </p>
+      </div>
+
+      <p
+        :if={is_binary(@legacy_note) and String.trim(@legacy_note) != ""}
+        class="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-900/40 dark:text-slate-400"
+      >
+        Legacy note: {@legacy_note}
+      </p>
+
+      <ul :if={@evidence != []} class="space-y-2">
+        <li
+          :for={ev <- @evidence}
+          class="flex flex-wrap items-start justify-between gap-2 rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-900/40"
+        >
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-slate-800 dark:text-slate-200">{ev["label"]}</p>
+            <p class="text-sm text-slate-500">
+              {content_type_label(ev["content_type"])}
+              <span :if={ev["storage_key"] not in [nil, ""]}>
+                ·
+                <%= if uri?(ev["storage_key"]) do %>
+                  <a
+                    href={ev["storage_key"]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="underline underline-offset-2"
+                  >
+                    {ev["storage_key"]}
+                  </a>
+                <% else %>
+                  <code>{ev["storage_key"]}</code>
+                <% end %>
+              </span>
+            </p>
+          </div>
+          <.button
+            :if={not @finalized}
+            type="button"
+            size="sm"
+            color="danger"
+            variant="ghost"
+            label="Remove"
+            phx-click="remove_evidence"
+            phx-value-id={ev["id"]}
+            phx-value-question_id={@question.id}
+            data-confirm="Remove this evidence?"
+          />
+        </li>
+      </ul>
+
+      <.p :if={@evidence == [] and not @answered} no_margin class="text-sm text-slate-500">
+        Save an answer to attach evidence metadata (label, type, URL).
+      </.p>
+
+      <form
+        :if={not @finalized and @answered}
+        id={"evidence-form-#{@question.id}-#{@form_n}"}
+        phx-submit="add_evidence"
+        class="space-y-3"
+      >
+        <input type="hidden" name="question_id" value={@question.id} />
+        <.field
+          type="text"
+          name="label"
+          label="Label"
+          placeholder="Policy PDF, register export, ticket URL…"
+          required
+          no_margin
+        />
+        <div class="flex flex-wrap gap-3">
+          <div class="answer-select min-w-[10rem]">
+            <label class="answer-select__label" for={"evidence-type-#{@question.id}"}>Type</label>
+            <select
+              id={"evidence-type-#{@question.id}"}
+              name="content_type"
+              class="answer-select__control"
+            >
+              {Phoenix.HTML.Form.options_for_select(
+                [{"Link / URL", "link"}, {"Note", "note"}, {"Document", "document"}],
+                "link"
+              )}
+            </select>
+          </div>
+          <.field
+            type="text"
+            name="storage_key"
+            label="URL or reference"
+            placeholder="https://… or storage key"
+            no_margin
+            wrapper_class="min-w-[14rem] flex-1"
+          />
+        </div>
+        <.button type="submit" size="sm" label="Attach evidence" color="primary" variant="outline" />
+      </form>
+    </div>
+    """
+  end
+
+  defp content_type_label("text/uri-list"), do: "Link"
+  defp content_type_label("text/plain"), do: "Note"
+  defp content_type_label("application/octet-stream"), do: "Document"
+  defp content_type_label(type) when is_binary(type) and type != "", do: type
+  defp content_type_label(_), do: "Evidence"
+
+  defp uri?(value) when is_binary(value) do
+    String.starts_with?(value, "http://") or String.starts_with?(value, "https://")
+  end
+
+  defp uri?(_), do: false
 
   defp format_multi(list) when is_list(list), do: Enum.join(list, ", ")
   defp format_multi(other) when is_binary(other), do: other
