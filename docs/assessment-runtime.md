@@ -53,7 +53,7 @@ user ──member──▶ org
 
 | Table | Purpose |
 |---|---|
-| `user` | Record-auth subject (`$auth`). email + argon2 password. Guidance prefs (`self_role`, `experience_level`, `comfort_level`) are stored on the user row and re-read with `SELECT … FROM ONLY $auth`. The cookie session keeps a compact non-nil overlay for immediate UI feedback; session nils never wipe Surreal values. |
+| `user` | Record-auth subject (`$auth`). email + argon2 password. Guidance prefs SoR is FLEXIBLE `guide_prefs` (plus legacy flat `self_role` / `experience_level` / `comfort_level` when present). Cookie session keeps a compact non-nil overlay; session nils never wipe Surreal. Soft-falls back to session when Surreal Cloud nodes lack pref columns. |
 
 | `org` | Tenant (the organization being assessed). |
 | `member` | `TYPE RELATION IN user OUT org` + `role`. |

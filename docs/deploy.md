@@ -49,6 +49,10 @@ even when CI `ensure_runtime` is green — the schema was applied to the other D
 Fix: `fly secrets set SURREAL_URL=… SURREAL_NAMESPACE=… SURREAL_DATABASE=…`
 to match Actions, then re-run **Sync corpus to SurrealDB** (`workflow_dispatch`).
 
+The app also writes prefs into FLEXIBLE `user.guide_prefs` and keeps a session
+overlay when flat columns lag on a Surreal Cloud compute node, so Settings
+remains usable while `ensure_runtime` converges.
+
 `ensure_runtime` applies schema across several fresh connections (default 8,
 `ENSURE_RUNTIME_PASSES`) because Surreal Cloud hostnames often resolve to
 multiple IPs — a single DEFINE + probe can be green in Actions while the Fly

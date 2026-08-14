@@ -10,7 +10,7 @@ defmodule Isomer.Db.RuntimeSchema do
 
   @access_name "isomer_user"
 
-  @required_user_fields ~w(email name password self_role experience_level comfort_level created_at updated_at)
+  @required_user_fields ~w(email name password self_role experience_level comfort_level guide_prefs created_at updated_at)
 
   @required_tenant_tables ~w(user org member assessment answer evidence artifact)
 
@@ -116,12 +116,18 @@ defmodule Isomer.Db.RuntimeSchema do
                  conn,
                  """
                  UPDATE $auth SET
+                   guide_prefs = $guide_prefs,
                    self_role = $self_role,
                    experience_level = $experience_level,
                    comfort_level = $comfort_level;
-                 SELECT self_role, experience_level, comfort_level FROM ONLY $auth;
+                 SELECT guide_prefs, self_role, experience_level, comfort_level FROM ONLY $auth;
                  """,
                  %{
+                   "guide_prefs" => %{
+                     "self_role" => "other",
+                     "experience_level" => "intermediate",
+                     "comfort_level" => "moderate"
+                   },
                    "self_role" => "other",
                    "experience_level" => "intermediate",
                    "comfort_level" => "moderate"
@@ -131,7 +137,28 @@ defmodule Isomer.Db.RuntimeSchema do
               :ok
 
             {:error, reason} ->
-              raise ArgumentError, "record-auth preference write failed: #{inspect(reason)}"
+              # Flat columns may lag on a compute node; FLEXIBLE bag alone is enough.
+              case UserClient.query(
+                     conn,
+                     """
+                     UPDATE $auth SET guide_prefs = $guide_prefs;
+                     SELECT guide_prefs FROM ONLY $auth;
+                     """,
+                     %{
+                       "guide_prefs" => %{
+                         "self_role" => "other",
+                         "experience_level" => "intermediate",
+                         "comfort_level" => "moderate"
+                       }
+                     }
+                   ) do
+                {:ok, _} ->
+                  :ok
+
+                {:error, reason2} ->
+                  raise ArgumentError,
+                        "record-auth preference write failed: #{inspect(reason)} / #{inspect(reason2)}"
+              end
           end
 
           case UserClient.query(
@@ -204,6 +231,11 @@ defmodule Isomer.Db.RuntimeSchema do
            self_role: "other",
            experience_level: "intermediate",
            comfort_level: "moderate",
+           guide_prefs: {
+             self_role: "other",
+             experience_level: "intermediate",
+             comfort_level: "moderate"
+           },
            updated_at: time::now()
          };
          DELETE user:isomer_schema_probe;
@@ -294,6 +326,7 @@ defmodule Isomer.Db.RuntimeSchema do
         ~S[DEFINE FIELD OVERWRITE self_role ON user TYPE option<string> COMMENT "Self-identified organizational role for adaptive guidance copy";],
         ~S[DEFINE FIELD OVERWRITE experience_level ON user TYPE option<string> COMMENT "Self-identified familiarity with governance material";],
         ~S[DEFINE FIELD OVERWRITE comfort_level ON user TYPE option<string> COMMENT "Preferred amount of plain-language help in the UI";],
+        ~S[DEFINE FIELD OVERWRITE guide_prefs ON user TYPE option<object> FLEXIBLE COMMENT "Guidance prefs bag (self_role / experience_level / comfort_level) — Settings SoR when flat columns lag";],
         ~S[DEFINE FIELD OVERWRITE created_at ON user TYPE datetime DEFAULT time::now();],
         ~S[DEFINE FIELD OVERWRITE updated_at ON user TYPE datetime VALUE time::now() DEFAULT time::now();],
         ~S[DEFINE INDEX OVERWRITE user_email ON user FIELDS email UNIQUE;]

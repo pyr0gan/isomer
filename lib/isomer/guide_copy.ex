@@ -48,11 +48,33 @@ defmodule Isomer.GuideCopy do
   def normalize(nil), do: default_prefs()
 
   def normalize(user) when is_map(user) do
+    # Prefer nested `guide_prefs` (FLEXIBLE object) when present; flat columns
+    # remain as a fallback for older rows / partial schema.
+    bag = prefs_bag(user)
+
     %{
-      "self_role" => pick(user, "self_role", @roles),
-      "experience_level" => pick(user, "experience_level", @experience_levels),
-      "comfort_level" => pick(user, "comfort_level", @comfort_levels)
+      "self_role" => pick(bag, "self_role", @roles) || pick(user, "self_role", @roles),
+      "experience_level" =>
+        pick(bag, "experience_level", @experience_levels) ||
+          pick(user, "experience_level", @experience_levels),
+      "comfort_level" =>
+        pick(bag, "comfort_level", @comfort_levels) ||
+          pick(user, "comfort_level", @comfort_levels)
     }
+  end
+
+  defp prefs_bag(user) when is_map(user) do
+    case Map.get(user, "guide_prefs") || Map.get(user, :guide_prefs) do
+      bag when is_map(bag) -> stringify_keys(bag)
+      _ -> %{}
+    end
+  end
+
+  defp stringify_keys(map) do
+    Map.new(map, fn
+      {k, v} when is_atom(k) -> {Atom.to_string(k), v}
+      {k, v} -> {to_string(k), v}
+    end)
   end
 
   def default_prefs do

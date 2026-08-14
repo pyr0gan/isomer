@@ -934,12 +934,33 @@ defmodule Isomer.Db.Tenant do
 
   @doc "Current auth user profile (prefs + identity). Never returns password."
   def get_current_user(conn) do
-    # SELECT the live user row — do not project `$auth.field` alone (token/auth
-    # context can omit preference columns even after a successful UPDATE).
-    # Never SELECT * (password hash is forbidden for record SELECT).
+    # Prefer guide_prefs (FLEXIBLE). Fall back if that column is missing on a
+    # Surreal Cloud node — never SELECT flat comfort_level/etc. first, since
+    # SCHEMAFULL "no such field" broke Settings after the persist-required change.
     sql = """
-    SELECT id, email, name, self_role, experience_level, comfort_level,
-           created_at, updated_at
+    SELECT id, email, name, guide_prefs, created_at, updated_at
+    FROM ONLY $auth;
+    """
+
+    case UserClient.query(conn, sql) do
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, user} -> {:ok, flatten_guide_prefs(user)}
+          other -> other
+        end
+
+      {:error, reason} ->
+        if missing_user_field_error?(reason) do
+          get_current_user_core(conn)
+        else
+          {:error, reason}
+        end
+    end
+  end
+
+  defp get_current_user_core(conn) do
+    sql = """
+    SELECT id, email, name, created_at, updated_at
     FROM ONLY $auth;
     """
 
@@ -952,9 +973,9 @@ defmodule Isomer.Db.Tenant do
   @doc """
   Updates self-identified guidance prefs on the auth user.
 
-  Empty strings clear optional fields via `UNSET` (Surreal cannot store JSON null /
-  `NONE` into `option` fields the way Postgres does). Pref enum membership is
-  checked in Elixir — Surreal columns are plain `option<string>`.
+  Writes FLEXIBLE `guide_prefs` (Settings SoR) and legacy flat columns when
+  present. Retries when Surreal Cloud nodes lack some SCHEMAFULL fields.
+  Pref enum membership is checked in Elixir.
   """
   def update_user_prefs(conn, attrs) when is_map(attrs) do
     fields = [
@@ -968,56 +989,139 @@ defmodule Isomer.Db.Tenant do
     ]
 
     with :ok <- validate_pref_enums(fields) do
-      {set_parts, unset_parts, vars} =
-        Enum.reduce(fields, {[], [], %{}}, fn {field, raw, _allowed}, {sets, unsets, vars} ->
-          case blank_to_nil(raw) do
-            nil when field == "name" ->
-              # Keep name present (option<string>); blank becomes empty string.
-              {["name = $name" | sets], unsets, Map.put(vars, "name", "")}
+      name =
+        case blank_to_nil(attrs |> Map.get("name", Map.get(attrs, :name))) do
+          nil -> ""
+          value -> value
+        end
 
-            nil ->
-              {sets, [field | unsets], vars}
+      guide_prefs =
+        %{
+          "self_role" => blank_to_nil(attrs |> Map.get("self_role", Map.get(attrs, :self_role))),
+          "experience_level" =>
+            blank_to_nil(attrs |> Map.get("experience_level", Map.get(attrs, :experience_level))),
+          "comfort_level" =>
+            blank_to_nil(attrs |> Map.get("comfort_level", Map.get(attrs, :comfort_level)))
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
 
-            value ->
-              {["#{field} = $#{field}" | sets], unsets, Map.put(vars, field, value)}
-          end
+      vars =
+        %{
+          "name" => name,
+          "guide_prefs" => guide_prefs
+        }
+        |> then(fn base ->
+          Enum.reduce(["self_role", "experience_level", "comfort_level"], base, fn key, acc ->
+            case Map.get(guide_prefs, key) do
+              v when is_binary(v) and v != "" -> Map.put(acc, key, v)
+              _ -> acc
+            end
+          end)
         end)
 
-      # Prefer UPDATE $auth — same subject as the LiveView JWT. Do not SET
-      # updated_at here; the field VALUE clause refreshes it when defined.
-      statements =
-        []
-        |> then(fn acc ->
-          case set_parts do
-            [] -> acc
-            parts -> ["UPDATE $auth SET #{Enum.join(Enum.reverse(parts), ", ")};" | acc]
-          end
-        end)
-        |> then(fn acc ->
-          case unset_parts do
-            [] ->
-              acc
-
-            fields ->
-              ["UPDATE $auth UNSET #{Enum.join(Enum.reverse(fields), ", ")};" | acc]
-          end
-        end)
-        |> Enum.reverse()
-
-      # Re-read the row from the table so callers see persisted prefs, not stale
-      # `$auth` projections that can omit newly written option fields.
-      sql = """
-      #{Enum.join(statements, "\n")}
-      SELECT id, email, name, self_role, experience_level, comfort_level,
-             created_at, updated_at
-      FROM ONLY $auth;
-      """
-
-      case UserClient.query(conn, sql, vars) do
-        {:ok, results} -> unwrap_one(results)
+      case write_user_prefs(conn, vars, guide_prefs) do
+        {:ok, user} -> {:ok, flatten_guide_prefs(user)}
         {:error, reason} -> {:error, reason}
       end
     end
+  end
+
+  defp write_user_prefs(conn, vars, guide_prefs) do
+    attempts = [
+      prefs_sql_bag_and_flat(guide_prefs),
+      prefs_sql_bag_only(),
+      prefs_sql_flat_only(guide_prefs)
+    ]
+
+    Enum.reduce_while(attempts, {:error, :prefs_schema_missing}, fn sql, _acc ->
+      case UserClient.query(conn, sql, vars) do
+        {:ok, results} ->
+          case unwrap_one(results) do
+            {:ok, row} -> {:halt, {:ok, row}}
+            other -> {:halt, other}
+          end
+
+        {:error, reason} ->
+          if missing_user_field_error?(reason) do
+            {:cont, {:error, {:prefs_schema_missing, reason}}}
+          else
+            {:halt, {:error, reason}}
+          end
+      end
+    end)
+  end
+
+  defp prefs_sql_bag_and_flat(guide_prefs) do
+    flat_sets =
+      ["self_role", "experience_level", "comfort_level"]
+      |> Enum.filter(&(is_binary(Map.get(guide_prefs, &1)) and Map.get(guide_prefs, &1) != ""))
+      |> Enum.map(&"#{&1} = $#{&1}")
+
+    flat_sql =
+      case flat_sets do
+        [] -> ""
+        parts -> ", " <> Enum.join(parts, ", ")
+      end
+
+    """
+    UPDATE $auth SET name = $name, guide_prefs = $guide_prefs#{flat_sql};
+    SELECT id, email, name, guide_prefs, created_at, updated_at FROM ONLY $auth;
+    """
+  end
+
+  defp prefs_sql_bag_only do
+    """
+    UPDATE $auth SET name = $name, guide_prefs = $guide_prefs;
+    SELECT id, email, name, guide_prefs, created_at, updated_at FROM ONLY $auth;
+    """
+  end
+
+  defp prefs_sql_flat_only(guide_prefs) do
+    sets =
+      ["name = $name"] ++
+        Enum.flat_map(["self_role", "experience_level", "comfort_level"], fn field ->
+          case Map.get(guide_prefs, field) do
+            v when is_binary(v) and v != "" -> ["#{field} = $#{field}"]
+            _ -> []
+          end
+        end)
+
+    """
+    UPDATE $auth SET #{Enum.join(sets, ", ")};
+    SELECT id, email, name, created_at, updated_at FROM ONLY $auth;
+    """
+  end
+
+  defp flatten_guide_prefs(user) when is_map(user) do
+    prefs = GuideCopy.normalize(user)
+
+    user
+    |> Map.put("self_role", prefs["self_role"])
+    |> Map.put("experience_level", prefs["experience_level"])
+    |> Map.put("comfort_level", prefs["comfort_level"])
+  end
+
+  @doc false
+  def missing_user_field_error?(reason) do
+    text =
+      cond do
+        is_binary(reason) ->
+          reason
+
+        is_exception(reason) ->
+          Exception.message(reason)
+
+        is_map(reason) ->
+          Map.get(reason, :message) || Map.get(reason, "message") || inspect(reason)
+
+        true ->
+          inspect(reason)
+      end
+      |> to_string()
+      |> String.downcase()
+
+    String.contains?(text, "no such field") or String.contains?(text, "found field")
   end
 
   defp validate_pref_enums(fields) do
