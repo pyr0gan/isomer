@@ -25,6 +25,9 @@ defmodule IsomerWeb.Endpoint do
     longpoll: [connect_info: [session: @session_options]]
   )
 
+  # Before Plug.Static so hashed assets also carry HSTS on public HTTPS.
+  plug(IsomerWeb.Plugs.SecurityHeaders)
+
   plug(Plug.Static,
     at: "/",
     from: :isomer,

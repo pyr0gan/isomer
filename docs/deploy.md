@@ -101,7 +101,9 @@ fly secrets set SECRET_KEY_BASE="$(mix phx.gen.secret)" \
 ```
 
 `fly.toml` sets `PHX_SERVER=true` and binds internal port `4000`. Health checks
-hit `/health` (plain-text liveness; not `/login`). Attach a custom domain with
+hit `/health` (plain-text liveness; not `/login`). Public HTTPS responses send
+`Strict-Transport-Security: max-age=31536000`; the app does not HTTP→HTTPS
+redirect on the dyno so those checks stay 200. Attach a custom domain with
 `fly certs add` when ready.
 
 Public discovery files (static under `priv/static/`):
