@@ -2,13 +2,15 @@ defmodule IsomerWeb.SettingsController do
   @moduledoc """
   HTTP save for guidance prefs.
 
-  Pref columns on Surreal `user` may be missing on some Surreal Cloud compute
-  nodes even after CI ensure. Display name still updates via `UPDATE $auth SET name`.
-  Role / experience / comfort are stored in the cookie session so LiveViews can
-  adapt copy without those columns.
+  Surreal `user` is the system of record (`self_role` / `experience_level` /
+  `comfort_level` / `name`). The cookie session keeps a compact overlay so
+  LiveViews can adapt immediately and survive brief Surreal read lag. Session
+  nils never wipe Surreal values (`GuideCopy.overlay_prefs/2`).
   """
 
   use IsomerWeb, :controller
+
+  require Logger
 
   alias Isomer.Db.Tenant
   alias Isomer.Db.UserClient
@@ -22,41 +24,66 @@ defmodule IsomerWeb.SettingsController do
 
     name = Map.get(params, "name", "") |> to_string() |> String.trim()
 
+    # Only store set keys in the cookie (smaller + overlay-safe).
+    session_prefs =
+      prefs
+      |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+      |> Map.new()
+
     conn =
       conn
-      |> put_session(:guide_prefs, prefs)
+      |> put_session(:guide_prefs, session_prefs)
       |> put_session(:guide_name, name)
 
+    case persist_prefs(conn, Map.put(prefs, "name", name)) do
+      :ok ->
+        conn
+        |> put_flash(
+          :info,
+          "Preferences saved — guidance copy will adapt on the next pages you open."
+        )
+        |> redirect(to: ~p"/settings")
+
+      {:error, reason} ->
+        Logger.warning("settings prefs persist failed: #{inspect(reason)}")
+
+        conn
+        |> put_flash(
+          :error,
+          "Could not save preferences to your account (#{format_error(reason)}). " <>
+            "Check your connection and try again."
+        )
+        |> redirect(to: ~p"/settings")
+    end
+  end
+
+  defp persist_prefs(conn, attrs) do
     token = get_session(conn, :surreal_token)
 
-    surreal_result =
-      if is_binary(token) and token != "" do
-        case UserClient.connect_with_token(token) do
-          {:ok, db} ->
-            try do
-              # Name always works on the live schema. Pref columns are best-effort.
-              _ = Tenant.update_user_prefs(db, Map.put(prefs, "name", name))
-              :ok
-            after
-              UserClient.stop(db)
+    if is_binary(token) and token != "" do
+      case UserClient.connect_with_token(token) do
+        {:ok, db} ->
+          try do
+            case Tenant.update_user_prefs(db, attrs) do
+              {:ok, _row} -> :ok
+              {:error, reason} -> {:error, reason}
             end
+          after
+            UserClient.stop(db)
+          end
 
-          {:error, _} ->
-            :ok
-        end
-      else
-        :ok
+        {:error, reason} ->
+          {:error, reason}
       end
-
-    _ = surreal_result
-
-    conn
-    |> put_flash(
-      :info,
-      "Preferences saved — guidance copy will adapt on the next pages you open."
-    )
-    |> redirect(to: ~p"/settings")
+    else
+      {:error, :not_signed_in}
+    end
   end
+
+  defp format_error(reason) when is_binary(reason), do: reason
+  defp format_error(%{message: msg}) when is_binary(msg), do: msg
+  defp format_error(:not_signed_in), do: "not signed in"
+  defp format_error(reason), do: inspect(reason)
 
   defp blank_to_nil(nil), do: nil
   defp blank_to_nil(""), do: nil

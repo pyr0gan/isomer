@@ -111,25 +111,12 @@ defmodule IsomerWeb.UserAuth do
   defp load_user_and_prefs(conn, session) do
     case Tenant.get_current_user(conn) do
       {:ok, user} ->
-        surreal_prefs = GuideCopy.normalize(user)
-        session_prefs = normalize_session_prefs(session["guide_prefs"])
-        prefs = GuideCopy.normalize(Map.merge(surreal_prefs, session_prefs))
-        {user, prefs}
+        {user, GuideCopy.overlay_prefs(user, session["guide_prefs"])}
 
       {:error, _} ->
-        {nil, GuideCopy.normalize(normalize_session_prefs(session["guide_prefs"]))}
+        {nil, GuideCopy.overlay_prefs(%{}, session["guide_prefs"])}
     end
   end
-
-  defp normalize_session_prefs(prefs) when is_map(prefs) do
-    %{
-      "self_role" => prefs["self_role"] || prefs[:self_role],
-      "experience_level" => prefs["experience_level"] || prefs[:experience_level],
-      "comfort_level" => prefs["comfort_level"] || prefs[:comfort_level]
-    }
-  end
-
-  defp normalize_session_prefs(_), do: %{}
 
   defp maybe_overlay_name(nil, _session), do: nil
 

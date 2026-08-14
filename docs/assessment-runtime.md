@@ -53,7 +53,7 @@ user ──member──▶ org
 
 | Table | Purpose |
 |---|---|
-| `user` | Record-auth subject (`$auth`). email + argon2 password. Optional guidance prefs: `self_role`, `experience_level`, `comfort_level` when the Surreal compute node has those columns; otherwise prefs also live in the Phoenix session. |
+| `user` | Record-auth subject (`$auth`). email + argon2 password. Guidance prefs (`self_role`, `experience_level`, `comfort_level`) are stored on the user row and re-read with `SELECT … FROM ONLY $auth`. The cookie session keeps a compact non-nil overlay for immediate UI feedback; session nils never wipe Surreal values. |
 
 | `org` | Tenant (the organization being assessed). |
 | `member` | `TYPE RELATION IN user OUT org` + `role`. |
@@ -134,7 +134,7 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `AssessmentLive.Results` | `/assessments/:id/results` | Classification / `activates` + satisfier residual coverage + domain completion |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE answer` (`pack_ref=__artifacts__`); download links |
 | `LibraryLive` | `/library` | All templates + generated docs (answer-backed) visible to the user |
-| `SettingsLive` / `SettingsController` | `/settings` | Session-backed guidance prefs + best-effort `UPDATE $auth` name/prefs |
+| `SettingsLive` / `SettingsController` | `/settings` | Persist guidance prefs + name via `UPDATE $auth` (Surreal SoR); cookie session overlay for immediate LiveView feedback; surface Surreal write failures instead of a false success toast |
 | `ArtifactController` | `/artifacts/:id/download` | Fetch generated doc (`answer` id) with user JWT; Markdown or print-ready HTML (Save as PDF) |
 
 ### Planned (not yet routed)
@@ -148,7 +148,12 @@ Product sequencing: [`roadmap.md`](roadmap.md) (evidence object storage; passwor
 
 ### Guidance prefs (adaptive copy)
 
-Stored on `user`, edited in Settings. `Isomer.GuideCopy` adjusts wizard ledes,
+Stored on `user`, edited in Settings (`POST /settings`). Reads use
+`SELECT … FROM ONLY $auth` so preference columns come from the live row, not a
+stale `$auth.field` projection. A compact cookie-session overlay supplies
+immediate LiveView feedback; `GuideCopy.overlay_prefs/2` ignores nil overlay
+keys so an empty session cannot clear Surreal values. `Isomer.GuideCopy`
+adjusts wizard ledes,
 per-question tips, and evidence hints from `self_role` / `experience_level` /
 `comfort_level`. Same screens and controls for every level — only text density
 changes. Prefs can be updated any time as comfort grows.

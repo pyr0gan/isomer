@@ -63,6 +63,26 @@ defmodule Isomer.GuideCopy do
     }
   end
 
+  @doc """
+  Overlay session-backed prefs onto Surreal (or other) prefs.
+
+  Only non-nil overlay values win. Session maps that omit keys or carry
+  explicit nils must not wipe values already stored on the user record —
+  that pattern cleared settings across reload when the cookie fallback was
+  empty or partial while Surreal still had prefs (or the reverse).
+  """
+  def overlay_prefs(base, overlay) do
+    base = normalize(base)
+    overlay = normalize(overlay || %{})
+
+    Enum.reduce(~w(self_role experience_level comfort_level), base, fn key, acc ->
+      case Map.get(overlay, key) do
+        nil -> acc
+        value -> Map.put(acc, key, value)
+      end
+    end)
+  end
+
   @doc "True when the UI should show expanded plain-language help."
   def guided?(prefs) do
     prefs = normalize(prefs)
