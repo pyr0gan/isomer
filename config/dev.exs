@@ -6,6 +6,7 @@ config :isomer, IsomerWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   session_cookie_secure: false,
+  hsts: false,
   secret_key_base: "dev_only_secret_key_base_isomer_replace_in_prod_0123456789abcdef",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:isomer, ~w(--sourcemap=inline --watch)]},
