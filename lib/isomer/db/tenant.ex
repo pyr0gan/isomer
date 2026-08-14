@@ -903,18 +903,13 @@ defmodule Isomer.Db.Tenant do
 
   @doc "Current auth user profile (prefs + identity). Never returns password."
   def get_current_user(conn) do
-    # Project fields from $auth — do not SELECT * (password hash).
+    # SELECT the live user row — do not project `$auth.field` alone (token/auth
+    # context can omit preference columns even after a successful UPDATE).
+    # Never SELECT * (password hash is forbidden for record SELECT).
     sql = """
-    RETURN {
-      id: $auth.id,
-      email: $auth.email,
-      name: $auth.name,
-      self_role: $auth.self_role,
-      experience_level: $auth.experience_level,
-      comfort_level: $auth.comfort_level,
-      created_at: $auth.created_at,
-      updated_at: $auth.updated_at
-    };
+    SELECT id, email, name, self_role, experience_level, comfort_level,
+           created_at, updated_at
+    FROM ONLY $auth;
     """
 
     case UserClient.query(conn, sql) do
@@ -978,18 +973,13 @@ defmodule Isomer.Db.Tenant do
         end)
         |> Enum.reverse()
 
+      # Re-read the row from the table so callers see persisted prefs, not stale
+      # `$auth` projections that can omit newly written option fields.
       sql = """
       #{Enum.join(statements, "\n")}
-      RETURN {
-        id: $auth.id,
-        email: $auth.email,
-        name: $auth.name,
-        self_role: $auth.self_role,
-        experience_level: $auth.experience_level,
-        comfort_level: $auth.comfort_level,
-        created_at: $auth.created_at,
-        updated_at: $auth.updated_at
-      };
+      SELECT id, email, name, self_role, experience_level, comfort_level,
+             created_at, updated_at
+      FROM ONLY $auth;
       """
 
       case UserClient.query(conn, sql, vars) do
