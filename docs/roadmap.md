@@ -201,8 +201,8 @@ Prefer vertical, reviewable changes. Suggested order:
 | C | Results LiveView + navigation | Shipped (#68) |
 | D | Evidence metadata in wizard + metrics | Shipped (#69) |
 | E | Org member administration + role-aware UI (+ org polish) | Shipped (this work) |
-| F | Evidence object storage | Shipped (this work) |
-| G | Content batches (questions, templates, mappings) | Next |
+| F | Evidence object storage | Next |
+| G | Content batches (questions, templates, mappings) | In progress (risk register template) |
 | H | Password recovery and/or SSO | Pending |
 
 Do not combine large corpus edits with runtime/LiveView changes in the same
