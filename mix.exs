@@ -61,6 +61,7 @@ defmodule Isomer.MixProject do
       # Override transitive decimal 2.x (EEF-CVE-2026-32686) until dependents catch up.
       {:decimal, "~> 3.1", override: true},
       {:req, "~> 0.5"},
+      {:aws_signature, "~> 0.4"},
       {:dotenvy, "~> 0.8"},
       {:surrealdb, github: "surrealdb/surrealdb.elixir"},
       {:phoenix, "~> 1.8"},

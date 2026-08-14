@@ -24,3 +24,27 @@ if config_env() == :prod do
     secret_key_base: secret_key_base,
     check_origin: true
 end
+
+evidence_backend =
+  case System.get_env("EVIDENCE_BACKEND") do
+    "s3" -> Isomer.Evidence.Storage.S3
+    "local" -> Isomer.Evidence.Storage.Local
+    "memory" -> Isomer.Evidence.Storage.Memory
+    _ -> nil
+  end
+
+evidence_opts =
+  []
+  |> then(fn opts ->
+    if evidence_backend, do: Keyword.put(opts, :backend, evidence_backend), else: opts
+  end)
+  |> then(fn opts ->
+    case System.get_env("EVIDENCE_LOCAL_ROOT") do
+      root when is_binary(root) and root != "" -> Keyword.put(opts, :local_root, root)
+      _ -> opts
+    end
+  end)
+
+if evidence_opts != [] do
+  config :isomer, Isomer.Evidence.Storage, evidence_opts
+end
