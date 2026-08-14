@@ -96,15 +96,11 @@ defmodule IsomerWeb.AssessmentLive.Results do
       <div class="isomer-page-header">
         <div>
           <.h1>Results · {@assessment["title"]}</.h1>
-          <.p class="isomer-lede flex flex-wrap items-center gap-2">
+          <.p
+            :if={@results["has_classification"]}
+            class="isomer-lede flex flex-wrap items-center gap-2"
+          >
             <.badge
-              color={status_badge_color(@assessment["status"])}
-              variant="soft"
-              label={status_label(@assessment["status"])}
-            />
-            <.badge color="gray" variant="soft" label={@assessment["kind"] || "domains"} />
-            <.badge
-              :if={@results["has_classification"]}
               color="info"
               variant="soft"
               label={@results["classification"]["label"]}
@@ -359,14 +355,6 @@ defmodule IsomerWeb.AssessmentLive.Results do
     </section>
     """
   end
-
-  defp status_label(status) when status in ["complete", "archived"], do: "finalized"
-  defp status_label(status) when is_binary(status) and status != "", do: status
-  defp status_label(_), do: "draft"
-
-  defp status_badge_color(status) when status in ["complete", "archived"], do: "success"
-  defp status_badge_color("in_progress"), do: "primary"
-  defp status_badge_color(_), do: "info"
 
   defp mapping_label("covered"), do: "Mapping: covered"
   defp mapping_label("partial"), do: "Mapping: partial"
