@@ -60,7 +60,13 @@ defmodule Isomer.Evidence.Storage do
   defp present?(_), do: false
 
   @doc "True when uploads to object storage are available (not URL-only metadata)."
-  def uploads_enabled?, do: backend() in [Isomer.Evidence.Storage.S3, Isomer.Evidence.Storage.Local, Isomer.Evidence.Storage.Memory]
+  def uploads_enabled?,
+    do:
+      backend() in [
+        Isomer.Evidence.Storage.S3,
+        Isomer.Evidence.Storage.Local,
+        Isomer.Evidence.Storage.Memory
+      ]
 
   def put(key, body, meta \\ %{}) when is_binary(key) and is_binary(body) do
     backend().put(key, body, stringify_meta(meta))
