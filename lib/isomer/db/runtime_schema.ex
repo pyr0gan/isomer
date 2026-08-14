@@ -114,6 +114,28 @@ defmodule Isomer.Db.RuntimeSchema do
 
           case UserClient.query(
                  conn,
+                 """
+                 UPDATE $auth SET
+                   self_role = $self_role,
+                   experience_level = $experience_level,
+                   comfort_level = $comfort_level;
+                 SELECT self_role, experience_level, comfort_level FROM ONLY $auth;
+                 """,
+                 %{
+                   "self_role" => "other",
+                   "experience_level" => "intermediate",
+                   "comfort_level" => "moderate"
+                 }
+               ) do
+            {:ok, _} ->
+              :ok
+
+            {:error, reason} ->
+              raise ArgumentError, "record-auth preference write failed: #{inspect(reason)}"
+          end
+
+          case UserClient.query(
+                 conn,
                  "SELECT count() FROM answer WHERE pack_ref = $ref GROUP ALL;",
                  %{"ref" => "__artifacts__"}
                ) do

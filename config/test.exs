@@ -8,3 +8,5 @@ config :isomer, IsomerWeb.Endpoint,
   hsts: false
 
 config :logger, level: :warning
+
+config :isomer, Isomer.Evidence.Storage, backend: Isomer.Evidence.Storage.Memory

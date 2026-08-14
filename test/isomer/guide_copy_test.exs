@@ -43,6 +43,39 @@ defmodule Isomer.GuideCopyTest do
     assert GuideCopy.library_empty_artifacts(%{}) =~ "Generate documents"
   end
 
+  test "overlay_prefs keeps Surreal values when session overlay is empty or nil-filled" do
+    surreal = %{
+      "self_role" => "engineering",
+      "experience_level" => "beginner",
+      "comfort_level" => "low"
+    }
+
+    assert GuideCopy.overlay_prefs(surreal, %{}) == surreal
+    assert GuideCopy.overlay_prefs(surreal, nil) == surreal
+
+    wiped_shape = %{
+      "self_role" => nil,
+      "experience_level" => nil,
+      "comfort_level" => nil
+    }
+
+    assert GuideCopy.overlay_prefs(surreal, wiped_shape) == surreal
+  end
+
+  test "overlay_prefs lets non-nil session values win without clearing other fields" do
+    surreal = %{
+      "self_role" => "engineering",
+      "experience_level" => "beginner",
+      "comfort_level" => "low"
+    }
+
+    assert GuideCopy.overlay_prefs(surreal, %{"self_role" => "security"}) == %{
+             "self_role" => "security",
+             "experience_level" => "beginner",
+             "comfort_level" => "low"
+           }
+  end
+
   test "time_scale_help explains relative effort, not a calendar period" do
     beginner = %{"experience_level" => "beginner"}
     expert = %{"experience_level" => "expert", "comfort_level" => "high"}

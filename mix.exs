@@ -4,7 +4,7 @@ defmodule Isomer.MixProject do
   def project do
     [
       app: :isomer,
-      version: "0.1.8",
+      version: "0.1.9",
       elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -61,6 +61,7 @@ defmodule Isomer.MixProject do
       # Override transitive decimal 2.x (EEF-CVE-2026-32686) until dependents catch up.
       {:decimal, "~> 3.1", override: true},
       {:req, "~> 0.5"},
+      {:aws_signature, "~> 0.4"},
       {:dotenvy, "~> 0.8"},
       {:surrealdb, github: "surrealdb/surrealdb.elixir"},
       {:phoenix, "~> 1.8"},

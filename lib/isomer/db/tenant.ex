@@ -556,6 +556,37 @@ defmodule Isomer.Db.Tenant do
   end
 
   @doc """
+  Renames an assessment. Blank titles are rejected.
+  Returns the updated assessment.
+  """
+  def update_assessment_title(conn, assessment_id, title)
+      when is_binary(assessment_id) and is_binary(title) do
+    assessment_id = canonicalize_record_id(assessment_id)
+    title = String.trim(title)
+
+    if title == "" do
+      {:error, "Title is required"}
+    else
+      {table, key} = split_record_id!(assessment_id)
+
+      sql = """
+      LET $aid = type::record($table, $key);
+      UPDATE $aid SET title = $title, updated_at = time::now();
+      RETURN SELECT * FROM ONLY $aid;
+      """
+
+      case UserClient.query(conn, sql, %{
+             "table" => table,
+             "key" => key,
+             "title" => title
+           }) do
+        {:ok, results} -> unwrap_one(results)
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
   Deletes an assessment and its answers/evidence. Requires owner/admin on the org.
   """
   def delete_assessment(conn, assessment_id) when is_binary(assessment_id) do
@@ -903,18 +934,13 @@ defmodule Isomer.Db.Tenant do
 
   @doc "Current auth user profile (prefs + identity). Never returns password."
   def get_current_user(conn) do
-    # Project fields from $auth — do not SELECT * (password hash).
+    # SELECT the live user row — do not project `$auth.field` alone (token/auth
+    # context can omit preference columns even after a successful UPDATE).
+    # Never SELECT * (password hash is forbidden for record SELECT).
     sql = """
-    RETURN {
-      id: $auth.id,
-      email: $auth.email,
-      name: $auth.name,
-      self_role: $auth.self_role,
-      experience_level: $auth.experience_level,
-      comfort_level: $auth.comfort_level,
-      created_at: $auth.created_at,
-      updated_at: $auth.updated_at
-    };
+    SELECT id, email, name, self_role, experience_level, comfort_level,
+           created_at, updated_at
+    FROM ONLY $auth;
     """
 
     case UserClient.query(conn, sql) do
@@ -978,18 +1004,13 @@ defmodule Isomer.Db.Tenant do
         end)
         |> Enum.reverse()
 
+      # Re-read the row from the table so callers see persisted prefs, not stale
+      # `$auth` projections that can omit newly written option fields.
       sql = """
       #{Enum.join(statements, "\n")}
-      RETURN {
-        id: $auth.id,
-        email: $auth.email,
-        name: $auth.name,
-        self_role: $auth.self_role,
-        experience_level: $auth.experience_level,
-        comfort_level: $auth.comfort_level,
-        created_at: $auth.created_at,
-        updated_at: $auth.updated_at
-      };
+      SELECT id, email, name, self_role, experience_level, comfort_level,
+             created_at, updated_at
+      FROM ONLY $auth;
       """
 
       case UserClient.query(conn, sql, vars) do
@@ -1479,12 +1500,88 @@ defmodule Isomer.Db.Tenant do
     {table, key} = split_record_id!(evidence_id)
 
     sql = """
-    DELETE type::record($table, $key);
+    LET $eid = type::record($table, $key);
+    LET $row = (SELECT id, storage_key FROM ONLY $eid);
+    DELETE $eid;
+    RETURN $row;
     """
 
     case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
-      {:ok, _} -> :ok
-      {:error, reason} -> {:error, reason}
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} when is_map(row) ->
+            {:ok, %{"storage_key" => row["storage_key"] || row[:storage_key]}}
+
+          {:error, :not_found} ->
+            :ok
+
+          _ ->
+            :ok
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc "Fetch one evidence row by id (membership enforced by Surreal PERMISSIONS)."
+  def get_evidence(conn, evidence_id) when is_binary(evidence_id) do
+    evidence_id = canonicalize_record_id(evidence_id)
+    {table, key} = split_record_id!(evidence_id)
+
+    sql = """
+    SELECT
+      id, org, answer, label, storage_key, content_type, uploaded_by, uploaded_at,
+      answer.question_id AS question_id
+    FROM ONLY type::record($table, $key);
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} -> {:ok, normalize_evidence(row)}
+          other -> other
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc "Sets `storage_key` on an evidence row after the object is written."
+  def update_evidence_storage_key(conn, evidence_id, storage_key)
+      when is_binary(evidence_id) and is_binary(storage_key) do
+    evidence_id = canonicalize_record_id(evidence_id)
+    storage_key = String.trim(storage_key)
+
+    if storage_key == "" do
+      {:error, "storage_key is required"}
+    else
+      {table, key} = split_record_id!(evidence_id)
+
+      sql = """
+      LET $eid = type::record($table, $key);
+      UPDATE $eid SET storage_key = $storage_key;
+      RETURN SELECT
+        id, org, answer, label, storage_key, content_type, uploaded_by, uploaded_at,
+        answer.question_id AS question_id
+      FROM ONLY $eid;
+      """
+
+      case UserClient.query(conn, sql, %{
+             "table" => table,
+             "key" => key,
+             "storage_key" => storage_key
+           }) do
+        {:ok, results} ->
+          case unwrap_one(results) do
+            {:ok, row} -> {:ok, normalize_evidence(row)}
+            other -> other
+          end
+
+        {:error, reason} ->
+          {:error, reason}
+      end
     end
   end
 

@@ -47,9 +47,9 @@ holds root/Vault credentials.
 | Tooling SBoM | CycloneDX published to Surreal `sbom:isomer_tooling` on sync (`mix isomer.db.sync_sbom`) |
 | Delivery | Corpus sync + runtime schema + SBoM sync in CI; Fly demo deploy on `main`; `mix test` in CI |
 
-Remaining Theme 2 work is object-storage evidence (slice F). Theme 3 member
-admin + org polish shipped; password recovery remains slice H. Content depth
-(Theme 4) can proceed in parallel.
+Remaining Theme 2 work is done for the assessment loop (slice F object storage
+shipped). Theme 3 member admin + org polish shipped; password recovery remains
+slice H. Content depth (Theme 4) can proceed in parallel.
 
 ---
 
@@ -103,6 +103,8 @@ without leaving the product.
 - Answers trigger `Isomer.Ruleset.Evaluate` and persist `classification` and
   `activates` on the assessment.
 - Details shows ruleset id, outcome label, and activated obligation count.
+- Details is the assessment hub: progress by domain, a single primary next
+  action, rename, and lifecycle controls (finalize/reopen/delete).
 
 **Acceptance:** A combined assessment can determine applicable AI Act obligations
 and retain that outcome for later views and artifact context.
@@ -122,17 +124,18 @@ Add `AssessmentLive.Results` (`/assessments/:id/results`):
 that answers “what applies?” and “what is still open?”—linked from assessment
 chrome (Details, Wizard, Menu).
 
-#### 2.3 Evidence on answers — shipped (metadata slice)
+#### 2.3 Evidence on answers — shipped (metadata + object storage)
 
-**Status:** Complete for metadata attach/list/remove + metrics; object storage deferred.
+**Status:** Complete for metadata attach/list/remove + metrics + object storage.
 
-Schema for `evidence` exists; the wizard should attach and list it.
+Schema for `evidence` exists; the wizard attaches and lists it.
 
 - First slice: metadata (label, content type, URL or storage key) created under
   the answer, with remove; org metrics `evidence_pct` reflects real evidence
   rows. **Shipped.**
-- Second slice: object storage for binaries (e.g. S3-compatible), authenticated
-  download, `storage_key` populated end-to-end. **Pending (slice F).**
+- Second slice: object storage for binaries (`memory` / `local` / S3-compatible),
+  wizard file upload, authenticated download at `/evidence/:id/download`,
+  `storage_key` populated end-to-end. **Shipped (slice F).**
 
 **Acceptance:** Assessors can support answers with evidence in-flow; coverage
 metrics include evidence, not only Yes/No counts.

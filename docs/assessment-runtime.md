@@ -53,7 +53,7 @@ user ──member──▶ org
 
 | Table | Purpose |
 |---|---|
-| `user` | Record-auth subject (`$auth`). email + argon2 password. Optional guidance prefs: `self_role`, `experience_level`, `comfort_level` when the Surreal compute node has those columns; otherwise prefs also live in the Phoenix session. |
+| `user` | Record-auth subject (`$auth`). email + argon2 password. Guidance prefs (`self_role`, `experience_level`, `comfort_level`) are stored on the user row and re-read with `SELECT … FROM ONLY $auth`. The cookie session keeps a compact non-nil overlay for immediate UI feedback; session nils never wipe Surreal values. |
 
 | `org` | Tenant (the organization being assessed). |
 | `member` | `TYPE RELATION IN user OUT org` + `role`. |
@@ -129,26 +129,46 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `OrgLive.Show` | `/orgs/:org_id` | Assessments primary (rich rows); maturity/metrics **open by default** (still collapsible); Members button for owners/admins; role-aware actions |
 | `OrgLive.Members` | `/orgs/:org_id/members` | Invite / role / remove for owners and admins; assessors and viewers are redirected to the org dashboard |
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `kind` (`domains` / `ruleset` / `combined`), optional ruleset, `domains[]`; `CREATE assessment` |
-| `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + results + artifacts |
+| `AssessmentLive.Show` | `/assessments/:id` | Assessment hub: progress snapshot, primary next-action CTA, rename, domain add, lifecycle (finalize/reopen/delete); secondary links to wizard/results/artifacts |
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer`; attach/list/remove `evidence` metadata; re-eval classification; adaptive help; domain metric opt-in |
 | `AssessmentLive.Results` | `/assessments/:id/results` | Classification / `activates` + satisfier residual coverage + domain completion |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE answer` (`pack_ref=__artifacts__`); download links |
 | `LibraryLive` | `/library` | All templates + generated docs (answer-backed) visible to the user |
-| `SettingsLive` / `SettingsController` | `/settings` | Session-backed guidance prefs + best-effort `UPDATE $auth` name/prefs |
+| `SettingsLive` / `SettingsController` | `/settings` | Persist guidance prefs + name via `UPDATE $auth` (Surreal SoR); cookie session overlay for immediate LiveView feedback; surface Surreal write failures instead of a false success toast |
 | `ArtifactController` | `/artifacts/:id/download` | Fetch generated doc (`answer` id) with user JWT; Markdown or print-ready HTML (Save as PDF) |
 
 ### Planned (not yet routed)
 
-Product sequencing: [`roadmap.md`](roadmap.md) (evidence object storage; password recovery / SSO).
+Product sequencing: [`roadmap.md`](roadmap.md) (password recovery / SSO; content depth).
 
 | LiveView | Route | Notes |
 |---|---|---|
-| Evidence object download | `/evidence/:id/download` | Binary bytes behind `storage_key` (slice F) |
 | Password recovery | `/password/…` | Token + email without Vault on the web path (slice H) |
+
+### Evidence object storage
+
+Surreal remains the metadata SoR (`evidence.label`, `content_type`, `storage_key`).
+Binary bytes live in `Isomer.Evidence.Storage` backends:
+
+| Backend | When |
+|---|---|
+| `memory` | Tests / ephemeral default |
+| `local` | `EVIDENCE_BACKEND=local` + `EVIDENCE_LOCAL_ROOT` |
+| `s3` | `EVIDENCE_BACKEND=s3` + `EVIDENCE_S3_*` (R2 / MinIO / AWS) |
+
+Wizard: stage a file (shared upload), then **Attach evidence** on a saved answer;
+URL/note metadata still works without a file. Download: `GET /evidence/:id/download`
+(auth session required). Object GC on remove deletes the backend object when
+`storage_key` is not an `http(s)` URL.
 
 ### Guidance prefs (adaptive copy)
 
-Stored on `user`, edited in Settings. `Isomer.GuideCopy` adjusts wizard ledes,
+Stored on `user`, edited in Settings (`POST /settings`). Reads use
+`SELECT … FROM ONLY $auth` so preference columns come from the live row, not a
+stale `$auth.field` projection. A compact cookie-session overlay supplies
+immediate LiveView feedback; `GuideCopy.overlay_prefs/2` ignores nil overlay
+keys so an empty session cannot clear Surreal values. `Isomer.GuideCopy`
+adjusts wizard ledes,
 per-question tips, and evidence hints from `self_role` / `experience_level` /
 `comfort_level`. Same screens and controls for every level — only text density
 changes. Prefs can be updated any time as comfort grows.
@@ -185,7 +205,9 @@ dyno still reaches a node without the table.
 3. Render controls from `kind` (`boolean` / `single` / `multi` / `evidence`)
 4. On change: upsert `answer` in place (stable id for evidence links)
 5. When ruleset answers change: run first-match eval (Elixir `Isomer.Ruleset.Evaluate`; later `fn::isomer::evaluate_ruleset`) and `UPDATE assessment SET classification=…, activates=…`
-6. Evidence metadata: `CREATE evidence` under the answer (`label`, `content_type`, `storage_key` as URL/reference); list + remove in-wizard
+6. Evidence: `CREATE evidence` under the answer (`label`, `content_type`,
+   `storage_key` as URL/note or object key); optional file upload to object
+   storage; list + download + remove in-wizard
 
 Evidence prompts on domain questions show the attach panel once an answer exists.
 
@@ -202,7 +224,7 @@ Root connection remains Mix-only (`isomer.db.sync`, `isomer.db.ensure_runtime`).
 
 ## Out of scope for this minimum
 
-- Object storage implementation for evidence bytes (schema stores metadata only)
+- Presigned browser→S3 uploads, virus scanning, or cascade orphan GC on org delete
 - Multi-system register / per-AI-system scoping (add `system` table later)
 - Porting ruleset evaluation into SurQL functions
 - Full Phoenix umbrella / UI chrome

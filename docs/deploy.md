@@ -22,6 +22,10 @@ Web runtime env (minimum):
 | `SURREAL_URL` | `wss://…/rpc` |
 | `SURREAL_NAMESPACE` / `SURREAL_DATABASE` | Same as sync |
 | `VAULT_*` | Only needed if you run Mix tasks in the same image |
+| `EVIDENCE_BACKEND` | Optional: `memory` / `local` / `s3` (auto: S3 if `EVIDENCE_S3_*` set, else local if `EVIDENCE_LOCAL_ROOT`, else memory) |
+| `EVIDENCE_LOCAL_ROOT` | Filesystem root when using local evidence storage |
+| `EVIDENCE_S3_BUCKET` / `EVIDENCE_S3_ACCESS_KEY_ID` / `EVIDENCE_S3_SECRET_ACCESS_KEY` | Required for S3-compatible evidence storage |
+| `EVIDENCE_S3_REGION` / `EVIDENCE_S3_ENDPOINT` / `EVIDENCE_S3_FORCE_PATH_STYLE` | Optional S3 region, custom endpoint (R2/MinIO), path-style |
 
 Signup/signin use Surreal record access and do **not** need the Vault password
 on the web process. Keep Vault on a one-off release command or CI for schema

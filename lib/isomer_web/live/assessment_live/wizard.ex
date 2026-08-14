@@ -3,12 +3,14 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   alias Isomer.Domains
   alias Isomer.Db.Tenant
+  alias Isomer.Evidence.Storage
   alias Isomer.GuideCopy
   alias Isomer.Maturity
   alias Isomer.Roles
   alias Isomer.Ruleset.Evaluate
 
   @classification_section_id "__classification__"
+  @evidence_max_bytes 10_000_000
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -27,13 +29,42 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
         {:ok,
          socket
          |> assign(state)
-         |> assign(error: nil, open_domain_ids: open_ids)}
+         |> assign(
+           error: nil,
+           open_domain_ids: open_ids,
+           evidence_max_bytes: @evidence_max_bytes
+         )
+         |> allow_upload(:evidence_file,
+           accept: :any,
+           max_entries: 1,
+           max_file_size: @evidence_max_bytes
+         )}
 
       {:error, _} ->
         {:ok,
          socket
          |> put_flash(:error, "Assessment not found")
          |> push_navigate(to: ~p"/orgs")}
+    end
+  end
+
+  @impl true
+  def handle_params(params, _uri, socket) do
+    case Map.get(params, "domain") do
+      domain when is_binary(domain) and domain != "" ->
+        valid? =
+          socket.assigns
+          |> Map.get(:domain_sections, [])
+          |> Enum.any?(&(&1.id == domain))
+
+        if valid? do
+          {:noreply, assign(socket, open_domain_ids: MapSet.new([domain]))}
+        else
+          {:noreply, socket}
+        end
+
+      _ ->
+        {:noreply, socket}
     end
   end
 
@@ -164,24 +195,10 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
             {:noreply, assign(socket, error: "Save an answer before attaching evidence.")}
 
           true ->
-            attrs = %{
-              "org_id" => socket.assigns.org_id,
-              "answer_id" => answer_id,
-              "label" => Map.get(params, "label", ""),
-              "storage_key" => Map.get(params, "storage_key", ""),
-              "content_type" => normalize_content_type(Map.get(params, "content_type", ""))
-            }
-
-            case Tenant.create_evidence(socket.assigns.surreal, attrs) do
-              {:ok, row} ->
-                evidence_by_qid =
-                  Map.update(socket.assigns.evidence_by_qid, qid, [row], fn list ->
-                    list ++ [row]
-                  end)
-
+            case attach_evidence(socket, qid, answer_id, params) do
+              {:ok, socket} ->
                 {:noreply,
                  socket
-                 |> assign(:evidence_by_qid, evidence_by_qid)
                  |> assign(:evidence_form_n, socket.assigns.evidence_form_n + 1)
                  |> assign(:error, nil)
                  |> put_flash(:info, "Evidence attached")}
@@ -198,21 +215,135 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       {:noreply, assign(socket, error: write_blocked_message(socket))}
     else
       case Tenant.delete_evidence(socket.assigns.surreal, evidence_id) do
-        :ok ->
-          evidence_by_qid =
-            Map.update(socket.assigns.evidence_by_qid, qid, [], fn list ->
-              Enum.reject(list, &(canonicalize_id(&1["id"]) == canonicalize_id(evidence_id)))
-            end)
+        {:ok, %{"storage_key" => key}} ->
+          if Storage.object_key?(key), do: _ = Storage.delete(key)
+          {:noreply, drop_evidence_row(socket, qid, evidence_id)}
 
-          {:noreply,
-           socket
-           |> assign(:evidence_by_qid, evidence_by_qid)
-           |> assign(:error, nil)
-           |> put_flash(:info, "Evidence removed")}
+        :ok ->
+          {:noreply, drop_evidence_row(socket, qid, evidence_id)}
 
         {:error, reason} ->
           {:noreply, assign(socket, error: format_error(reason))}
       end
+    end
+  end
+
+  # LiveView file uploads require a change event on the form.
+  def handle_event("noop", _params, socket), do: {:noreply, socket}
+
+  defp drop_evidence_row(socket, qid, evidence_id) do
+    evidence_by_qid =
+      Map.update(socket.assigns.evidence_by_qid, qid, [], fn list ->
+        Enum.reject(list, &(canonicalize_id(&1["id"]) == canonicalize_id(evidence_id)))
+      end)
+
+    socket
+    |> assign(:evidence_by_qid, evidence_by_qid)
+    |> assign(:error, nil)
+    |> put_flash(:info, "Evidence removed")
+  end
+
+  defp attach_evidence(socket, qid, answer_id, params) do
+    upload = socket.assigns.uploads.evidence_file
+
+    with :ok <- validate_evidence_upload(upload) do
+      uploads =
+        consume_uploaded_entries(socket, :evidence_file, fn %{path: path}, entry ->
+          case File.read(path) do
+            {:ok, body} ->
+              {:ok,
+               %{
+                 body: body,
+                 content_type: entry.client_type || "application/octet-stream",
+                 client_name: entry.client_name
+               }}
+
+            {:error, reason} ->
+              {:postpone, reason}
+          end
+        end)
+
+      label = Map.get(params, "label", "")
+      url_or_ref = Map.get(params, "storage_key", "") |> to_string() |> String.trim()
+
+      case uploads do
+        [%{body: body, content_type: content_type, client_name: client_name}] ->
+          attach_uploaded_file(socket, qid, answer_id, label, body, content_type, client_name)
+
+        [] ->
+          attrs = %{
+            "org_id" => socket.assigns.org_id,
+            "answer_id" => answer_id,
+            "label" => label,
+            "storage_key" => url_or_ref,
+            "content_type" => normalize_content_type(Map.get(params, "content_type", ""))
+          }
+
+          case Tenant.create_evidence(socket.assigns.surreal, attrs) do
+            {:ok, row} ->
+              evidence_by_qid =
+                Map.update(socket.assigns.evidence_by_qid, qid, [row], fn list ->
+                  list ++ [row]
+                end)
+
+              {:ok, assign(socket, :evidence_by_qid, evidence_by_qid)}
+
+            {:error, reason} ->
+              {:error, reason}
+          end
+
+        other ->
+          {:error, "Upload failed: #{inspect(other)}"}
+      end
+    end
+  end
+
+  defp validate_evidence_upload(upload) do
+    cond do
+      Enum.any?(upload.entries, &(&1.done? == false)) ->
+        {:error, "Wait for the file upload to finish."}
+
+      (errs = upload_errors(upload)) != [] ->
+        {:error, "Upload error: #{Enum.map_join(errs, ", ", &upload_error_to_string/1)}"}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp attach_uploaded_file(socket, qid, answer_id, label, body, content_type, client_name) do
+    label =
+      case String.trim(to_string(label)) do
+        "" -> client_name || "Uploaded file"
+        other -> other
+      end
+
+    attrs = %{
+      "org_id" => socket.assigns.org_id,
+      "answer_id" => answer_id,
+      "label" => label,
+      "content_type" => content_type || "application/octet-stream"
+    }
+
+    with {:ok, row} <- Tenant.create_evidence(socket.assigns.surreal, attrs),
+         evidence_id <- canonicalize_id(row["id"]),
+         object_key <-
+           Storage.build_key(socket.assigns.org_id, socket.assigns.assessment_id, evidence_id),
+         :ok <-
+           Storage.put(object_key, body, %{
+             "content_type" => content_type,
+             "filename" => client_name
+           }),
+         {:ok, updated} <-
+           Tenant.update_evidence_storage_key(socket.assigns.surreal, evidence_id, object_key) do
+      evidence_by_qid =
+        Map.update(socket.assigns.evidence_by_qid, qid, [updated], fn list ->
+          list ++ [updated]
+        end)
+
+      {:ok, assign(socket, :evidence_by_qid, evidence_by_qid)}
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -702,6 +833,41 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           </details>
         </.card_content>
       </.card>
+
+      <div
+        :if={not @finalized and map_size(@answer_ids) > 0}
+        class="mb-4 rounded-lg border border-dashed border-slate-300 bg-white/60 px-4 py-3 dark:border-slate-600 dark:bg-slate-900/30"
+      >
+        <p class="text-sm font-medium text-slate-800 dark:text-slate-200">
+          Evidence file (optional)
+        </p>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Choose a file here (max {div(@evidence_max_bytes, 1_000_000)} MB), then use
+          <span class="font-medium">Attach evidence</span> on a saved answer. URL/note
+          metadata still works without a file. Surreal stores metadata; bytes go to object storage.
+        </p>
+        <form id="evidence-file-staging" phx-change="noop" class="mt-3 space-y-1">
+          <.live_file_input upload={@uploads.evidence_file} class="block w-full text-sm" />
+          <p
+            :for={err <- upload_errors(@uploads.evidence_file)}
+            class="text-sm text-rose-600 dark:text-rose-400"
+          >
+            {upload_error_to_string(err)}
+          </p>
+          <p
+            :for={entry <- @uploads.evidence_file.entries}
+            class="text-sm text-slate-600 dark:text-slate-300"
+          >
+            Ready: {entry.client_name}
+            <span
+              :for={err <- upload_errors(@uploads.evidence_file, entry)}
+              class="text-rose-600 dark:text-rose-400"
+            >
+              — {upload_error_to_string(err)}
+            </span>
+          </p>
+        </form>
+      </div>
 
       <%= if @domain_sections == [] do %>
         <.card variant="muted">
@@ -1281,10 +1447,19 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
                     rel="noopener noreferrer"
                     class="underline underline-offset-2"
                   >
-                    {ev["storage_key"]}
+                    Open link
                   </a>
                 <% else %>
-                  <code>{ev["storage_key"]}</code>
+                  <%= if Storage.object_key?(ev["storage_key"]) do %>
+                    <a
+                      href={~p"/evidence/#{ev["id"]}/download"}
+                      class="underline underline-offset-2"
+                    >
+                      Download
+                    </a>
+                  <% else %>
+                    <code>{ev["storage_key"]}</code>
+                  <% end %>
                 <% end %>
               </span>
             </p>
@@ -1305,7 +1480,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       </ul>
 
       <.p :if={@evidence == [] and not @answered} no_margin class="text-sm text-slate-500">
-        Save an answer to attach evidence metadata (label, type, URL).
+        Save an answer to attach evidence (file upload, URL, or note).
       </.p>
 
       <form
@@ -1340,8 +1515,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
           <.field
             type="text"
             name="storage_key"
-            label="URL or reference"
-            placeholder="https://… or storage key"
+            label="URL or note (optional if a file is staged above)"
+            placeholder="https://… or short note"
             no_margin
             wrapper_class="min-w-[14rem] flex-1"
           />
@@ -1363,6 +1538,11 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   defp uri?(_), do: false
+
+  defp upload_error_to_string(:too_large), do: "file is too large"
+  defp upload_error_to_string(:too_many_files), do: "too many files"
+  defp upload_error_to_string(:not_accepted), do: "file type not accepted"
+  defp upload_error_to_string(other), do: inspect(other)
 
   defp format_multi(list) when is_list(list), do: Enum.join(list, ", ")
   defp format_multi(other) when is_binary(other), do: other
