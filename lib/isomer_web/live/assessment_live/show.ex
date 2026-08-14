@@ -206,7 +206,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
             to={~p"/orgs/#{@org_id}"}
             color="gray"
             variant="ghost"
-            label="← Org"
+            label="Org"
             icon="hero-arrow-left"
           />
           <.button
@@ -376,7 +376,8 @@ defmodule IsomerWeb.AssessmentLive.Show do
         to={~p"/orgs/#{@org_id}"}
         color="gray"
         variant="ghost"
-        label="← Back to org"
+        label="Back to org"
+        icon="hero-arrow-left"
       />
     </section>
     """

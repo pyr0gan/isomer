@@ -237,7 +237,8 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
             to={~p"/orgs/#{@org_id}"}
             color="gray"
             variant="ghost"
-            label="← Org dashboard"
+            label="Org"
+            icon="hero-arrow-left"
           />
         </div>
       </div>

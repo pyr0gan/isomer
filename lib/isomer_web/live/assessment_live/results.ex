@@ -120,7 +120,7 @@ defmodule IsomerWeb.AssessmentLive.Results do
             to={~p"/orgs/#{@org_id}"}
             color="gray"
             variant="ghost"
-            label="← Org"
+            label="Org"
             icon="hero-arrow-left"
           />
           <.button
