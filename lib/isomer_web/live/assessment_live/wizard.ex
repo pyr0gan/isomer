@@ -38,6 +38,26 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   @impl true
+  def handle_params(params, _uri, socket) do
+    case Map.get(params, "domain") do
+      domain when is_binary(domain) and domain != "" ->
+        valid? =
+          socket.assigns
+          |> Map.get(:domain_sections, [])
+          |> Enum.any?(&(&1.id == domain))
+
+        if valid? do
+          {:noreply, assign(socket, open_domain_ids: MapSet.new([domain]))}
+        else
+          {:noreply, socket}
+        end
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event("toggle_domain", %{"id" => domain_id}, socket) do
     open = socket.assigns.open_domain_ids
 

@@ -130,6 +130,46 @@
     @apply flex flex-wrap items-start justify-between gap-4;
   }
 
+  .assessment-hub-title-row {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .assessment-hub-title-form {
+    @apply flex max-w-xl flex-col gap-2;
+  }
+
+  .assessment-hub-title-input {
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xl font-semibold text-slate-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  .assessment-hub-cta-card.pc-card {
+    @apply border-primary-200 bg-primary-50/40 dark:border-primary-900 dark:bg-primary-950/30;
+  }
+
+  .assessment-hub-sections {
+    @apply space-y-4;
+  }
+
+  .assessment-hub-section__main {
+    @apply mb-1.5 flex flex-wrap items-baseline justify-between gap-2;
+  }
+
+  .assessment-hub-section__label {
+    @apply font-medium text-primary-700 underline-offset-2 hover:underline dark:text-primary-300;
+  }
+
+  .assessment-hub-section__counts {
+    @apply text-sm text-slate-500 dark:text-slate-400;
+  }
+
+  .assessment-hub-section__track {
+    @apply h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800;
+  }
+
+  .assessment-hub-section__fill {
+    @apply h-full rounded-full bg-primary-500 transition-[width] duration-300;
+  }
+
   .isomer-lede {
     @apply mt-1 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-400;
   }

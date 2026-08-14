@@ -103,6 +103,8 @@ without leaving the product.
 - Answers trigger `Isomer.Ruleset.Evaluate` and persist `classification` and
   `activates` on the assessment.
 - Details shows ruleset id, outcome label, and activated obligation count.
+- Details is the assessment hub: progress by domain, a single primary next
+  action, rename, and lifecycle controls (finalize/reopen/delete).
 
 **Acceptance:** A combined assessment can determine applicable AI Act obligations
 and retain that outcome for later views and artifact context.

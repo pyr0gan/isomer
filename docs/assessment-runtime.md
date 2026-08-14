@@ -129,7 +129,7 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `OrgLive.Show` | `/orgs/:org_id` | Assessments primary (rich rows); maturity/metrics **open by default** (still collapsible); Members button for owners/admins; role-aware actions |
 | `OrgLive.Members` | `/orgs/:org_id/members` | Invite / role / remove for owners and admins; assessors and viewers are redirected to the org dashboard |
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `kind` (`domains` / `ruleset` / `combined`), optional ruleset, `domains[]`; `CREATE assessment` |
-| `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + results + artifacts |
+| `AssessmentLive.Show` | `/assessments/:id` | Assessment hub: progress snapshot, primary next-action CTA, rename, domain add, lifecycle (finalize/reopen/delete); secondary links to wizard/results/artifacts |
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer`; attach/list/remove `evidence` metadata; re-eval classification; adaptive help; domain metric opt-in |
 | `AssessmentLive.Results` | `/assessments/:id/results` | Classification / `activates` + satisfier residual coverage + domain completion |
 | `AssessmentLive.Artifacts` | `/assessments/:id/artifacts` | List corpus `template`; merge fields → `CREATE answer` (`pack_ref=__artifacts__`); download links |

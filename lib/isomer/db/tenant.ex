@@ -556,6 +556,37 @@ defmodule Isomer.Db.Tenant do
   end
 
   @doc """
+  Renames an assessment. Blank titles are rejected.
+  Returns the updated assessment.
+  """
+  def update_assessment_title(conn, assessment_id, title)
+      when is_binary(assessment_id) and is_binary(title) do
+    assessment_id = canonicalize_record_id(assessment_id)
+    title = String.trim(title)
+
+    if title == "" do
+      {:error, "Title is required"}
+    else
+      {table, key} = split_record_id!(assessment_id)
+
+      sql = """
+      LET $aid = type::record($table, $key);
+      UPDATE $aid SET title = $title, updated_at = time::now();
+      RETURN SELECT * FROM ONLY $aid;
+      """
+
+      case UserClient.query(conn, sql, %{
+             "table" => table,
+             "key" => key,
+             "title" => title
+           }) do
+        {:ok, results} -> unwrap_one(results)
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
   Deletes an assessment and its answers/evidence. Requires owner/admin on the org.
   """
   def delete_assessment(conn, assessment_id) when is_binary(assessment_id) do
