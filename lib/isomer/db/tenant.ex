@@ -24,6 +24,7 @@ defmodule Isomer.Db.Tenant do
 
   alias Isomer.Db.UserClient
   alias Isomer.GuideCopy
+  alias Isomer.Roles
 
   @artifact_pack "question_set"
   @artifact_pack_ref "__artifacts__"
@@ -119,6 +120,262 @@ defmodule Isomer.Db.Tenant do
         {:error, reason}
     end
   end
+
+  @doc """
+  Current user's membership role on an org (`owner` / `admin` / `assessor` /
+  `viewer`). Returns `{:error, :not_found}` when the user is not a member.
+  """
+  def get_membership(conn, org_id) when is_binary(org_id) do
+    {table, key} = split_record_id!(org_id)
+
+    sql = """
+    SELECT id, role, created_at, in AS user_id, out AS org_id
+    FROM member
+    WHERE in = $auth.id AND out = type::record($table, $key)
+    LIMIT 1;
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, results} ->
+        case rows_of(results) do
+          [row | _] ->
+            {:ok,
+             row
+             |> normalize_record()
+             |> Map.update("role", "viewer", &Roles.normalize/1)
+             |> Map.update("user_id", nil, &canonicalize_record_id/1)
+             |> Map.update("org_id", nil, &canonicalize_record_id/1)}
+
+          [] ->
+            {:error, :not_found}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Members of an org with email/name from the related user.
+
+  Owners/admins can list everyone (Surreal member SELECT). Other roles only see
+  their own edge — callers should gate the admin UI with `Roles.can_manage_members?/1`.
+  """
+  def list_members(conn, org_id) when is_binary(org_id) do
+    {table, key} = split_record_id!(org_id)
+
+    sql = """
+    SELECT
+      id,
+      role,
+      created_at,
+      in AS user_id,
+      in.email AS email,
+      in.name AS name
+    FROM member
+    WHERE out = type::record($table, $key)
+    ORDER BY role ASC, email ASC;
+    """
+
+    case UserClient.query(conn, sql, %{"table" => table, "key" => key}) do
+      {:ok, results} ->
+        rows =
+          results
+          |> rows_of()
+          |> Enum.map(fn row ->
+            row
+            |> normalize_record()
+            |> Map.update("role", "viewer", &Roles.normalize/1)
+            |> Map.update("user_id", nil, &canonicalize_record_id/1)
+          end)
+
+        {:ok, rows}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Add an existing user (by email) to the org. Caller must be owner/admin.
+
+  Users must already have an account — this slice does not send invite email.
+  """
+  def add_member_by_email(conn, org_id, email, role)
+      when is_binary(org_id) and is_binary(email) and is_binary(role) do
+    email = email |> String.trim() |> String.downcase()
+    role = Roles.normalize(role)
+
+    cond do
+      not String.contains?(email, "@") ->
+        {:error, "Enter a valid email address."}
+
+      role == "owner" ->
+        {:error, "Promote an existing member to owner instead of inviting as owner."}
+
+      role not in Roles.all() ->
+        {:error, "Unknown role."}
+
+      true ->
+        {table, key} = split_record_id!(org_id)
+
+        sql = """
+        LET $org = type::record($table, $key);
+        IF $org NOT IN fn::isomer::member_org_ids_with_roles(["owner", "admin"]) {
+          THROW "Only owners and admins can add members.";
+        };
+        LET $uid = (SELECT VALUE id FROM user WHERE email = $email LIMIT 1)[0];
+        IF $uid = NONE {
+          THROW "No account with that email. Ask them to sign up first, then add them here.";
+        };
+        IF count(SELECT * FROM member WHERE in = $uid AND out = $org) > 0 {
+          THROW "That user is already a member of this organization.";
+        };
+        RELATE $uid -> member -> $org SET role = $role;
+        RETURN SELECT
+          id, role, created_at,
+          in AS user_id, in.email AS email, in.name AS name
+        FROM member
+        WHERE in = $uid AND out = $org
+        LIMIT 1;
+        """
+
+        case UserClient.query(
+               conn,
+               sql,
+               %{"table" => table, "key" => key, "email" => email, "role" => role}
+             ) do
+          {:ok, results} ->
+            case unwrap_one(results) do
+              {:ok, row} ->
+                {:ok,
+                 row
+                 |> Map.update("role", "viewer", &Roles.normalize/1)
+                 |> Map.update("user_id", nil, &canonicalize_record_id/1)}
+
+              other ->
+                other
+            end
+
+          {:error, reason} ->
+            {:error, humanize_member_error(reason)}
+        end
+    end
+  end
+
+  @doc """
+  Change a member's role. Refuses to demote the last owner.
+  """
+  def update_member_role(conn, org_id, member_id, role)
+      when is_binary(org_id) and is_binary(member_id) and is_binary(role) do
+    role = Roles.normalize(role)
+    org_id = canonicalize_record_id(org_id)
+    member_id = canonicalize_record_id(member_id)
+    {org_table, org_key} = split_record_id!(org_id)
+    {member_table, member_key} = split_record_id!(member_id)
+
+    sql = """
+    LET $org = type::record($org_table, $org_key);
+    LET $mid = type::record($member_table, $member_key);
+    IF $org NOT IN fn::isomer::member_org_ids_with_roles(["owner", "admin"]) {
+      THROW "Only owners and admins can change roles.";
+    };
+    LET $row = (SELECT * FROM ONLY $mid);
+    IF $row = NONE OR $row.out != $org {
+      THROW "Member not found on this organization.";
+    };
+    IF $row.role = "owner" AND $role != "owner" {
+      LET $owners = count(SELECT * FROM member WHERE out = $org AND role = "owner");
+      IF $owners <= 1 {
+        THROW "Cannot demote the last owner.";
+      };
+    };
+    UPDATE $mid SET role = $role;
+    RETURN SELECT
+      id, role, created_at,
+      in AS user_id, in.email AS email, in.name AS name
+    FROM ONLY $mid;
+    """
+
+    case UserClient.query(
+           conn,
+           sql,
+           %{
+             "org_table" => org_table,
+             "org_key" => org_key,
+             "member_table" => member_table,
+             "member_key" => member_key,
+             "role" => role
+           }
+         ) do
+      {:ok, results} ->
+        case unwrap_one(results) do
+          {:ok, row} ->
+            {:ok,
+             row
+             |> Map.update("role", "viewer", &Roles.normalize/1)
+             |> Map.update("user_id", nil, &canonicalize_record_id/1)}
+
+          other ->
+            other
+        end
+
+      {:error, reason} ->
+        {:error, humanize_member_error(reason)}
+    end
+  end
+
+  @doc """
+  Remove a member edge. Refuses to remove the last owner.
+  """
+  def remove_member(conn, org_id, member_id)
+      when is_binary(org_id) and is_binary(member_id) do
+    org_id = canonicalize_record_id(org_id)
+    member_id = canonicalize_record_id(member_id)
+    {org_table, org_key} = split_record_id!(org_id)
+    {member_table, member_key} = split_record_id!(member_id)
+
+    sql = """
+    LET $org = type::record($org_table, $org_key);
+    LET $mid = type::record($member_table, $member_key);
+    IF $org NOT IN fn::isomer::member_org_ids_with_roles(["owner", "admin"]) {
+      THROW "Only owners and admins can remove members.";
+    };
+    LET $row = (SELECT * FROM ONLY $mid);
+    IF $row = NONE OR $row.out != $org {
+      THROW "Member not found on this organization.";
+    };
+    IF $row.role = "owner" {
+      LET $owners = count(SELECT * FROM member WHERE out = $org AND role = "owner");
+      IF $owners <= 1 {
+        THROW "Cannot remove the last owner.";
+      };
+    };
+    DELETE $mid;
+    """
+
+    case UserClient.query(
+           conn,
+           sql,
+           %{
+             "org_table" => org_table,
+             "org_key" => org_key,
+             "member_table" => member_table,
+             "member_key" => member_key
+           }
+         ) do
+      {:ok, _} -> :ok
+      {:error, reason} -> {:error, humanize_member_error(reason)}
+    end
+  end
+
+  defp humanize_member_error(%{message: msg}) when is_binary(msg), do: strip_throw_prefix(msg)
+  defp humanize_member_error(msg) when is_binary(msg), do: strip_throw_prefix(msg)
+  defp humanize_member_error(other), do: other
+
+  defp strip_throw_prefix("An error occurred: " <> rest), do: rest
+  defp strip_throw_prefix("Error: " <> rest), do: rest
+  defp strip_throw_prefix(msg), do: msg
 
   def list_assessments(conn, org_id) when is_binary(org_id) do
     {table, key} = split_record_id!(org_id)

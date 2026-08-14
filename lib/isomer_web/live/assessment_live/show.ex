@@ -4,6 +4,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
   alias Isomer.Domains
   alias Isomer.Db.Tenant
   alias Isomer.GuideCopy
+  alias Isomer.Roles
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -23,101 +24,122 @@ defmodule IsomerWeb.AssessmentLive.Show do
 
   @impl true
   def handle_event("add_domains", params, socket) do
-    if finalized?(socket.assigns.assessment) do
-      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
-    else
-      selected =
-        params
-        |> Map.get("domains", %{})
-        |> Map.keys()
+    cond do
+      not Roles.can_write?(socket.assigns.current_role) ->
+        {:noreply, assign(socket, error: "Viewer access — editing is not allowed.")}
 
-      case Tenant.add_assessment_domains(
-             socket.assigns.surreal,
-             socket.assigns.assessment_id,
-             selected
-           ) do
-        {:ok, _assessment} ->
-          case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
-            {:ok, state} ->
-              {:noreply,
-               socket
-               |> assign(state)
-               |> assign(:error, nil)
-               |> put_flash(:info, "Domains updated")}
+      finalized?(socket.assigns.assessment) ->
+        {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
 
-            {:error, reason} ->
-              {:noreply, assign(socket, error: format_error(reason))}
-          end
+      true ->
+        selected =
+          params
+          |> Map.get("domains", %{})
+          |> Map.keys()
 
-        {:error, reason} ->
-          {:noreply, assign(socket, error: format_error(reason))}
-      end
+        case Tenant.add_assessment_domains(
+               socket.assigns.surreal,
+               socket.assigns.assessment_id,
+               selected
+             ) do
+          {:ok, _assessment} ->
+            case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
+              {:ok, state} ->
+                {:noreply,
+                 socket
+                 |> assign(state)
+                 |> assign(:error, nil)
+                 |> put_flash(:info, "Domains updated")}
+
+              {:error, reason} ->
+                {:noreply, assign(socket, error: format_error(reason))}
+            end
+
+          {:error, reason} ->
+            {:noreply, assign(socket, error: format_error(reason))}
+        end
     end
   end
 
   def handle_event("finalize", _params, socket) do
-    if finalized?(socket.assigns.assessment) do
-      {:noreply, assign(socket, error: "Already finalized.")}
-    else
-      case Tenant.update_assessment_status(
-             socket.assigns.surreal,
-             socket.assigns.assessment_id,
-             "complete"
-           ) do
-        {:ok, assessment} ->
-          {:noreply,
-           socket
-           |> assign(:assessment, assessment)
-           |> assign(:finalized, true)
-           |> assign(:error, nil)
-           |> put_flash(:info, "Assessment finalized — editing is locked.")}
+    cond do
+      not Roles.can_write?(socket.assigns.current_role) ->
+        {:noreply, assign(socket, error: "Viewer access — editing is not allowed.")}
 
-        {:error, reason} ->
-          {:noreply, assign(socket, error: format_error(reason))}
-      end
+      finalized?(socket.assigns.assessment) ->
+        {:noreply, assign(socket, error: "Already finalized.")}
+
+      true ->
+        case Tenant.update_assessment_status(
+               socket.assigns.surreal,
+               socket.assigns.assessment_id,
+               "complete"
+             ) do
+          {:ok, assessment} ->
+            {:noreply,
+             socket
+             |> assign(:assessment, assessment)
+             |> assign(:finalized, true)
+             |> assign(:error, nil)
+             |> put_flash(:info, "Assessment finalized — editing is locked.")}
+
+          {:error, reason} ->
+            {:noreply, assign(socket, error: format_error(reason))}
+        end
     end
   end
 
   def handle_event("reopen", _params, socket) do
-    if finalized?(socket.assigns.assessment) do
-      case Tenant.update_assessment_status(
-             socket.assigns.surreal,
-             socket.assigns.assessment_id,
-             "in_progress"
-           ) do
-        {:ok, assessment} ->
+    cond do
+      not Roles.can_write?(socket.assigns.current_role) ->
+        {:noreply, assign(socket, error: "Viewer access — editing is not allowed.")}
+
+      finalized?(socket.assigns.assessment) ->
+        case Tenant.update_assessment_status(
+               socket.assigns.surreal,
+               socket.assigns.assessment_id,
+               "in_progress"
+             ) do
+          {:ok, assessment} ->
+            {:noreply,
+             socket
+             |> assign(:assessment, assessment)
+             |> assign(:finalized, false)
+             |> assign(:error, nil)
+             |> put_flash(:info, "Assessment reopened for editing.")}
+
+          {:error, reason} ->
+            {:noreply, assign(socket, error: format_error(reason))}
+        end
+
+      true ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("delete", _params, socket) do
+    if Roles.can_delete_assessment?(socket.assigns.current_role) do
+      org_id = socket.assigns.org_id
+
+      case Tenant.delete_assessment(socket.assigns.surreal, socket.assigns.assessment_id) do
+        :ok ->
           {:noreply,
            socket
-           |> assign(:assessment, assessment)
-           |> assign(:finalized, false)
-           |> assign(:error, nil)
-           |> put_flash(:info, "Assessment reopened for editing.")}
+           |> put_flash(:info, "Assessment deleted")
+           |> push_navigate(to: ~p"/orgs/#{org_id}")}
 
         {:error, reason} ->
           {:noreply, assign(socket, error: format_error(reason))}
       end
     else
-      {:noreply, socket}
-    end
-  end
-
-  def handle_event("delete", _params, socket) do
-    org_id = socket.assigns.org_id
-
-    case Tenant.delete_assessment(socket.assigns.surreal, socket.assigns.assessment_id) do
-      :ok ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Assessment deleted")
-         |> push_navigate(to: ~p"/orgs/#{org_id}")}
-
-      {:error, reason} ->
-        {:noreply, assign(socket, error: format_error(reason))}
+      {:noreply, assign(socket, error: "Only owners and admins can delete assessments.")}
     end
   end
 
   defp load_state(surreal, id) do
     with {:ok, assessment} <- Tenant.get_assessment(surreal, id),
+         org_id <- Tenant.canonicalize_record_id(assessment["org"]),
+         {:ok, membership} <- Tenant.get_membership(surreal, org_id),
          {:ok, sets} <- Tenant.list_question_sets(surreal) do
       set_domains =
         sets
@@ -128,8 +150,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
       available = Domains.selectable(set_domains)
       selected = Enum.filter(available, &(&1["id"] in selected_ids))
       addable = Enum.reject(available, &(&1["id"] in selected_ids))
-
-      org_id = Tenant.canonicalize_record_id(assessment["org"])
+      role = Roles.normalize(membership["role"])
 
       {:ok,
        %{
@@ -140,6 +161,9 @@ defmodule IsomerWeb.AssessmentLive.Show do
          selected_domains: selected,
          addable_domains: addable,
          finalized: finalized?(assessment),
+         current_role: role,
+         can_write: Roles.can_write?(role),
+         can_delete: Roles.can_delete_assessment?(role),
          nav_org_id: org_id,
          nav_assessment_id: id,
          nav_assessment_title: assessment["title"]
@@ -207,26 +231,29 @@ defmodule IsomerWeb.AssessmentLive.Show do
             label={GuideCopy.artifacts_nav_label()}
             icon="hero-document-text"
           />
-          <%= if @finalized do %>
-            <.button
-              type="button"
-              color="gray"
-              variant="outline"
-              label="Reopen"
-              phx-click="reopen"
-              data-confirm="Reopen this assessment for editing?"
-            />
-          <% else %>
-            <.button
-              type="button"
-              color="success"
-              variant="outline"
-              label="Finalize"
-              phx-click="finalize"
-              data-confirm="Finalize this assessment? Editing will be locked until you reopen it."
-            />
+          <%= if @can_write do %>
+            <%= if @finalized do %>
+              <.button
+                type="button"
+                color="gray"
+                variant="outline"
+                label="Reopen"
+                phx-click="reopen"
+                data-confirm="Reopen this assessment for editing?"
+              />
+            <% else %>
+              <.button
+                type="button"
+                color="success"
+                variant="outline"
+                label="Finalize"
+                phx-click="finalize"
+                data-confirm="Finalize this assessment? Editing will be locked until you reopen it."
+              />
+            <% end %>
           <% end %>
           <.button
+            :if={@can_delete}
             type="button"
             color="danger"
             variant="outline"
@@ -238,6 +265,15 @@ defmodule IsomerWeb.AssessmentLive.Show do
       </div>
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
+
+      <.alert
+        :if={not @can_write}
+        color="info"
+        variant="soft"
+        with_icon
+        class="mb-4"
+        label={"Viewer access (#{Roles.label(@current_role)}) — you can browse this assessment but not edit it."}
+      />
 
       <.alert
         :if={@finalized}
@@ -306,7 +342,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
             </ul>
           <% end %>
 
-          <%= if not @finalized and @addable_domains != [] do %>
+          <%= if @can_write and not @finalized and @addable_domains != [] do %>
             <form phx-submit="add_domains" class="space-y-4 border-t border-slate-200 pt-4">
               <fieldset>
                 <legend class="mb-2 text-base font-medium text-slate-700">Add domains</legend>
@@ -328,7 +364,7 @@ defmodule IsomerWeb.AssessmentLive.Show do
               <.button type="submit" label="Add selected domains" size="sm" />
             </form>
           <% else %>
-            <.p :if={not @finalized} class="text-slate-500">
+            <.p :if={@can_write and not @finalized} class="text-slate-500">
               All available domains are already on this assessment.
             </.p>
           <% end %>

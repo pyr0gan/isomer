@@ -4,44 +4,64 @@ defmodule IsomerWeb.AssessmentLive.New do
   alias Isomer.Domains
   alias Isomer.Db.Tenant
   alias Isomer.Namegen
+  alias Isomer.Roles
 
   @impl true
   def mount(%{"org_id" => org_id}, _session, socket) do
     org_id = Tenant.canonicalize_record_id(org_id)
 
-    set_domains =
-      case Tenant.list_question_sets(socket.assigns.surreal) do
-        {:ok, rows} ->
-          rows
-          |> Enum.map(& &1["domain"])
-          |> Enum.reject(&is_nil/1)
+    with {:ok, _org} <- Tenant.get_org(socket.assigns.surreal, org_id),
+         {:ok, membership} <- Tenant.get_membership(socket.assigns.surreal, org_id) do
+      role = Roles.normalize(membership["role"])
 
-        {:error, _} ->
-          []
+      if Roles.can_create_assessment?(role) do
+        set_domains =
+          case Tenant.list_question_sets(socket.assigns.surreal) do
+            {:ok, rows} ->
+              rows
+              |> Enum.map(& &1["domain"])
+              |> Enum.reject(&is_nil/1)
+
+            {:error, _} ->
+              []
+          end
+
+        rulesets =
+          case Tenant.list_rulesets(socket.assigns.surreal) do
+            {:ok, rows} -> Enum.map(rows, &normalize_ruleset_option/1)
+            {:error, _} -> []
+          end
+
+        domains = Domains.selectable(set_domains)
+        title = Namegen.generate()
+
+        {:ok,
+         assign(socket,
+           page_title: "New assessment",
+           org_id: org_id,
+           title: title,
+           edit_title?: false,
+           kind: "domains",
+           domains: domains,
+           rulesets: rulesets,
+           selected_ruleset_id: default_ruleset_id(rulesets),
+           current_role: role,
+           error: nil,
+           nav_org_id: org_id
+         )}
+      else
+        {:ok,
+         socket
+         |> put_flash(:error, "Viewer access — you cannot create assessments.")
+         |> push_navigate(to: ~p"/orgs/#{org_id}")}
       end
-
-    rulesets =
-      case Tenant.list_rulesets(socket.assigns.surreal) do
-        {:ok, rows} -> Enum.map(rows, &normalize_ruleset_option/1)
-        {:error, _} -> []
-      end
-
-    domains = Domains.selectable(set_domains)
-    title = Namegen.generate()
-
-    {:ok,
-     assign(socket,
-       page_title: "New assessment",
-       org_id: org_id,
-       title: title,
-       edit_title?: false,
-       kind: "domains",
-       domains: domains,
-       rulesets: rulesets,
-       selected_ruleset_id: default_ruleset_id(rulesets),
-       error: nil,
-       nav_org_id: org_id
-     )}
+    else
+      {:error, _} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Organization not found")
+         |> push_navigate(to: ~p"/orgs")}
+    end
   end
 
   @impl true

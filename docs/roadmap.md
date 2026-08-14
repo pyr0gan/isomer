@@ -42,12 +42,14 @@ holds root/Vault credentials.
 | Crosswalks | ISMS↔AIMS and AIMS↔AI Act mapping sets, synced as `maps_to` graph edges |
 | Classification | EU AI Act ruleset with first-match evaluation; UI create + wizard persist; Results shows residual coverage via `maps_to` satisfiers (Themes 2.1–2.2) |
 | Maturity model | 13 domain rubrics (L0–L4) and aligned question packs |
-| Assessment UX | Org tenancy; domain / ruleset / combined assessments; wizard with evidence metadata; Results; finalize/reopen; adaptive guidance copy |
+| Assessment UX | Org tenancy with member admin + role-aware projector; domain / ruleset / combined assessments; wizard with evidence; Results; finalize/reopen; adaptive guidance copy |
 | Documents | Template render → Library downloads (Markdown / print-ready HTML); stored as `answer` rows (`pack_ref=__artifacts__`) |
 | Tooling SBoM | CycloneDX published to Surreal `sbom:isomer_tooling` on sync (`mix isomer.db.sync_sbom`) |
 | Delivery | Corpus sync + runtime schema + SBoM sync in CI; Fly demo deploy on `main`; `mix test` in CI |
 
-Remaining Theme 2 work is object-storage evidence (slice F); collaboration (Theme 3) is next for product UX.
+Remaining Theme 2 work is object-storage evidence (slice F). Theme 3 member
+admin + org polish shipped; password recovery remains slice H. Content depth
+(Theme 4) can proceed in parallel.
 
 ---
 
@@ -135,16 +137,19 @@ Schema for `evidence` exists; the wizard should attach and list it.
 **Acceptance:** Assessors can support answers with evidence in-flow; coverage
 metrics include evidence, not only Yes/No counts.
 
-### 3. Collaboration
+### 3. Collaboration — members shipped; recovery pending
 
 **Intent:** Assessments are team work. Roles already exist on `member`
 (`owner` / `admin` / `assessor` / `viewer`); the UI must manage and respect them.
 
 | Deliverable | Acceptance |
 |---|---|
-| Member administration | Owners/admins list members, invite by email, change roles, remove access |
-| Authorization in the projector | Write actions hidden or blocked for viewers; Surreal denials surface as clear errors |
-| Account recovery | Password reset usable without operator Mix/Vault on the web path (token + email, or equivalent); web dyno still never needs Vault for auth |
+| Member administration | Owners/admins list members, invite by email (existing accounts), change roles, remove access — **shipped** |
+| Authorization in the projector | Write actions hidden or blocked for viewers; Surreal denials surface as clear errors — **shipped** |
+| Account recovery | Password reset usable without operator Mix/Vault on the web path (token + email, or equivalent); web dyno still never needs Vault for auth — **pending (slice H)** |
+
+Org dashboard polish landed with member admin: assessments primary, richer
+assessment rows, stronger empty state, maturity/metrics secondary.
 
 ### 4. Content depth
 
@@ -190,9 +195,9 @@ Prefer vertical, reviewable changes. Suggested order:
 | A | Artifact model clarity + test harness + CI `mix test` (+ SBoM→Surreal) | Shipped (#64) |
 | B | Ruleset / combined assessment create + wizard persistence of classification | Shipped (#66) |
 | C | Results LiveView + navigation | Shipped (#68) |
-| D | Evidence metadata in wizard + metrics | Shipped (this work) |
-| E | Org member administration + role-aware UI | Next |
-| F | Evidence object storage | Pending |
+| D | Evidence metadata in wizard + metrics | Shipped (#69) |
+| E | Org member administration + role-aware UI (+ org polish) | Shipped (this work) |
+| F | Evidence object storage | Next |
 | G | Content batches (questions, templates, mappings) | Pending |
 | H | Password recovery and/or SSO | Pending |
 
