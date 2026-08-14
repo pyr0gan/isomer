@@ -184,7 +184,9 @@ defmodule Isomer.GuideCopy do
   def evidence_help_text(prefs, prompt) do
     prefs = normalize(prefs)
     prompt = blank_to_nil(prompt)
-    sufficiency = "A filename, ticket link, or simple note is sufficient."
+
+    sufficiency =
+      "Attach a label plus URL or reference below — a filename or ticket link is enough."
 
     cond do
       concise?(prefs) ->

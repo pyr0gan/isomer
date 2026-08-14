@@ -409,13 +409,14 @@ defmodule Isomer.Db.RuntimeSchema do
         PERMISSIONS
           FOR select WHERE org IN fn::isomer::member_org_ids()
           FOR create, update WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin", "assessor"])
-          FOR delete WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin"])
+          FOR delete WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin", "assessor"])
         COMMENT "Evidence metadata linked to an answer";
 
       DEFINE FIELD OVERWRITE org ON evidence TYPE record<org>;
       DEFINE FIELD OVERWRITE answer ON evidence TYPE record<answer>;
       DEFINE FIELD OVERWRITE label ON evidence TYPE option<string>;
-      DEFINE FIELD OVERWRITE storage_key ON evidence TYPE option<string>;
+      DEFINE FIELD OVERWRITE storage_key ON evidence TYPE option<string>
+        COMMENT "External URL (slice 1) or object-storage key (slice 2)";
       DEFINE FIELD OVERWRITE content_type ON evidence TYPE option<string>;
       DEFINE FIELD OVERWRITE uploaded_by ON evidence TYPE record<user>;
       DEFINE FIELD OVERWRITE uploaded_at ON evidence TYPE datetime DEFAULT time::now();

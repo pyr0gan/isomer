@@ -38,6 +38,19 @@ defmodule Isomer.OrgMetricsTest do
     assert stats.evidence_pct == 50
   end
 
+  test "score_questions accepts evidence question-id MapSet from evidence rows" do
+    questions = [
+      %{id: "q1", kind: "boolean", evidence_prompt: "Attach policy"},
+      %{id: "q2", kind: "boolean", evidence_prompt: "Attach register"}
+    ]
+
+    answers = %{"q1" => true, "q2" => true}
+    evidence = MapSet.new(["q1"])
+
+    stats = OrgMetrics.score_questions(questions, answers, evidence)
+    assert stats.evidence_pct == 50
+  end
+
   test "score_questions returns nil percentages when empty" do
     stats = OrgMetrics.score_questions([], %{}, %{})
     assert stats.yes_pct == nil

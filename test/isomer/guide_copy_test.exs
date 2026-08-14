@@ -48,9 +48,10 @@ defmodule Isomer.GuideCopyTest do
     prompt = "Attach the approved policy and a communication/acknowledgement record."
 
     assert GuideCopy.evidence_help_text(prefs, prompt) ==
-             prompt <> " A filename, ticket link, or simple note is sufficient."
+             prompt <>
+               " Attach a label plus URL or reference below — a filename or ticket link is enough."
 
     assert GuideCopy.evidence_help_text(prefs, nil) ==
-             "A filename, ticket link, or simple note is sufficient."
+             "Attach a label plus URL or reference below — a filename or ticket link is enough."
   end
 end

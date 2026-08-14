@@ -61,15 +61,21 @@ defmodule Isomer.OrgMetrics do
   def sparkline_ready?(_), do: false
 
   @doc """
-  Scores questions against answer and evidence-note maps.
+  Scores questions against answer and evidence maps.
 
   Each question is a map with `:id`, `:kind`, and optional `:evidence_prompt`.
-  `answers` and `notes` are keyed by question id. Returns
-  `%{yes_pct, unanswered, evidence_pct}` (`yes_pct` / `evidence_pct` may be nil
-  when there is nothing to score).
+  `answers` is keyed by question id. `evidence` may be:
+
+  - a `MapSet` of question ids that have at least one evidence row (preferred)
+  - a map of question id → note string (legacy answer-value notes)
+
+  Returns `%{yes_pct, unanswered, evidence_pct}` (`yes_pct` / `evidence_pct`
+  may be nil when there is nothing to score).
   """
-  def score_questions(questions, answers, notes)
-      when is_list(questions) and is_map(answers) and is_map(notes) do
+  def score_questions(questions, answers, evidence)
+      when is_list(questions) and is_map(answers) do
+    has_evidence? = evidence_present_fun(evidence)
+
     total = length(questions)
 
     {yes, unanswered, evidence_needed, evidence_have} =
@@ -80,8 +86,7 @@ defmodule Isomer.OrgMetrics do
 
         {en, eh} =
           if present?(q.evidence_prompt) do
-            note = Map.get(notes, q.id, "")
-            {en + 1, if(present?(note), do: eh + 1, else: eh)}
+            {en + 1, if(has_evidence?.(q.id), do: eh + 1, else: eh)}
           else
             {en, eh}
           end
@@ -109,6 +114,16 @@ defmodule Isomer.OrgMetrics do
       evidence_pct: evidence_pct
     }
   end
+
+  defp evidence_present_fun(%MapSet{} = set) do
+    fn id -> MapSet.member?(set, id) end
+  end
+
+  defp evidence_present_fun(notes) when is_map(notes) do
+    fn id -> present?(Map.get(notes, id, "")) end
+  end
+
+  defp evidence_present_fun(_), do: fn _ -> false end
 
   @doc """
   SVG polyline points for a numeric series (nil skipped). Returns `nil` when
@@ -163,6 +178,27 @@ defmodule Isomer.OrgMetrics do
           {:error, _} -> {%{}, %{}}
         end
 
+      evidence_qids =
+        case Tenant.list_evidence_for_assessment(conn, id) do
+          {:ok, rows} ->
+            rows
+            |> Enum.map(& &1["question_id"])
+            |> Enum.filter(&(is_binary(&1) and &1 != ""))
+            |> MapSet.new()
+
+          {:error, _} ->
+            MapSet.new()
+        end
+
+      # Prefer real evidence rows; still count legacy answer-value notes.
+      note_qids =
+        notes
+        |> Enum.filter(fn {_qid, note} -> present?(note) end)
+        |> Enum.map(fn {qid, _} -> qid end)
+        |> MapSet.new()
+
+      evidence_set = MapSet.union(evidence_qids, note_qids)
+
       # Yes % / unanswered / evidence use every domain on the assessment;
       # time rows stay opt-in only.
       score_domains =
@@ -177,7 +213,7 @@ defmodule Isomer.OrgMetrics do
         score_domains
         |> Enum.flat_map(fn domain_id -> Map.get(question_index, domain_id, []) end)
 
-      stats = score_questions(questions, answers, notes)
+      stats = score_questions(questions, answers, evidence_set)
       domain_rows = domain_time_rows(collecting, metrics, catalog)
 
       %{

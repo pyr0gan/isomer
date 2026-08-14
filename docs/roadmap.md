@@ -42,12 +42,12 @@ holds root/Vault credentials.
 | Crosswalks | ISMS↔AIMS and AIMS↔AI Act mapping sets, synced as `maps_to` graph edges |
 | Classification | EU AI Act ruleset with first-match evaluation; UI create + wizard persist; Results shows residual coverage via `maps_to` satisfiers (Themes 2.1–2.2) |
 | Maturity model | 13 domain rubrics (L0–L4) and aligned question packs |
-| Assessment UX | Org tenancy; domain / ruleset / combined assessments; wizard; Results (classification + residual coverage + domain completion); finalize/reopen; adaptive guidance copy |
+| Assessment UX | Org tenancy; domain / ruleset / combined assessments; wizard with evidence metadata; Results; finalize/reopen; adaptive guidance copy |
 | Documents | Template render → Library downloads (Markdown / print-ready HTML); stored as `answer` rows (`pack_ref=__artifacts__`) |
 | Tooling SBoM | CycloneDX published to Surreal `sbom:isomer_tooling` on sync (`mix isomer.db.sync_sbom`) |
 | Delivery | Corpus sync + runtime schema + SBoM sync in CI; Fly demo deploy on `main`; `mix test` in CI |
 
-Remaining Theme 2 work is evidence (2.3), then collaboration and content depth.
+Remaining Theme 2 work is object-storage evidence (slice F); collaboration (Theme 3) is next for product UX.
 
 ---
 
@@ -120,15 +120,17 @@ Add `AssessmentLive.Results` (`/assessments/:id/results`):
 that answers “what applies?” and “what is still open?”—linked from assessment
 chrome (Details, Wizard, Menu).
 
-#### 2.3 Evidence on answers
+#### 2.3 Evidence on answers — shipped (metadata slice)
+
+**Status:** Complete for metadata attach/list/remove + metrics; object storage deferred.
 
 Schema for `evidence` exists; the wizard should attach and list it.
 
 - First slice: metadata (label, content type, URL or storage key) created under
   the answer, with remove; org metrics `evidence_pct` reflects real evidence
-  rows.
+  rows. **Shipped.**
 - Second slice: object storage for binaries (e.g. S3-compatible), authenticated
-  download, `storage_key` populated end-to-end.
+  download, `storage_key` populated end-to-end. **Pending (slice F).**
 
 **Acceptance:** Assessors can support answers with evidence in-flow; coverage
 metrics include evidence, not only Yes/No counts.
@@ -187,9 +189,9 @@ Prefer vertical, reviewable changes. Suggested order:
 |---|---|---|
 | A | Artifact model clarity + test harness + CI `mix test` (+ SBoM→Surreal) | Shipped (#64) |
 | B | Ruleset / combined assessment create + wizard persistence of classification | Shipped (#66) |
-| C | Results LiveView + navigation | Shipped (this work) |
-| D | Evidence metadata in wizard + metrics | Next |
-| E | Org member administration + role-aware UI | Pending |
+| C | Results LiveView + navigation | Shipped (#68) |
+| D | Evidence metadata in wizard + metrics | Shipped (this work) |
+| E | Org member administration + role-aware UI | Next |
 | F | Evidence object storage | Pending |
 | G | Content batches (questions, templates, mappings) | Pending |
 | H | Password recovery and/or SSO | Pending |
