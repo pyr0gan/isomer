@@ -149,7 +149,8 @@ metrics include evidence, not only Yes/No counts.
 | Account recovery | Password reset usable without operator Mix/Vault on the web path (token + email, or equivalent); web dyno still never needs Vault for auth — **pending (slice H)** |
 
 Org dashboard polish landed with member admin: assessments primary, richer
-assessment rows, stronger empty state, maturity/metrics secondary.
+assessment rows, stronger empty state, maturity/metrics visible on load
+(collapsible). Members live on `/orgs/:org_id/members`.
 
 ### 4. Content depth
 

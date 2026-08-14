@@ -126,7 +126,8 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `SessionController` | `/login`, `/session`, `/logout` | `signin` / `signup` via access `isomer_user`; JWT in cookie session |
 | `OrgLive.Index` | `/orgs` | `SELECT` orgs via `member` where `in = $auth` |
 | `OrgLive.New` | `/orgs/new` | `CREATE org` + `RELATE $auth->member->$org` (role `owner`) |
-| `OrgLive.Show` | `/orgs/:org_id` | Assessments primary (rich rows); members admin for owners/admins; maturity/metrics secondary; role-aware actions |
+| `OrgLive.Show` | `/orgs/:org_id` | Assessments primary (rich rows); maturity/metrics **open by default** (still collapsible); Members button for owners/admins; role-aware actions |
+| `OrgLive.Members` | `/orgs/:org_id/members` | Invite / role / remove for owners and admins; assessors and viewers are redirected to the org dashboard |
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `kind` (`domains` / `ruleset` / `combined`), optional ruleset, `domains[]`; `CREATE assessment` |
 | `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + results + artifacts |
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer`; attach/list/remove `evidence` metadata; re-eval classification; adaptive help; domain metric opt-in |

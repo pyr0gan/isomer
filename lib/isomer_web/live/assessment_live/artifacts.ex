@@ -180,6 +180,7 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
          current_role: role,
          can_write: can_write,
          nav_org_id: org_id,
+         nav_show_members: Roles.can_manage_members?(role),
          nav_assessment_id: assessment_id,
          nav_assessment_title: assessment["title"]
        }}
