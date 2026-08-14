@@ -43,6 +43,21 @@ defmodule Isomer.GuideCopyTest do
     assert GuideCopy.library_empty_artifacts(%{}) =~ "Generate documents"
   end
 
+  test "time_scale_help explains relative effort, not a calendar period" do
+    beginner = %{"experience_level" => "beginner"}
+    expert = %{"experience_level" => "expert", "comfort_level" => "high"}
+
+    assert GuideCopy.time_scale_help(beginner) =~ "relative effort rating"
+    assert GuideCopy.time_scale_help(beginner) =~ "not a date range"
+    assert GuideCopy.time_scale_help(beginner) =~ "Neither field affects maturity scores"
+    assert GuideCopy.time_scale_help(expert) =~ "not a calendar period"
+    assert GuideCopy.time_scale_help(expert) =~ "Neither changes scores"
+
+    assert GuideCopy.org_time_scale_help(beginner) =~ "not a calendar period"
+    assert GuideCopy.org_time_scale_help(beginner) =~ "Neither changes maturity scores"
+    assert GuideCopy.org_time_scale_help(expert) =~ "relative effort"
+  end
+
   test "evidence_help_text keeps the prompt and a short sufficiency line" do
     prefs = %{"experience_level" => "beginner"}
     prompt = "Attach the approved policy and a communication/acknowledgement record."
