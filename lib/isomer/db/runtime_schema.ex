@@ -254,7 +254,8 @@ defmodule Isomer.Db.RuntimeSchema do
       exec!(db, """
       DEFINE TABLE OVERWRITE user SCHEMAFULL
         PERMISSIONS
-          FOR select, update WHERE id = $auth.id
+          FOR select WHERE id = $auth.id OR $auth != NONE
+          FOR update WHERE id = $auth.id
           FOR create, delete NONE
         COMMENT "Record-auth subjects for assessment LiveViews";
       """)
@@ -265,7 +266,9 @@ defmodule Isomer.Db.RuntimeSchema do
       [
         ~S[DEFINE FIELD OVERWRITE email ON user TYPE string ASSERT string::is_email($value);],
         ~S[DEFINE FIELD OVERWRITE name ON user TYPE option<string>;],
-        ~S[DEFINE FIELD OVERWRITE password ON user TYPE string;],
+        # Password must never be readable via record SELECT (invite lookups need
+        # email/id). SIGNIN/SIGNUP ACCESS still compares/hashes passwords.
+        ~S[DEFINE FIELD OVERWRITE password ON user TYPE string PERMISSIONS FOR select NONE FOR create FULL FOR update WHERE id = $auth.id;],
         ~S[DEFINE FIELD OVERWRITE self_role ON user TYPE option<string> COMMENT "Self-identified organizational role for adaptive guidance copy";],
         ~S[DEFINE FIELD OVERWRITE experience_level ON user TYPE option<string> COMMENT "Self-identified familiarity with governance material";],
         ~S[DEFINE FIELD OVERWRITE comfort_level ON user TYPE option<string> COMMENT "Preferred amount of plain-language help in the UI";],
@@ -388,7 +391,7 @@ defmodule Isomer.Db.RuntimeSchema do
         PERMISSIONS
           FOR select WHERE org IN fn::isomer::member_org_ids()
           FOR create, update WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin", "assessor"])
-          FOR delete WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin"])
+          FOR delete WHERE org IN fn::isomer::member_org_ids_with_roles(["owner", "admin", "assessor"])
         COMMENT "Single answer row inside an assessment";
 
       DEFINE FIELD OVERWRITE org ON answer TYPE record<org>;

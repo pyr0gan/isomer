@@ -5,6 +5,7 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   alias Isomer.Db.Tenant
   alias Isomer.GuideCopy
   alias Isomer.Maturity
+  alias Isomer.Roles
   alias Isomer.Ruleset.Evaluate
 
   @classification_section_id "__classification__"
@@ -51,8 +52,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   def handle_event("add_domains", params, socket) do
-    if socket.assigns.finalized do
-      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    if write_blocked?(socket) do
+      {:noreply, assign(socket, error: write_blocked_message(socket))}
     else
       selected =
         params
@@ -86,8 +87,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   def handle_event("toggle_domain_collect", %{"domain" => domain_id}, socket) do
-    if socket.assigns.finalized do
-      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    if write_blocked?(socket) do
+      {:noreply, assign(socket, error: write_blocked_message(socket))}
     else
       current = Map.get(socket.assigns.domain_metrics, domain_id, %{})
       collecting? = Map.get(current, "collect") in [true, "true", "on", 1, "1"]
@@ -108,8 +109,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   def handle_event("save_domain_time", %{"domain" => domain_id} = params, socket) do
-    if socket.assigns.finalized do
-      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    if write_blocked?(socket) do
+      {:noreply, assign(socket, error: write_blocked_message(socket))}
     else
       attrs = %{
         "collect" => true,
@@ -123,8 +124,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   def handle_event("answer", %{"question_id" => qid} = params, socket) do
     cond do
-      socket.assigns.finalized ->
-        {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+      write_blocked?(socket) ->
+        {:noreply, assign(socket, error: write_blocked_message(socket))}
 
       true ->
         question = Enum.find(socket.assigns.questions, &(&1.id == qid))
@@ -148,8 +149,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
   def handle_event("add_evidence", %{"question_id" => qid} = params, socket) do
     cond do
-      socket.assigns.finalized ->
-        {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+      write_blocked?(socket) ->
+        {:noreply, assign(socket, error: write_blocked_message(socket))}
 
       true ->
         question = Enum.find(socket.assigns.questions, &(&1.id == qid))
@@ -193,8 +194,8 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
   end
 
   def handle_event("remove_evidence", %{"id" => evidence_id, "question_id" => qid}, socket) do
-    if socket.assigns.finalized do
-      {:noreply, assign(socket, error: "This assessment is finalized and cannot be edited.")}
+    if write_blocked?(socket) do
+      {:noreply, assign(socket, error: write_blocked_message(socket))}
     else
       case Tenant.delete_evidence(socket.assigns.surreal, evidence_id) do
         :ok ->
@@ -215,7 +216,20 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
     end
   end
 
+  defp write_blocked?(socket) do
+    socket.assigns.finalized or not Map.get(socket.assigns, :can_write, true)
+  end
+
+  defp write_blocked_message(socket) do
+    if Map.get(socket.assigns, :can_write, true) do
+      "This assessment is finalized and cannot be edited."
+    else
+      "Viewer access — answers are read-only."
+    end
+  end
+
   defp blank_answer?("boolean", value), do: is_nil(value)
+
   defp blank_answer?("multi", value) when is_list(value), do: value == []
   defp blank_answer?(_kind, value), do: value in [nil, ""]
 
@@ -459,6 +473,18 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
 
       org_id = Tenant.canonicalize_record_id(assessment["org"])
 
+      {role, can_write} =
+        case Tenant.get_membership(surreal, org_id) do
+          {:ok, membership} ->
+            r = Roles.normalize(membership["role"])
+            {r, Roles.can_write?(r)}
+
+          {:error, _} ->
+            {"viewer", false}
+        end
+
+      status_finalized = finalized?(assessment)
+
       {:ok,
        %{
          page_title: "Wizard · #{assessment["title"]}",
@@ -477,7 +503,10 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
          evidence_by_qid: evidence_by_qid,
          evidence_form_n: 0,
          addable_domains: addable,
-         finalized: finalized?(assessment),
+         finalized: status_finalized or not can_write,
+         status_finalized: status_finalized,
+         current_role: role,
+         can_write: can_write,
          nav_org_id: org_id,
          nav_assessment_id: id,
          nav_assessment_title: assessment["title"]
@@ -602,7 +631,16 @@ defmodule IsomerWeb.AssessmentLive.Wizard do
       </.alert>
 
       <.alert
-        :if={@finalized}
+        :if={@finalized and not @can_write}
+        color="info"
+        variant="soft"
+        with_icon
+        class="mb-4"
+        label={"Viewer access (#{Roles.label(@current_role)}) — answers are read-only."}
+      />
+
+      <.alert
+        :if={@finalized and @can_write}
         color="warning"
         variant="soft"
         with_icon

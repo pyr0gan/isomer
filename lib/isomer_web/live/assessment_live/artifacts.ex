@@ -4,6 +4,7 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
   alias Isomer.Artifacts.Render
   alias Isomer.Db.Tenant
   alias Isomer.GuideCopy
+  alias Isomer.Roles
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
@@ -67,79 +68,87 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
   end
 
   def handle_event("generate", params, socket) do
-    template_id = Map.get(params, "template_id") || socket.assigns.selected_template_id
+    if not socket.assigns.can_write do
+      {:noreply, assign(socket, error: "Viewer access — you cannot generate documents.")}
+    else
+      template_id = Map.get(params, "template_id") || socket.assigns.selected_template_id
 
-    case Enum.find(socket.assigns.templates, &(&1["corpus_id"] == template_id)) do
-      nil ->
-        {:noreply, assign(socket, error: "Choose a template first.")}
+      case Enum.find(socket.assigns.templates, &(&1["corpus_id"] == template_id)) do
+        nil ->
+          {:noreply, assign(socket, error: "Choose a template first.")}
 
-      tmpl ->
-        fields = tmpl["merge_fields"] || []
-        overrides = Map.get(params, "merge", %{})
+        tmpl ->
+          fields = tmpl["merge_fields"] || []
+          overrides = Map.get(params, "merge", %{})
 
-        values =
-          Render.build_values(socket.assigns.org, socket.assigns.assessment, overrides)
+          values =
+            Render.build_values(socket.assigns.org, socket.assigns.assessment, overrides)
 
-        # Keep only declared fields (+ anything typed) for storage clarity
-        stored =
-          fields
-          |> Enum.map(fn f -> {f, Map.get(values, f, Map.get(overrides, f, ""))} end)
-          |> Map.new()
+          # Keep only declared fields (+ anything typed) for storage clarity
+          stored =
+            fields
+            |> Enum.map(fn f -> {f, Map.get(values, f, Map.get(overrides, f, ""))} end)
+            |> Map.new()
 
-        body = Render.render(tmpl["body"] || "", Map.merge(values, stored))
-        title = "#{tmpl["name"]} — #{socket.assigns.org["name"]}"
+          body = Render.render(tmpl["body"] || "", Map.merge(values, stored))
+          title = "#{tmpl["name"]} — #{socket.assigns.org["name"]}"
 
-        attrs = %{
-          "org_id" => socket.assigns.org_id,
-          "assessment_id" => socket.assigns.assessment_id,
-          "template_id" => tmpl["corpus_id"],
-          "title" => title,
-          "body" => body,
-          "merge_values" => stored
-        }
+          attrs = %{
+            "org_id" => socket.assigns.org_id,
+            "assessment_id" => socket.assigns.assessment_id,
+            "template_id" => tmpl["corpus_id"],
+            "title" => title,
+            "body" => body,
+            "merge_values" => stored
+          }
 
-        case Tenant.create_artifact(socket.assigns.surreal, attrs) do
-          {:ok, _artifact} ->
-            case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
-              {:ok, state} ->
-                {:noreply,
-                 socket
-                 |> assign(state)
-                 |> assign(
-                   error: nil,
-                   selected_template_id: template_id,
-                   preview_fields: fields,
-                   merge_form: stored
-                 )
-                 |> put_flash(:info, "Artifact generated")}
+          case Tenant.create_artifact(socket.assigns.surreal, attrs) do
+            {:ok, _artifact} ->
+              case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
+                {:ok, state} ->
+                  {:noreply,
+                   socket
+                   |> assign(state)
+                   |> assign(
+                     error: nil,
+                     selected_template_id: template_id,
+                     preview_fields: fields,
+                     merge_form: stored
+                   )
+                   |> put_flash(:info, "Artifact generated")}
 
-              {:error, reason} ->
-                {:noreply, assign(socket, error: format_error(reason))}
-            end
+                {:error, reason} ->
+                  {:noreply, assign(socket, error: format_error(reason))}
+              end
 
-          {:error, reason} ->
-            {:noreply, assign(socket, error: format_error(reason))}
-        end
+            {:error, reason} ->
+              {:noreply, assign(socket, error: format_error(reason))}
+          end
+      end
     end
   end
 
   def handle_event("delete_artifact", %{"id" => id}, socket) do
-    case Tenant.delete_artifact(socket.assigns.surreal, id) do
-      :ok ->
-        case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
-          {:ok, state} ->
-            {:noreply,
-             socket
-             |> assign(state)
-             |> assign(:error, nil)
-             |> put_flash(:info, "Artifact deleted")}
+    if not socket.assigns.can_write do
+      {:noreply, assign(socket, error: "Viewer access — you cannot delete documents.")}
+    else
+      case Tenant.delete_artifact(socket.assigns.surreal, id) do
+        :ok ->
+          case load_state(socket.assigns.surreal, socket.assigns.assessment_id) do
+            {:ok, state} ->
+              {:noreply,
+               socket
+               |> assign(state)
+               |> assign(:error, nil)
+               |> put_flash(:info, "Artifact deleted")}
 
-          {:error, reason} ->
-            {:noreply, assign(socket, error: format_error(reason))}
-        end
+            {:error, reason} ->
+              {:noreply, assign(socket, error: format_error(reason))}
+          end
 
-      {:error, reason} ->
-        {:noreply, assign(socket, error: format_error(reason))}
+        {:error, reason} ->
+          {:noreply, assign(socket, error: format_error(reason))}
+      end
     end
   end
 
@@ -149,6 +158,16 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
          {:ok, org} <- Tenant.get_org(surreal, org_id),
          {:ok, templates} <- Tenant.list_templates(surreal),
          {:ok, artifacts} <- Tenant.list_artifacts_for_assessment(surreal, assessment_id) do
+      {role, can_write} =
+        case Tenant.get_membership(surreal, org_id) do
+          {:ok, membership} ->
+            r = Roles.normalize(membership["role"])
+            {r, Roles.can_write?(r)}
+
+          {:error, _} ->
+            {"viewer", false}
+        end
+
       {:ok,
        %{
          page_title: "Generate documents · #{assessment["title"]}",
@@ -158,6 +177,8 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
          org_id: org_id,
          templates: templates,
          artifacts: artifacts,
+         current_role: role,
+         can_write: can_write,
          nav_org_id: org_id,
          nav_assessment_id: assessment_id,
          nav_assessment_title: assessment["title"]
@@ -223,58 +244,71 @@ defmodule IsomerWeb.AssessmentLive.Artifacts do
 
       <.alert :if={@error} color="danger" variant="soft" with_icon label={@error} />
 
+      <.alert
+        :if={not @can_write}
+        color="info"
+        variant="soft"
+        with_icon
+        class="mb-4"
+        label={"Viewer access (#{Roles.label(@current_role)}) — you can download drafts but not generate new ones."}
+      />
+
       <section class="isomer-library__section">
         <h2 class="isomer-library__heading">Generate from a template</h2>
 
-        <%= if @templates == [] do %>
-          <.p class="text-slate-500">
-            No templates available. Sync the corpus, then re-run <code>mix isomer.db.ensure_runtime</code>.
-          </.p>
+        <%= if not @can_write do %>
+          <.p class="text-slate-500">Document generation requires assessor access or higher.</.p>
         <% else %>
-          <form phx-change="select_template" class="mb-4">
-            <label class="isomer-settings__label" for="template_id">Template</label>
-            <select
-              id="template_id"
-              name="template_id"
-              class="wizard-domain-time__control max-w-lg"
-            >
-              {Phoenix.HTML.Form.options_for_select(
-                [{"Choose a template…", ""} | Enum.map(@templates, &{&1["name"], &1["corpus_id"]})],
-                @selected_template_id || ""
-              )}
-            </select>
-          </form>
-
-          <%= if @selected do %>
-            <form phx-submit="generate" class="space-y-4">
-              <input type="hidden" name="template_id" value={@selected["corpus_id"]} />
-              <.p class="text-base text-slate-600 dark:text-slate-400">
-                Covers {length(@selected["covers"] || [])} requirement(s). Fill what you know — blanks become “—” in the draft.
-              </.p>
-
-              <div :if={@preview_fields != []} class="isomer-settings__fields">
-                <div :for={field <- @preview_fields} class="isomer-settings__field">
-                  <label class="isomer-settings__label" for={"merge-#{field}"}>{field}</label>
-                  <input
-                    id={"merge-#{field}"}
-                    type="text"
-                    name={"merge[#{field}]"}
-                    value={Map.get(@merge_form, field, "")}
-                    class="wizard-domain-time__control"
-                    placeholder={GuideCopy.merge_field_hint(@guide_prefs, field)}
-                  />
-                  <.p
-                    :if={GuideCopy.guided?(@guide_prefs)}
-                    no_margin
-                    class="text-sm text-slate-500"
-                  >
-                    {GuideCopy.merge_field_hint(@guide_prefs, field)}
-                  </.p>
-                </div>
-              </div>
-
-              <.button type="submit" label="Generate draft" icon="hero-document-plus" />
+          <%= if @templates == [] do %>
+            <.p class="text-slate-500">
+              No templates available. Sync the corpus, then re-run <code>mix isomer.db.ensure_runtime</code>.
+            </.p>
+          <% else %>
+            <form phx-change="select_template" class="mb-4">
+              <label class="isomer-settings__label" for="template_id">Template</label>
+              <select
+                id="template_id"
+                name="template_id"
+                class="wizard-domain-time__control max-w-lg"
+              >
+                {Phoenix.HTML.Form.options_for_select(
+                  [{"Choose a template…", ""} | Enum.map(@templates, &{&1["name"], &1["corpus_id"]})],
+                  @selected_template_id || ""
+                )}
+              </select>
             </form>
+
+            <%= if @selected do %>
+              <form phx-submit="generate" class="space-y-4">
+                <input type="hidden" name="template_id" value={@selected["corpus_id"]} />
+                <.p class="text-base text-slate-600 dark:text-slate-400">
+                  Covers {length(@selected["covers"] || [])} requirement(s). Fill what you know — blanks become “—” in the draft.
+                </.p>
+
+                <div :if={@preview_fields != []} class="isomer-settings__fields">
+                  <div :for={field <- @preview_fields} class="isomer-settings__field">
+                    <label class="isomer-settings__label" for={"merge-#{field}"}>{field}</label>
+                    <input
+                      id={"merge-#{field}"}
+                      type="text"
+                      name={"merge[#{field}]"}
+                      value={Map.get(@merge_form, field, "")}
+                      class="wizard-domain-time__control"
+                      placeholder={GuideCopy.merge_field_hint(@guide_prefs, field)}
+                    />
+                    <.p
+                      :if={GuideCopy.guided?(@guide_prefs)}
+                      no_margin
+                      class="text-sm text-slate-500"
+                    >
+                      {GuideCopy.merge_field_hint(@guide_prefs, field)}
+                    </.p>
+                  </div>
+                </div>
+
+                <.button type="submit" label="Generate draft" icon="hero-document-plus" />
+              </form>
+            <% end %>
           <% end %>
         <% end %>
       </section>

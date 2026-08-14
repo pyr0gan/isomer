@@ -99,6 +99,10 @@ Unique index: `(assessment, pack, pack_ref, question_id)`.
 
 `evidence` also carries denormalized `org` for the same reason.
 
+Authenticated users may `SELECT` other users' non-password fields so org
+owners/admins can invite by email and label member lists. The `password` field
+is `PERMISSIONS FOR select NONE`.
+
 ### Roles on `member`
 
 `owner` \| `admin` \| `assessor` \| `viewer`
@@ -122,7 +126,7 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 | `SessionController` | `/login`, `/session`, `/logout` | `signin` / `signup` via access `isomer_user`; JWT in cookie session |
 | `OrgLive.Index` | `/orgs` | `SELECT` orgs via `member` where `in = $auth` |
 | `OrgLive.New` | `/orgs/new` | `CREATE org` + `RELATE $auth->member->$org` (role `owner`) |
-| `OrgLive.Show` | `/orgs/:org_id` | Org header; maturity + objective-metrics panels; list assessments for org |
+| `OrgLive.Show` | `/orgs/:org_id` | Assessments primary (rich rows); members admin for owners/admins; maturity/metrics secondary; role-aware actions |
 | `AssessmentLive.New` | `/orgs/:org_id/assessments/new` | Pick `kind` (`domains` / `ruleset` / `combined`), optional ruleset, `domains[]`; `CREATE assessment` |
 | `AssessmentLive.Show` | `/assessments/:id` | Status, kind, classification summary, domains, finalize/reopen/delete; links to wizard + results + artifacts |
 | `AssessmentLive.Wizard` | `/assessments/:id/q` | **Projector**: load `ruleset` + `question_set`; upsert `answer`; attach/list/remove `evidence` metadata; re-eval classification; adaptive help; domain metric opt-in |
@@ -134,11 +138,12 @@ Organizations, Library, Settings, Sign out). No separate nav system.
 
 ### Planned (not yet routed)
 
-Product sequencing: [`roadmap.md`](roadmap.md) (Theme 3 collaboration; evidence object storage).
+Product sequencing: [`roadmap.md`](roadmap.md) (evidence object storage; password recovery / SSO).
 
 | LiveView | Route | Notes |
 |---|---|---|
 | Evidence object download | `/evidence/:id/download` | Binary bytes behind `storage_key` (slice F) |
+| Password recovery | `/password/…` | Token + email without Vault on the web path (slice H) |
 
 ### Guidance prefs (adaptive copy)
 
