@@ -28,7 +28,7 @@ defmodule Mix.Tasks.Isomer.Db.SyncSbom do
       Mix.shell().info(@moduledoc)
       :ok
     else
-      Mix.Task.run("app.start")
+      Isomer.Mix.Boot.start_for_db!()
 
       try do
         result =

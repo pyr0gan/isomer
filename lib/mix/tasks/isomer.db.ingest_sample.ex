@@ -9,7 +9,7 @@ defmodule Mix.Tasks.Isomer.Db.IngestSample do
 
   @impl Mix.Task
   def run(args) do
-    Mix.Task.run("app.start")
+    Isomer.Mix.Boot.start_for_db!()
     path = List.first(args)
 
     try do

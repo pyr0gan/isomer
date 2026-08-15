@@ -20,7 +20,7 @@ defmodule Mix.Tasks.Isomer.Db.Sync do
       Mix.shell().info(@moduledoc)
       :ok
     else
-      Mix.Task.run("app.start")
+      Isomer.Mix.Boot.start_for_db!()
 
       dry_run? = Keyword.get(opts, :dry_run, false)
       prune? = Keyword.get(opts, :prune, true)

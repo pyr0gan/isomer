@@ -60,6 +60,7 @@ This repo is a **YAML/JSON Schema content corpus** (governance content layer) pl
 ### Gotchas
 
 - Run Mix tasks from the **repo root**.
+- `mix isomer.db.*` tasks use `Isomer.Mix.Boot.start_for_db!/0` (no Phoenix Endpoint) so CI sync does not attempt live_reload/inotify.
 - JSON Schema files declare draft 2020-12; `ex_json_schema` validates via a draft-07 `$schema` rewrite in `Isomer.Schema` (corpus shapes only use shared features).
 - YAML `id` is omitted on Surreal upserts (Surreal reserves `id` for the record id); the corpus id is stored as `corpus_id`.
 - `rulesets/` may be empty or absent; the validator skips them when no YAML files are present. If any `rubrics/` exist, missing domain rubrics are warnings (filename = domain id).
