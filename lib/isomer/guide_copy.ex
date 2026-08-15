@@ -46,8 +46,9 @@ defmodule Isomer.GuideCopy do
 
   @doc "Normalize a user row (or empty map) into string-keyed prefs."
   def normalize(nil), do: default_prefs()
+  def normalize(%SurrealDB.None{}), do: default_prefs()
 
-  def normalize(user) when is_map(user) do
+  def normalize(user) when is_map(user) and not is_struct(user) do
     # Prefer nested `guide_prefs` (FLEXIBLE object) when present; flat columns
     # remain as a fallback for older rows / partial schema.
     bag = prefs_bag(user)
@@ -63,19 +64,31 @@ defmodule Isomer.GuideCopy do
     }
   end
 
+  def normalize(_), do: default_prefs()
+
   defp prefs_bag(user) when is_map(user) do
-    case Map.get(user, "guide_prefs") || Map.get(user, :guide_prefs) do
-      bag when is_map(bag) -> stringify_keys(bag)
+    # Surreal `option<object>` unset values arrive as `%SurrealDB.None{}` — a
+    # struct, hence `is_map?/1` is true, but it is not Enumerable. Treating it
+    # as a prefs bag crashed `/orgs` mount after SELECT guide_prefs.
+    raw = Map.get(user, "guide_prefs", :__missing__)
+
+    raw =
+      if raw == :__missing__, do: Map.get(user, :guide_prefs, :__missing__), else: raw
+
+    case raw do
+      bag when is_map(bag) and not is_struct(bag) -> stringify_keys(bag)
       _ -> %{}
     end
   end
 
-  defp stringify_keys(map) do
+  defp stringify_keys(map) when is_map(map) and not is_struct(map) do
     Map.new(map, fn
       {k, v} when is_atom(k) -> {Atom.to_string(k), v}
       {k, v} -> {to_string(k), v}
     end)
   end
+
+  defp stringify_keys(_), do: %{}
 
   def default_prefs do
     %{
