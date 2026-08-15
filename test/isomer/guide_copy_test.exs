@@ -3,10 +3,21 @@ defmodule Isomer.GuideCopyTest do
 
   alias Isomer.GuideCopy
 
-  test "normalize accepts unknown values as unset" do
-    prefs = GuideCopy.normalize(%{"self_role" => "wizard", "experience_level" => "beginner"})
-    assert prefs["self_role"] == nil
-    assert prefs["experience_level"] == "beginner"
+  test "normalize treats SurrealDB.None guide_prefs as unset" do
+    prefs =
+      GuideCopy.normalize(%{
+        "email" => "a@example.com",
+        "guide_prefs" => %SurrealDB.None{},
+        "self_role" => "engineering"
+      })
+
+    assert prefs["self_role"] == "engineering"
+    assert prefs["experience_level"] == nil
+    assert prefs["comfort_level"] == nil
+  end
+
+  test "normalize ignores SurrealDB.None as the whole user row" do
+    assert GuideCopy.normalize(%SurrealDB.None{}) == GuideCopy.default_prefs()
   end
 
   test "guided? is true for beginners and unset prefs" do

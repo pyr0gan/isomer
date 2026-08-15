@@ -1100,6 +1100,20 @@ defmodule Isomer.Db.Tenant do
     |> Map.put("self_role", prefs["self_role"])
     |> Map.put("experience_level", prefs["experience_level"])
     |> Map.put("comfort_level", prefs["comfort_level"])
+    |> sanitize_guide_prefs_field()
+  end
+
+  defp sanitize_guide_prefs_field(user) when is_map(user) do
+    case Map.get(user, "guide_prefs", Map.get(user, :guide_prefs)) do
+      bag when is_map(bag) and not is_struct(bag) ->
+        Map.put(user, "guide_prefs", bag)
+
+      _ ->
+        # Unset option<object> is SurrealDB.None — drop so LiveViews never Enum it.
+        user
+        |> Map.delete("guide_prefs")
+        |> Map.delete(:guide_prefs)
+    end
   end
 
   @doc false
