@@ -8,6 +8,8 @@ The content lives in plain YAML and Markdown in this repo. Elixir tooling
 checks it, and SurrealDB stores it so apps (including a questionnaire UI) can
 query it.
 
+![Organization dashboard with assessments and maturity metrics](docs/assets/screenshots/org-dashboard.png)
+
 <p align="center">
   <a href="https://elixir-lang.org" title="Built with Elixir" style="text-decoration: none;">
     <picture>
@@ -204,7 +206,7 @@ templates/tmpl-*.md                              document templates
 vocab/domains.yaml                               domain list
 schemas/*.schema.json                            JSON Schema definitions
 lib/                                             Elixir tooling
-docs/                                            design notes + logo assets
+docs/                                            design notes, README screenshot, logo assets
 ```
 
 </details>
