@@ -1,15 +1,5 @@
 # isomer
 
-**isomer** is a shared library of AI governance content — the requirements,
-questions, and mappings that make up an integrated security + AI management
-playbook.
-
-The content lives in plain YAML and Markdown in this repo. Elixir tooling
-checks it, and SurrealDB stores it so apps (including a questionnaire UI) can
-query it.
-
-![Organization dashboard with assessments and maturity metrics](docs/assets/screenshots/org-dashboard.png)
-
 <p align="center">
   <a href="https://elixir-lang.org" title="Built with Elixir" style="text-decoration: none;">
     <picture>
@@ -27,6 +17,16 @@ query it.
     </picture>
   </a>
 </p>
+
+**isomer** is a shared library of AI governance content — the requirements,
+questions, and mappings that make up an integrated security + AI management
+playbook.
+
+The content lives in plain YAML and Markdown in this repo. Elixir tooling
+checks it, and SurrealDB stores it so apps (including a questionnaire UI) can
+query it.
+
+![Organization dashboard with assessments and maturity metrics](docs/assets/screenshots/org-dashboard.png)
 
 ---
 
