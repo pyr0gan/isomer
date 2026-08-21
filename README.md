@@ -28,14 +28,11 @@ query it.
   </a>
 </p>
 
-Tooling version lives in [`mix.exs`](mix.exs). Content is versioned in the YAML
-itself — see [`docs/versioning.md`](docs/versioning.md).
-
 ---
 
 ## What you get
 
-| Kind | What it is |
+| Aspect | What it is |
 |---|---|
 | **Requirements** | Controls and legal obligations (what you must do), with evidence expectations |
 | **Mappings** | How one framework covers another (and where the gaps are) |
