@@ -2,7 +2,7 @@
  
 **AI and information security governance content as code.** ISO/IEC 42001, ISO/IEC 27001 and the EU AI Act, expressed as schema-checked YAML and Markdown that you can diff, lint, and query.
  
-[Live demo](TODO-DEMO-URL) · [Roadmap](docs/roadmap.md) · [Contributing](AGENTS.md)
+[Live demo](https://isomer-demo.fly.dev) · [Roadmap](docs/roadmap.md) · [Contributing](AGENTS.md)
  
 ![Organization dashboard with assessments and maturity metrics](docs/assets/screenshots/org-dashboard.png)
  
