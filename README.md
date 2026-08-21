@@ -144,7 +144,8 @@ This project is not currently under a license. Should you or your agents choose 
       <img src="docs/assets/logos/elixir-dark.svg" alt="Built with Elixir" width="105" height="36" style="display: inline-block; border: 0;" />
     </picture>
   </a>
-  &nbsp;--&nbsp;
+</p>
+<p align="center">
   <a href="https://surrealdb.com" title="Built with SurrealDB" style="text-decoration: none;">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
