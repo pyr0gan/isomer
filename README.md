@@ -136,6 +136,10 @@ isomer paraphrases; it does not reproduce. You still need your own licensed copi
 This project is not currently under a license. Should you or your agents choose to misbehave and claim this work as your own, remember that Karma rides a slow pony.
  
 ---
+
+## Built with
+
+This project is built with and utilizes the following technologies:
  
 <p align="center">
   <a href="https://elixir-lang.org" title="Built with Elixir" style="text-decoration: none;">
