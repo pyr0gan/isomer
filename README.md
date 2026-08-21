@@ -44,16 +44,23 @@ mix lint    # schemas, cross-references, and charset
 `mix setup` wires up `.githooks/` so commits run `mix format`, compile with warnings-as-errors, and `mix lint` before they land, matching CI. Re-run `mix git.hooks` if the hooks go missing, or run the gate manually with `mix precommit`.
  
 <details>
-<summary><strong>Connecting to SurrealDB</strong></summary>
+<summary>
+ <strong>Connecting to SurrealDB</strong>
+</summary>
+ 
 1. Copy `.env.example` → `.env` and fill in the Surreal and Vault values. Never commit `.env`. The Surreal password comes from **Vault**, not from a plain `SURREAL_PASSWORD`.
 2. Smoke-test the connection with `mix isomer.db.ping`. If `.env` uses 1Password `op://` references, wrap it: `op run --env-file=.env -- mix isomer.db.ping`.
 3. Publish the corpus with `mix isomer.db.sync` (add `--dry-run` to preview).
 4. Optionally create the assessment and auth tables with `mix isomer.db.ensure_runtime`, then start the LiveViews with `mix phx.server`.
 See [`docs/assessment-runtime.md`](docs/assessment-runtime.md) and [`docs/deploy.md`](docs/deploy.md).
- 
+
 </details>
+
 <details>
-<summary><strong>All mix tasks</strong></summary>
+<summary>
+ <strong>All mix tasks</strong>
+</summary>
+ 
 | Command | What it does |
 |---|---|
 | `mix lint` | Full content check (schemas plus charset) |
@@ -79,9 +86,13 @@ mix isomer.ruleset.eval \
 On `main`, `sync-corpus.yml` runs `mix isomer.db.sync_sbom` after the corpus sync. The current bill of materials lives at Surreal record `sbom:isomer_tooling`, not as a GitHub Actions artifact.
  
 </details>
+
 <details>
-<summary><strong>Repository layout</strong></summary>
-```
+<summary>
+ <strong>Repository layout</strong>
+</summary>
+ 
+```text
 frameworks/<name>/<version>/framework.yaml       framework manifest
 frameworks/<name>/<version>/requirements/*.yaml  one file per requirement
 mappings/*.yaml                                  links between frameworks
@@ -94,8 +105,9 @@ schemas/*.schema.json                            JSON Schema definitions
 lib/                                             Elixir tooling
 docs/                                            design notes, screenshots, logo assets
 ```
- 
+
 </details>
+
 ## Contributing content
  
 The rules that the linter can't catch:
@@ -118,9 +130,10 @@ isomer paraphrases; it does not reproduce. You still need your own licensed copi
 - Versioning, tooling vs content: [`docs/versioning.md`](docs/versioning.md)
 - Assessment runtime and Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
 - Deploy to Fly.io or Railway: [`docs/deploy.md`](docs/deploy.md)
+
 ## License
  
-TODO
+This project is not currently under a license. Should you or your agents choose to misbehave and claim this work as your own, remember that Karma rides a slow pony.
  
 ---
  
@@ -131,7 +144,7 @@ TODO
       <img src="docs/assets/logos/elixir-dark.svg" alt="Built with Elixir" width="105" height="36" style="display: inline-block; border: 0;" />
     </picture>
   </a>
-  &nbsp;&nbsp;
+  &nbsp;--&nbsp;
   <a href="https://surrealdb.com" title="Built with SurrealDB" style="text-decoration: none;">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logos/surrealdb-light.svg" />
