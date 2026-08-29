@@ -4,7 +4,7 @@ defmodule Isomer.MixProject do
   def project do
     [
       app: :isomer,
-      version: "0.1.12",
+      version: "0.1.13",
       elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
