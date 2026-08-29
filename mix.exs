@@ -4,7 +4,7 @@ defmodule Isomer.MixProject do
   def project do
     [
       app: :isomer,
-      version: "0.1.13",
+      version: "0.1.14",
       elixir: "~> 1.20",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -67,7 +67,7 @@ defmodule Isomer.MixProject do
       {:phoenix, "~> 1.8"},
       {:phoenix_html, "~> 4.2"},
       {:phoenix_live_view, "~> 1.1"},
-      {:phoenix_live_reload, "~> 1.5", only: :dev},
+      {:phoenix_live_reload, "~> 1.5", only: :dev, runtime: false},
       {:bandit, "~> 1.6"},
       {:dns_cluster, "~> 0.2"},
       # UI (Petal free components). phoenix_ecto/ecto are required by Petal helpers
