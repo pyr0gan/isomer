@@ -20,7 +20,12 @@ defmodule Isomer.Mix.BootTest do
 
   test "Boot module documents why Endpoint is skipped" do
     src = File.read!("lib/isomer/mix/boot.ex")
-    assert src =~ "live-reload"
+    assert src =~ "phoenix_live_reload"
     assert src =~ "inotify"
+  end
+
+  test "phoenix_live_reload is compile-only (no app.start on db tasks)" do
+    src = File.read!("mix.exs")
+    assert src =~ ~s[{:phoenix_live_reload, "~> 1.5", only: :dev, runtime: false}]
   end
 end

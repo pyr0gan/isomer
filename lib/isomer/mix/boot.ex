@@ -4,8 +4,9 @@ defmodule Isomer.Mix.Boot do
 
   `mix isomer.db.sync` / `ensure_runtime` / etc. only need Config, Vault, and the
   Surreal client. Calling `Mix.Task.run("app.start")` under `MIX_ENV=dev` (CI
-  default) also boots `IsomerWeb.Endpoint`, which tries Phoenix live-reload /
-  `file_system` / inotify and prints noisy errors on GitHub Actions runners.
+  default) also starts dev-only OTP apps such as `:phoenix_live_reload`, which
+  tries `file_system` / inotify and prints noisy errors on GitHub Actions runners
+  (and skips `:isomer_web` Endpoint unless configured).
 
   Call `start_for_db!/0` from those tasks instead of raw `app.start`.
   """
