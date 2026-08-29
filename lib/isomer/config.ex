@@ -79,9 +79,18 @@ defmodule Isomer.Config do
       secret_id: secret_id,
       path: required!("VAULT_SECRET_PATH"),
       field: optional("VAULT_SECRET_FIELD", "password"),
-      kv_version: optional("VAULT_KV_VERSION")
+      kv_version: optional("VAULT_KV_VERSION"),
+      skip_verify: truthy_env?("VAULT_SKIP_VERIFY"),
+      cacert: optional("VAULT_CACERT")
     }
     |> assert_resolved([:addr, :path, :field])
+  end
+
+  defp truthy_env?(name) do
+    case optional(name) do
+      v when v in ["1", "true", "TRUE", "yes", "YES", "on", "ON"] -> true
+      _ -> false
+    end
   end
 
   defp required!(name) do

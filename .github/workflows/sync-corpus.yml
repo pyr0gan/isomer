@@ -84,6 +84,8 @@ jobs:
           VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
           VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
           VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
+          # v.omega-agent.cloud (default VAULT_ADDR) uses a self-signed TLS cert.
+          VAULT_SKIP_VERIFY: "true"
           GITHUB_SHA: ${{ github.sha }}
         # Isomer.Mix.Boot.start_for_db!/0 — no Phoenix Endpoint / live_reload / inotify.
         run: mix isomer.db.sync
@@ -98,6 +100,7 @@ jobs:
           VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
           VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
           VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
+          VAULT_SKIP_VERIFY: "true"
           GITHUB_SHA: ${{ github.sha }}
         run: mix isomer.db.sync_sbom
 
@@ -114,4 +117,5 @@ jobs:
           VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
           VAULT_SECRET_PATH: ${{ secrets.VAULT_SECRET_PATH }}
           VAULT_SECRET_FIELD: ${{ secrets.VAULT_SECRET_FIELD }}
+          VAULT_SKIP_VERIFY: "true"
         run: mix isomer.db.ensure_runtime

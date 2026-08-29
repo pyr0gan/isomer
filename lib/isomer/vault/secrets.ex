@@ -5,7 +5,7 @@ defmodule Isomer.Vault.Secrets do
 
   def read_secret_field!(vault) do
     token = resolve_token!(vault)
-    json = vault_fetch!(vault.addr, vault.path, token: token)
+    json = vault_fetch!(vault, vault.path, token: token)
 
     version =
       cond do
@@ -33,9 +33,9 @@ defmodule Isomer.Vault.Secrets do
 
   def resolve_token!(%{token: token}) when is_binary(token) and token != "", do: token
 
-  def resolve_token!(%{addr: addr, role_id: role_id, secret_id: secret_id}) do
+  def resolve_token!(vault = %{addr: _addr, role_id: role_id, secret_id: secret_id}) do
     json =
-      vault_fetch!(addr, "auth/approle/login",
+      vault_fetch!(vault, "auth/approle/login",
         method: :post,
         body: %{role_id: role_id, secret_id: secret_id}
       )
@@ -46,7 +46,31 @@ defmodule Isomer.Vault.Secrets do
     end
   end
 
-  defp vault_fetch!(addr, path, opts) do
+  @doc """
+  Req `connect_options` for Vault HTTPS.
+
+  Prefer `VAULT_CACERT` (PEM file path) when you have a private CA. Use
+  `VAULT_SKIP_VERIFY=true` only for self-signed Vault endpoints (e.g. CI).
+  """
+  def tls_connect_options(vault) do
+    cacert = Map.get(vault, :cacert)
+
+    transport_opts =
+      cond do
+        is_binary(cacert) and cacert != "" ->
+          [cacertfile: String.to_charlist(cacert), verify: :verify_peer]
+
+        Map.get(vault, :skip_verify) ->
+          [verify: :verify_none]
+
+        true ->
+          nil
+      end
+
+    if transport_opts, do: [connect_options: [transport_opts: transport_opts]], else: []
+  end
+
+  defp vault_fetch!(vault = %{addr: addr}, path, opts) do
     method = Keyword.get(opts, :method, :get)
     token = Keyword.get(opts, :token)
     body = Keyword.get(opts, :body)
@@ -56,12 +80,13 @@ defmodule Isomer.Vault.Secrets do
       [{"content-type", "application/json"}] ++
         if(token, do: [{"x-vault-token", token}], else: [])
 
-    attempt_fetch(url, method, headers, body, path, 1)
+    attempt_fetch(vault, url, method, headers, body, path, 1)
   end
 
-  defp attempt_fetch(url, method, headers, body, path, attempt) do
+  defp attempt_fetch(vault, url, method, headers, body, path, attempt) do
     req =
-      Req.new(url: url, headers: headers)
+      ([url: url, headers: headers] ++ tls_connect_options(vault))
+      |> Req.new()
       |> then(fn r ->
         if body, do: Req.merge(r, json: body), else: r
       end)
@@ -83,7 +108,7 @@ defmodule Isomer.Vault.Secrets do
       {:error, err} ->
         if attempt < 3 and transient?(err) do
           Process.sleep(400 * attempt)
-          attempt_fetch(url, method, headers, body, path, attempt + 1)
+          attempt_fetch(vault, url, method, headers, body, path, attempt + 1)
         else
           raise "fetch failed talking to Vault at #{url} — #{Exception.message(err)}"
         end
