@@ -15,8 +15,8 @@ defmodule Isomer.Application do
   end
 
   # Mix DB tasks (`Isomer.Mix.Boot.start_for_db!/0`) set `:start_endpoint` false
-  # so CI/sync does not boot Bandit + live_reload/inotify. Releases and
-  # `mix phx.server` leave the default true.
+  # so CI/sync does not boot Bandit. `:phoenix_live_reload` uses `runtime: false`
+  # in mix.exs so `app.start` for db tasks does not boot file_system/inotify.
   defp endpoint_children do
     if Application.get_env(:isomer, :start_endpoint, true) do
       [IsomerWeb.Endpoint]
