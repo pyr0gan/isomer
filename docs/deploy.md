@@ -3,7 +3,7 @@
 The assessment UI is a Phoenix endpoint inside the same Mix app as the corpus
 tooling. SurrealDB stays the system of record; this process only holds **user**
 JWTs at runtime. Root/Vault credentials are for Mix tasks (`sync`,
-`ensure_runtime`), not for the web dyno’s request path.
+`ensure_runtime`), not for the web process’s request path.
 
 ## Prerequisites
 
@@ -31,23 +31,17 @@ Signup/signin use Surreal record access and do **not** need the Vault password
 on the web process. Keep Vault on a one-off release command or CI for schema
 sync.
 
-### Fly vs Actions Surreal target
+### Web vs Actions Surreal target
 
-The demo dyno (`isomer-demo`) and `sync-corpus.yml` must talk to the **same**
-Surreal Cloud instance. After a sync run, compare:
+The web app and `sync-corpus.yml` must talk to the **same** Surreal instance.
+`mix isomer.db.ensure_runtime` and the Actions "Print Surreal target fingerprint"
+step log `host=… ns=… db=…`; compare that with the `SURREAL_URL` your web
+process uses (host only; do not paste secrets into tickets).
 
-```text
-# from the Actions “Print Surreal target fingerprint” / ensure_runtime log
-host=….aws-usw2.surreal.cloud ns=main db=main
-
-# from the Fly machine
-fly ssh console -a isomer-demo -C 'printenv SURREAL_URL'  # host only; do not paste secrets into tickets
-```
-
-If the hosts differ, Settings saves fail with “no such field” for `comfort_level`
+If the hosts differ, Settings saves fail with "no such field" for `comfort_level`
 even when CI `ensure_runtime` is green — the schema was applied to the other DB.
-Fix: `fly secrets set SURREAL_URL=… SURREAL_NAMESPACE=… SURREAL_DATABASE=…`
-to match Actions, then re-run **Sync corpus to SurrealDB** (`workflow_dispatch`).
+Fix the web process's `SURREAL_*` env to match Actions, then re-run **Sync
+corpus to SurrealDB** (`workflow_dispatch`).
 
 The app also writes prefs into FLEXIBLE `user.guide_prefs` and keeps a session
 overlay when flat columns lag on a Surreal Cloud compute node, so Settings
@@ -55,64 +49,48 @@ remains usable while `ensure_runtime` converges.
 
 `ensure_runtime` applies schema across several fresh connections (default 8,
 `ENSURE_RUNTIME_PASSES`) because Surreal Cloud hostnames often resolve to
-multiple IPs — a single DEFINE + probe can be green in Actions while the Fly
-dyno still misses `artifact` / pref fields. Each pass runs root INFO checks, a
+multiple IPs — a single DEFINE + probe can be green in Actions while the web
+process still misses `artifact` / pref fields. Each pass runs root INFO checks, a
 root write probe, and a **record-auth** signup/update/`SELECT artifact` probe.
 
 
 ### Surreal connect timeouts on sign-in
 
-If Fly logs show `auth signin failed … reason=could not connect:
+If web logs show `auth signin failed … reason=could not connect:
 %Mint.TransportError{reason: :timeout}` (or `RPC use timed out during setup`),
-the password was never checked — the dyno failed to open / set up the Surreal
+the password was never checked — the web process failed to open / set up the Surreal
 WSS session. Common causes:
 
 1. **Surreal Cloud idle pause** (free / low tiers) — wake the instance in the
    Surreal console, wait ~30s, retry sign-in.
-2. **Wrong or stale `SURREAL_URL`** on the Fly app (`fly secrets list -a isomer-demo`).
-3. **Regional lag** — demo Fly region is `iad`; many Surreal Cloud hosts are
-   `aws-usw2`. Latency alone rarely hits 10–15s, but combined with a cold
+2. **Wrong or stale `SURREAL_URL`** in the web process's environment.
+3. **Regional lag** — hosting the app far from the Surreal Cloud region adds
+   latency. Latency alone rarely hits 10–15s, but combined with a cold
    instance it can.
 
 The web client retries transient connect failures a few times and keeps an
 existing session cookie when LiveView mount times out (so a pause does not
 force a logout loop).
 
-## Fly.io
+## Docker
 
-The checked-in demo app is **`isomer-demo`** (`https://isomer-demo.fly.dev`).
-The global name `isomer` is already taken on Fly.io.
-
-### Continuous deploy
-
-On every push to `main` (merged PRs), GitHub Actions runs
-[`.github/workflows/fly-deploy.yml`](../.github/workflows/fly-deploy.yml) and
-deploys with `flyctl deploy -a isomer-demo --remote-only`.
-
-Required Actions secret:
-
-| Secret | How to create |
-|---|---|
-| `FLY_API_TOKEN` | `fly tokens create deploy -a isomer-demo -x 999999h` → paste into repo **Settings → Secrets and variables → Actions** |
-
-Manual deploy remains available (`workflow_dispatch` on that workflow, or local
-`fly deploy`).
-
-### First-time / secrets on the app
+There is no hosted demo; for day-to-day use, run locally (README, "Run it
+locally"). To self-host, build the release image from the `Dockerfile`:
 
 ```bash
-# First time (app already exists for this repo's demo):
-#   fly apps create isomer-demo
-fly secrets set SECRET_KEY_BASE="$(mix phx.gen.secret)" \
-  PHX_HOST=isomer-demo.fly.dev \
-  SURREAL_URL=… SURREAL_NAMESPACE=main SURREAL_DATABASE=main
+docker build -t isomer .
+docker run --rm -p 4000:4000 \
+  -e SECRET_KEY_BASE="$(mix phx.gen.secret)" \
+  -e PHX_HOST=your.host.example \
+  -e SURREAL_URL=wss://…/rpc -e SURREAL_NAMESPACE=main -e SURREAL_DATABASE=main \
+  isomer
 ```
 
-`fly.toml` sets `PHX_SERVER=true` and binds internal port `4000`. Health checks
-hit `/health` (plain-text liveness; not `/login`). Public HTTPS responses send
-`Strict-Transport-Security: max-age=31536000`; the app does not HTTP→HTTPS
-redirect on the dyno so those checks stay 200. Attach a custom domain with
-`fly certs add` when ready.
+The image sets `PHX_SERVER=true` and listens on `PORT` (default `4000`). Health
+checks should hit `/health` (plain-text liveness; not `/login`). Prod responses
+send `Strict-Transport-Security: max-age=31536000` and the session cookie is
+`Secure`, so put the app behind a TLS-terminating proxy; the app does not
+HTTP→HTTPS redirect itself, so `/health` stays 200 over plain HTTP.
 
 Public discovery files (static under `priv/static/`):
 
@@ -161,10 +139,8 @@ mix isomer.db.reset_password --email you@example.com --password 'new-secret'
 
 ## Local
 
-```
-mix setup                      # deps + Tailwind/esbuild install + asset build
-mix isomer.db.ensure_runtime   # once per Surreal DB
-mix phx.server                 # http://localhost:4000
-```
+See the README, "Run it locally": local SurrealDB + Vault dev server, then
+`mix setup`, `mix isomer.db.sync`, `mix isomer.db.ensure_runtime`,
+`mix phx.server` → http://localhost:4000.
 
 UI assets live under `assets/` and compile to `priv/static/assets/` via Tailwind v4 and esbuild (Petal Components). Production images run `mix assets.deploy` in the Dockerfile.

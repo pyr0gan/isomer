@@ -1,4 +1,4 @@
-# isomer — https://isomer-demo.fly.dev
+# isomer
 # LLM context: /llms.txt
 # Security: /.well-known/security.txt
 

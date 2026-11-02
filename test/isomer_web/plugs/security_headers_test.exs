@@ -24,7 +24,7 @@ defmodule IsomerWeb.Plugs.SecurityHeadersTest do
   test "sets HSTS when conn.scheme is https" do
     conn =
       :get
-      |> conn("https://isomer-demo.fly.dev/login")
+      |> conn("https://isomer.example/login")
       |> SecurityHeaders.call(@opts)
 
     assert get_resp_header(conn, "strict-transport-security") == [

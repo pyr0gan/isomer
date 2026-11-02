@@ -45,7 +45,7 @@ holds root/Vault credentials.
 | Assessment UX | Org tenancy with member admin + role-aware projector; domain / ruleset / combined assessments; wizard with evidence; Results; finalize/reopen; adaptive guidance copy |
 | Documents | Template render → Library downloads (Markdown / print-ready HTML); stored as `answer` rows (`pack_ref=__artifacts__`) |
 | Tooling SBoM | CycloneDX published to Surreal `sbom:isomer_tooling` on sync (`mix isomer.db.sync_sbom`) |
-| Delivery | Corpus sync + runtime schema + SBoM sync in CI; Fly demo deploy on `main`; `mix test` in CI |
+| Delivery | Corpus sync + runtime schema + SBoM sync in CI; `mix test` in CI |
 
 Remaining Theme 2 work is done for the assessment loop (slice F object storage
 shipped). Theme 3 member admin + org polish shipped; password recovery remains
@@ -186,7 +186,7 @@ After the loop and collaboration paths are solid:
 | AI system register | `system` (or equivalent) for per–AI-system scoping of assessments and artifacts |
 | Document export | Native PDF only if browser print/HTML is insufficient for stakeholders |
 | Dependency posture | Pin/track the Surreal Elixir client; document upgrade policy while it remains GitHub-sourced |
-| Operations | Actions sync target and Fly `SURREAL_*` stay identical; retain multi-pass `ensure_runtime` probes for Surreal Cloud |
+| Operations | Actions sync target and the web app's `SURREAL_*` stay identical; retain multi-pass `ensure_runtime` probes for Surreal Cloud |
 
 ---
 

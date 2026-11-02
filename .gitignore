@@ -16,3 +16,7 @@ bom.cdx.json
 *.cdx.json
 *.cdx.xml
 *.cdx.pb
+
+# Local dev data (see README "Run it locally")
+.surreal-data/
+.evidence/
