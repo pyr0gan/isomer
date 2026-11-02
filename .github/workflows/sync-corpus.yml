@@ -70,7 +70,7 @@ jobs:
           SURREAL_DATABASE: ${{ secrets.SURREAL_DATABASE }}
           SURREAL_USERNAME: ${{ secrets.SURREAL_USERNAME }}
         run: |
-          # Host + ns/db only — compare with `fly ssh console -a isomer-demo` fingerprint.
+          # Host + ns/db only — compare with the web app's SURREAL_URL host.
           # --no-start: fingerprint is env-only; avoid booting Phoenix (live_reload/inotify).
           mix run --no-start -e 'IO.puts(Isomer.Config.surreal_target_fingerprint())'
 

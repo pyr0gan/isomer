@@ -1,4 +1,4 @@
-# isomer — https://isomer-demo.fly.dev
+# isomer
 # See https://llmstxt.org/
 
 > isomer is a shared library of AI governance content (requirements, questions,
@@ -10,7 +10,7 @@ a projector over Surreal record-auth sessions (no parallel Ecto user table).
 
 ## Product
 
-- Assessment UI (demo): https://isomer-demo.fly.dev
+- Assessment UI: run locally (README, "Run it locally")
 - Source: https://github.com/pyr0gan/isomer
 - Docs in-repo: README.md, docs/assessment-runtime.md, docs/deploy.md, docs/versioning.md
 

@@ -2,7 +2,7 @@
  
 **AI and information security governance content as code.** ISO/IEC 42001, ISO/IEC 27001 and the EU AI Act, expressed as schema-checked YAML and Markdown that you can diff, lint, and query.
  
-[Live demo](https://isomer-demo.fly.dev) · [Roadmap](docs/roadmap.md) · [Contributing](AGENTS.md)
+[Run it locally](#run-it-locally) · [Roadmap](docs/roadmap.md) · [Contributing](AGENTS.md)
  
 ![Organization dashboard with assessments and maturity metrics](docs/assets/screenshots/org-dashboard.png)
  
@@ -27,35 +27,76 @@ Two mapping files show what one framework leaves undone for another: ISO 27001 �
  
 Alongside the requirements themselves, the corpus carries **mappings** (framework-to-framework coverage and gaps), **questions** (48 assessment questions, weighted toward practical L1/L2 self-report), **rulesets** (guided classification, such as EU AI Act risk category), **rubrics** (L0–L4 maturity per domain), and **templates** (policy, Statement of Applicability, impact assessment, each declaring which requirements it evidences).
  
-## Try the demo
- 
-The hosted demo is free and open to anyone who creates a login. The maintainer may clear the database without notice, so don't put real work in it.
- 
 ## Run it locally
  
-Requires **Elixir 1.20.3+** and **OTP 29+** (pinned in `mise.toml`).
+There is no hosted demo. You run the whole stack on your own machine: the Phoenix app, a SurrealDB server, and a Vault dev server. The app reads the SurrealDB root password from Vault, so you need both.
+ 
+You need:
+ 
+- **Elixir 1.20.3+** and **OTP 29+**. Both are pinned in `mise.toml`, so `mise install` sets them up.
+- **SurrealDB** 3.x, the `surreal` CLI ([install](https://surrealdb.com/docs/surrealdb/installation)).
+- **Vault**, the `vault` CLI ([install](https://developer.hashicorp.com/vault/install)). Dev mode is enough.
+ 
+**1. Start SurrealDB and Vault.** Use two terminals and leave both running.
  
 ```bash
-mix deps.get
-mix setup   # deps, assets, and git pre-commit hooks
-mix lint    # schemas, cross-references, and charset
+# Terminal 1: SurrealDB, data kept in ./.surreal-data
+surreal start --user root --pass root --bind 127.0.0.1:8000 rocksdb:.surreal-data
+ 
+# Terminal 2: Vault in dev mode (in memory, fixed root token)
+vault server -dev -dev-root-token-id=dev-root
 ```
+ 
+**2. Store the SurrealDB password in Vault.** Vault dev mode forgets everything when it stops, so run this again each time you restart Vault.
+ 
+```bash
+VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=dev-root vault kv put secret/surreal password=root
+```
+ 
+**3. Point the app at both.** Create `.env` in the repo root. It is gitignored.
+ 
+```bash
+cat > .env <<'EOF'
+SURREAL_URL=ws://127.0.0.1:8000/rpc
+SURREAL_NAMESPACE=main
+SURREAL_DATABASE=main
+SURREAL_USERNAME=root
+VAULT_ADDR=http://127.0.0.1:8200
+VAULT_TOKEN=dev-root
+VAULT_SECRET_PATH=secret/data/surreal
+VAULT_SECRET_FIELD=password
+EOF
+```
+ 
+**4. Install, load the corpus, and start the app.**
+ 
+```bash
+mix setup                      # deps, assets, and git pre-commit hooks
+mix isomer.db.ping             # should print "ok": true
+mix isomer.db.sync             # load frameworks, mappings, questions, templates
+mix isomer.db.ensure_runtime   # create auth, org, and assessment tables
+mix phx.server
+```
+ 
+Open <http://localhost:4000>, create an account on the login page, and you land on **Organizations**. Create an org to start an assessment.
+ 
+Evidence files you attach are kept in memory and lost on restart. To keep them on disk, start the server with `EVIDENCE_BACKEND=local EVIDENCE_LOCAL_ROOT=.evidence mix phx.server`. These two must be set in the shell; `.env` is read too late for them.
+ 
+To start over, stop SurrealDB and delete `.surreal-data/`. If you only want to lint the corpus, you don't need SurrealDB or Vault at all: `mix setup && mix lint`.
  
 `mix setup` wires up `.githooks/` so commits run `mix format`, compile with warnings-as-errors, and `mix lint` before they land, matching CI. Re-run `mix git.hooks` if the hooks go missing, or run the gate manually with `mix precommit`.
  
 <details>
 <summary>
- <strong>Connecting to SurrealDB</strong>
+ <strong>Using a remote SurrealDB or Vault</strong>
 </summary>
  
-1. Copy `.env.example` → `.env` and fill in the Surreal and Vault values. Never commit `.env`. The Surreal password comes from **Vault**, not from a plain `SURREAL_PASSWORD`.
-2. Smoke-test the connection with `mix isomer.db.ping`. If `.env` uses 1Password `op://` references, wrap it: `op run --env-file=.env -- mix isomer.db.ping`.
-3. Publish the corpus with `mix isomer.db.sync` (add `--dry-run` to preview).
-4. Optionally create the assessment and auth tables with `mix isomer.db.ensure_runtime`, then start the LiveViews with `mix phx.server`.
+`.env.example` lists every variable for a hosted setup, such as Surreal Cloud with `wss://…/rpc` and a real Vault with a token or AppRole. The Surreal password always comes from **Vault**, never from a plain `SURREAL_PASSWORD`. If `.env` uses 1Password `op://` references, wrap commands: `op run --env-file=.env -- mix isomer.db.ping`.
+ 
 See [`docs/assessment-runtime.md`](docs/assessment-runtime.md) and [`docs/deploy.md`](docs/deploy.md).
-
+ 
 </details>
-
+ 
 <details>
 <summary>
  <strong>All mix tasks</strong>
@@ -129,7 +170,7 @@ isomer paraphrases; it does not reproduce. You still need your own licensed copi
  
 - Versioning, tooling vs content: [`docs/versioning.md`](docs/versioning.md)
 - Assessment runtime and Surreal auth design: [`docs/assessment-runtime.md`](docs/assessment-runtime.md)
-- Deploy to Fly.io or Railway: [`docs/deploy.md`](docs/deploy.md)
+- Self-hosting with Docker: [`docs/deploy.md`](docs/deploy.md)
 
 ## License
  
